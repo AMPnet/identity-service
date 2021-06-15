@@ -1,0 +1,66 @@
+<configuration scan="false">
+
+    <property name="LOG_DIR" value="/var/log" />
+    <property name="LOG_FILE_PREFIX" value="identity-service" />
+    <property name="LOG_ERROR_FILE_PREFIX" value="identity-service-error" />
+    <property name="MAX_HISTORY" value="7" />
+    <property name="PATTERN_COLOR" value="%date{ISO8601} [%cyan(%thread)] %highlight(%-5level) %yellow(%logger{100}) - %msg%n%rEx{full,
+          java.lang.reflect.Method,
+          org.apache.catalina,
+          org.springframework.aop,
+          org.springframework.security,
+          org.springframework.transaction,
+          org.springframework.web,
+          sun.reflect,
+          net.sf.cglib,
+          ByCGLIB
+        }" />
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${PATTERN_COLOR}</pattern>
+        </encoder>
+    </appender>
+
+    <springProfile name="dev">
+        <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_DIR}/${LOG_FILE_PREFIX}.log</file>
+            <encoder>
+                <pattern>${PATTERN_COLOR}</pattern>
+            </encoder>
+
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_DIR}/${LOG_FILE_PREFIX}.%d{yyyy-MM-dd}.log</fileNamePattern>
+                <maxHistory>${MAX_HISTORY}</maxHistory>
+                <totalSizeCap>1GB</totalSizeCap>
+            </rollingPolicy>
+        </appender>
+
+        <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>ERROR</level>
+            </filter>
+            <file>${LOG_DIR}/${LOG_ERROR_FILE_PREFIX}.log</file>
+            <encoder>
+                <pattern>${PATTERN_COLOR}</pattern>
+            </encoder>
+
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_DIR}/${LOG_ERROR_FILE_PREFIX}.%d{yyyy-MM-dd}.log</fileNamePattern>
+                <maxHistory>${MAX_HISTORY}</maxHistory>
+                <totalSizeCap>1GB</totalSizeCap>
+            </rollingPolicy>
+        </appender>
+    </springProfile>
+
+    <logger name="com.ampnet" level="DEBUG" />
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <springProfile name="dev">
+            <appender-ref ref="FILE" />
+            <appender-ref ref="ERROR_FILE" />
+        </springProfile>
+    </root>
+
+</configuration>

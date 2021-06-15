@@ -1,0 +1,11 @@
+= AMPnet Identity Service API Documentation
+Version {version}, {date}
+:doctype: book
+:toc: left
+:sectnums:
+:toclevels: 2
+:source-highlighter: prettify
+:docinfo: shared
+
+== Introduction
+This document contains generated documentation for `AMPnet identity service`.
