@@ -11,7 +11,7 @@ plugins {
     id("org.springframework.boot") version "2.5.1"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
     id("com.google.cloud.tools.jib") version "2.8.0"
-    id("org.asciidoctor.convert") version "1.5.8"
+    id("org.asciidoctor.jvm.convert") version "3.3.2"
     id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
     id("io.gitlab.arturbosch.detekt").version("1.16.0")
     idea
@@ -24,7 +24,8 @@ java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
     mavenCentral()
-    maven(url = "https://jitpack.io")
+    maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
+    maven("https://jitpack.io")
 }
 
 dependencies {
