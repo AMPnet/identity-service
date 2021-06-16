@@ -25,7 +25,7 @@ java.sourceCompatibility = JavaVersion.VERSION_1_8
 repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
-    maven(url = "https://jitpack.io")
+    maven("https://jitpack.io")
 }
 
 dependencies {
