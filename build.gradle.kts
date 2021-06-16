@@ -71,7 +71,7 @@ jib {
     }
 }
 
-jacoco.toolVersion = "0.8.6"
+jacoco.toolVersion = "0.8.7"
 tasks.jacocoTestReport {
     reports {
         xml.isEnabled = true
@@ -92,7 +92,7 @@ tasks.jacocoTestCoverageVerification {
     violationRules {
         rule {
             limit {
-                minimum = "0.7".toBigDecimal()
+                minimum = "0.2".toBigDecimal()
             }
         }
     }
