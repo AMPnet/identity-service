@@ -39,6 +39,14 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     implementation("io.github.microutils:kotlin-logging:2.0.5")
+    implementation("com.github.AMPnet:jwt:7197e5de")
+    implementation("org.web3j:core:4.8.4") {
+        exclude(group = "com.squareup.okhttp3")
+    }
+
+    val okhttpVersion = "4.9.1"
+    implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
+    implementation("com.squareup.okhttp3:logging-interceptor:$okhttpVersion")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
