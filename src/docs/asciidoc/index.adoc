@@ -9,3 +9,27 @@ Version {version}, {date}
 
 == Introduction
 This document contains generated documentation for `AMPnet identity service`.
+
+== Authorization API
+
+=== Get payload
+Used to retrieve a unique nonce associated with user address.
+
+.Request
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayload/http-request.adoc[]
+.Response
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayload/http-response.adoc[]
+
+=== Authorize jwt
+When user signs payload received from `POST /authorize` route correctly with his private key he is authorized and receives jwt.
+
+.Request
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwt/http-request.adoc[]
+.Response
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwt/http-response.adoc[]
+
+=== Refresh token
+.Request
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetAccessTokenWithRefreshToken/http-request.adoc[]
+.Response
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetAccessTokenWithRefreshToken/http-response.adoc[]

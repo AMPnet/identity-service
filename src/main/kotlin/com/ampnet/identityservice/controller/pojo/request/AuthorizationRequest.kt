@@ -1,4 +1,4 @@
-package com.ampnet.identityservice.controller.pojo
+package com.ampnet.identityservice.controller.pojo.request
 
 data class PayloadRequest(val address: String)
 
