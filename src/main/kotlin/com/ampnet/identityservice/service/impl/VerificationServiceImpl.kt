@@ -46,6 +46,10 @@ class VerificationServiceImpl : VerificationService {
         }
     }
 
+    /*
+     ECDSA signatures consist of two numbers(integers): r and s.
+     Ethereum uses an additional v(recovery identifier) variable. The signature can be notated as {r, s, v}.
+     */
     private fun getSignatureData(signedPayload: String): SignatureData {
         if (signedPayload.length != 132)
             throw InvalidRequestException(

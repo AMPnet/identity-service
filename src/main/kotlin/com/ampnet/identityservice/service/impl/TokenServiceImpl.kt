@@ -26,6 +26,7 @@ class TokenServiceImpl(
     }
 
     private val charPool: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9') + listOf('-', '_', '+')
+    private val secureRandom = SecureRandom()
 
     @Transactional
     @Throws(KeyException::class, TokenException::class)
@@ -75,7 +76,7 @@ class TokenServiceImpl(
     override fun deleteRefreshToken(address: String) = refreshTokenRepository.deleteByUserAddress(address)
 
     private fun getRandomToken(): String = (1..REFRESH_TOKEN_LENGTH)
-        .map { SecureRandom().nextInt(charPool.size) }
+        .map { secureRandom.nextInt(charPool.size) }
         .map(charPool::get)
         .joinToString("")
 }
