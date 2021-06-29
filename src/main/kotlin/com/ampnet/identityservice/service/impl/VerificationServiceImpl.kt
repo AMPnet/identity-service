@@ -23,7 +23,6 @@ class VerificationServiceImpl : VerificationService {
     private val userPayload = mutableMapOf<String, String>()
 
     override fun generatePayload(address: String): String {
-        // TODO generates a negative number, find a function in kethereum
         val nonce = SecureRandom().nextLong().toString()
         userPayload[address] = nonce
         return nonce
@@ -46,6 +45,10 @@ class VerificationServiceImpl : VerificationService {
         }
     }
 
+    /*
+     ECDSA signatures consist of two numbers(integers): r and s.
+     Ethereum uses an additional v(recovery identifier) variable. The signature can be notated as {r, s, v}.
+     */
     private fun getSignatureData(signedPayload: String): SignatureData {
         if (signedPayload.length != 132)
             throw InvalidRequestException(

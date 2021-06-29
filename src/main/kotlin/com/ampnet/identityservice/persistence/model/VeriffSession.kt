@@ -1,5 +1,6 @@
 package com.ampnet.identityservice.persistence.model
 
+import com.ampnet.identityservice.service.pojo.VeriffSessionResponse
 import java.time.ZonedDateTime
 import javax.persistence.Column
 import javax.persistence.Entity
@@ -48,20 +49,6 @@ class VeriffSession(
         VeriffSessionState.CREATED
     )
 }
-
-data class VeriffSessionResponse(
-    val status: String?,
-    val verification: VeriffSessionVerificationResponse
-)
-
-data class VeriffSessionVerificationResponse(
-    val id: String,
-    val url: String?,
-    val vendorData: String?,
-    val host: String?,
-    val status: String?,
-    val sessionToken: String
-)
 
 enum class VeriffSessionState(val id: Int) {
     CREATED(0), STARTED(1), SUBMITTED(2)

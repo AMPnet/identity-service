@@ -1,11 +1,12 @@
 package com.ampnet.identityservice.persistence.model
 
+import com.ampnet.identityservice.service.pojo.VeriffDocument
 import javax.persistence.Embeddable
 
 @Embeddable
 class Document(
-    var type: String,
-    var country: String,
+    var type: String?,
+    var country: String?,
     var number: String?,
     var validUntil: String?,
     var validFrom: String?
@@ -18,12 +19,3 @@ class Document(
         veriffDocument.validFrom
     )
 }
-
-// TODO place in right dir
-data class VeriffDocument(
-    val type: String,
-    val country: String,
-    val number: String?,
-    val validUntil: String?,
-    val validFrom: String?
-)

@@ -1,0 +1,37 @@
+{
+  "status": "success",
+  "verification": {
+    "id": "cbb238c6-51a0-482b-bd1a-42a2e0b0ff1c",
+    "code": 9103,
+    "person": {
+      "gender": null,
+      "idNumber": null,
+      "lastName": "last",
+      "firstName": "first",
+      "citizenship": null,
+      "dateOfBirth": null,
+      "nationality": null,
+      "yearOfBirth": null,
+      "placeOfBirth": null,
+      "pepSanctionMatch": null
+    },
+    "reason": "Full document not visible",
+    "status": "resubmission_requested",
+    "comments": [],
+    "document": {
+      "type": "ID_CARD",
+      "number": null,
+      "country": "HR",
+      "validFrom": null,
+      "validUntil": null
+    },
+    "reasonCode": 203,
+    "vendorData": "2652972e-2dfd-428a-93b9-3b283a0a754c",
+    "decisionTime": "2020-12-07T14:25:18.274Z",
+    "acceptanceTime": "2020-12-07T14:23:33.000Z",
+    "additionalVerifiedData": {}
+  },
+  "technicalData": {
+    "ip": "85.94.67.101"
+  }
+}

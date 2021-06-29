@@ -2,14 +2,13 @@ package com.ampnet.identityservice.service.pojo
 
 import com.ampnet.identityservice.persistence.model.VeriffDecision
 import com.ampnet.identityservice.persistence.model.VeriffSessionState
-import com.ampnet.identityservice.persistence.model.VeriffStatus
 
 data class ServiceVerificationResponse(
-    val verificationUrl: String,
+    val verificationUrl: String?,
     val state: String,
     val decision: ServiceVerificationDecision?
 ) {
-    constructor(url: String, state: VeriffSessionState, decision: VeriffDecision? = null) : this(
+    constructor(url: String?, state: VeriffSessionState, decision: VeriffDecision? = null) : this(
         url, state.name.toLowerCase(), decision?.let { ServiceVerificationDecision(it) }
     )
 }

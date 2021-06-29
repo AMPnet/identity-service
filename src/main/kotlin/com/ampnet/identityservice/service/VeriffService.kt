@@ -1,7 +1,8 @@
 package com.ampnet.identityservice.service
 
+import com.ampnet.identityservice.persistence.model.UserInfo
+import com.ampnet.identityservice.persistence.model.VeriffSession
 import com.ampnet.identityservice.service.pojo.ServiceVerificationResponse
-import java.util.UUID
 
 interface VeriffService {
     fun getVeriffSession(address: String, baseUrl: String): ServiceVerificationResponse?

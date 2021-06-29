@@ -3,13 +3,29 @@ package com.ampnet.identityservice.service.impl
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.ResourceNotFoundException
+import com.ampnet.identityservice.exception.VeriffException
+import com.ampnet.identityservice.exception.VeriffReasonCode
+import com.ampnet.identityservice.exception.VeriffVerificationCode
+import com.ampnet.identityservice.persistence.model.UserInfo
+import com.ampnet.identityservice.persistence.model.VeriffDecision
 import com.ampnet.identityservice.persistence.model.VeriffSession
+import com.ampnet.identityservice.persistence.model.VeriffSessionState
+import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.VeriffDecisionRepository
 import com.ampnet.identityservice.persistence.repository.VeriffSessionRepository
+import com.ampnet.identityservice.service.ServiceUtils
 import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.VeriffService
 import com.ampnet.identityservice.service.pojo.ServiceVerificationResponse
+import com.ampnet.identityservice.service.pojo.VeriffDocument
+import com.ampnet.identityservice.service.pojo.VeriffEvent
+import com.ampnet.identityservice.service.pojo.VeriffEventAction
+import com.ampnet.identityservice.service.pojo.VeriffPerson
+import com.ampnet.identityservice.service.pojo.VeriffResponse
 import com.ampnet.identityservice.service.pojo.VeriffSessionRequest
+import com.ampnet.identityservice.service.pojo.VeriffSessionResponse
+import com.ampnet.identityservice.service.pojo.VeriffStatus
+import com.ampnet.identityservice.service.pojo.VeriffVerification
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -26,12 +42,13 @@ import org.springframework.web.client.postForEntity
 import java.net.URI
 import java.security.MessageDigest
 import java.time.ZonedDateTime
-import java.util.UUID
 
 @Service
+@Suppress("TooManyFunctions", "ReturnCount")
 class VeriffServiceImpl(
     private val veriffSessionRepository: VeriffSessionRepository,
     private val veriffDecisionRepository: VeriffDecisionRepository,
+    private val userInfoRepository: UserInfoRepository,
     private val applicationProperties: ApplicationProperties,
     private val userService: UserService,
     private val restTemplate: RestTemplate,
@@ -63,7 +80,7 @@ class VeriffServiceImpl(
     override fun getVeriffSession(address: String, baseUrl: String): ServiceVerificationResponse? {
         logger.debug { "Get Veriff session for address: $address" }
         val session = veriffSessionRepository.findByUserAddressOrderByCreatedAtDesc(address).firstOrNull()
-            ?: return createVeriffSession(userUuid, baseUrl)?.let { newSession ->
+            ?: return createVeriffSession(address, baseUrl)?.let { newSession ->
                 ServiceVerificationResponse(newSession.url, newSession.state)
             }
         logger.debug { "User has pending Veriff session" }
@@ -71,7 +88,7 @@ class VeriffServiceImpl(
         @Suppress("MagicNumber")
         if (session.createdAt.isBefore(ZonedDateTime.now().minusDays(7))) {
             logger.warn { "Veriff session expired" }
-            createVeriffSession(userUuid, baseUrl)?.let { newSession ->
+            createVeriffSession(address, baseUrl)?.let { newSession ->
                 return ServiceVerificationResponse(newSession.url, newSession.state)
             }
         }
@@ -84,14 +101,12 @@ class VeriffServiceImpl(
             VeriffStatus.approved, VeriffStatus.resubmission_requested, VeriffStatus.review ->
                 ServiceVerificationResponse(session.url, session.state, decision)
             VeriffStatus.declined, VeriffStatus.abandoned, VeriffStatus.expired ->
-                createVeriffSession(userUuid, baseUrl)?.let { newSession ->
+                createVeriffSession(address, baseUrl)?.let { newSession ->
                     ServiceVerificationResponse(newSession.url, newSession.state, decision)
                 }
         }
     }
 
-    @Throws(VeriffException::class)
-    @Transactional
     override fun handleDecision(data: String): UserInfo? {
         val response = mapVeriffResponse(data)
         val verification = response.verification
@@ -135,9 +150,7 @@ class VeriffServiceImpl(
 
     @Throws(VeriffException::class)
     override fun verifyClient(client: String) {
-        if (client != applicationProperties.veriff.apiKey) {
-            throw VeriffException("X-AUTH-CLIENT: $client is invalid")
-        }
+        if (client != applicationProperties.veriff.apiKey) throw VeriffException("X-AUTH-CLIENT: $client is invalid")
     }
 
     @Throws(VeriffException::class)
@@ -147,13 +160,6 @@ class VeriffServiceImpl(
             throw VeriffException("X-SIGNATURE invalid!")
         }
     }
-
-    internal fun mapVeriffResponse(response: String): VeriffResponse =
-        try {
-            objectMapper.readValue(response)
-        } catch (ex: JsonProcessingException) {
-            throw VeriffException("Could not map Veriff response", ex)
-        }
 
     private fun createVeriffSession(address: String, baseUrl: String): VeriffSession? {
         logger.debug { "Creating Veriff session for address: $address" }
@@ -169,7 +175,7 @@ class VeriffServiceImpl(
         return try {
             val veriffSessionResponse = restTemplate.postForEntity<VeriffSessionResponse>(uri, httpEntity).body
             veriffSessionResponse?.let {
-                val veriffSession = VeriffSession(veriffSessionResponse, userUuid)
+                val veriffSession = VeriffSession(veriffSessionResponse, address)
                 logger.debug { "Create Veriff session: ${veriffSession.id}" }
                 return veriffSessionRepository.save(veriffSession)
             }
@@ -177,45 +183,6 @@ class VeriffServiceImpl(
             logger.warn("Could not create Veriff session", ex)
             null
         }
-    }
-
-    private fun verifyUser(userInfo: UserInfo, vendorData: String?) {
-        vendorData?.let {
-            try {
-                val userUuid = UUID.fromString(it)
-                userService.connectUserInfo(userUuid, userInfo.sessionId)
-                ServiceUtils.wrapOptional(veriffSessionRepository.findById(userInfo.sessionId))?.let { session ->
-                    session.connected = true
-                }
-            } catch (ex: IllegalArgumentException) {
-                logger.warn("Vendor data: $it is not in valid format", ex)
-            }
-        }
-    }
-
-    private fun getVeriffPerson(verification: VeriffVerification): VeriffPerson? {
-        val status = verification.status
-        val code = VeriffVerificationCode.fromInt(verification.code)
-        val reason = VeriffReasonCode.fromInt(verification.reasonCode)
-        val message = "Status: $status with code ${code?.code} - ${code?.name}. " +
-            "Reason code: ${reason?.code} - ${reason?.name}. Reason: ${verification.reason}. " +
-            "Session id: ${verification.id}"
-        if (status != VeriffStatus.approved) {
-            logger.info { "Verification not approved. $message" }
-            return null
-        }
-        return verification.person
-            ?: throw VeriffException("Missing verification person data. $message")
-    }
-
-    private fun getVeriffDocument(verification: VeriffVerification): VeriffDocument {
-        if (verification.document == null) {
-            val reason = VeriffReasonCode.fromInt(verification.reasonCode)
-            throw VeriffException(
-                "Missing document. Reason: ${reason?.code} - ${reason?.name}. Session id: ${verification.id}"
-            )
-        }
-        return verification.document
     }
 
     private fun generateSignature(payload: String): String {
@@ -245,7 +212,48 @@ class VeriffServiceImpl(
         return hexString.toString()
     }
 
-    private fun verifySignature(signedPayload: String) {
+    private fun getVeriffPerson(verification: VeriffVerification): VeriffPerson? {
+        val status = verification.status
+        val code = VeriffVerificationCode.fromInt(verification.code)
+        val reason = VeriffReasonCode.fromInt(verification.reasonCode)
+        val message = "Status: $status with code ${code?.code} - ${code?.name}. " +
+            "Reason code: ${reason?.code} - ${reason?.name}. Reason: ${verification.reason}. " +
+            "Session id: ${verification.id}"
+        if (status != VeriffStatus.approved) {
+            logger.info { "Verification not approved. $message" }
+            return null
+        }
+        return verification.person
+            ?: throw VeriffException("Missing verification person data. $message")
+    }
 
+    private fun getVeriffDocument(verification: VeriffVerification): VeriffDocument {
+        if (verification.document == null) {
+            val reason = VeriffReasonCode.fromInt(verification.reasonCode)
+            throw VeriffException(
+                "Missing document. Reason: ${reason?.code} - ${reason?.name}. Session id: ${verification.id}"
+            )
+        }
+        return verification.document
+    }
+
+    internal fun mapVeriffResponse(response: String): VeriffResponse =
+        try {
+            objectMapper.readValue(response)
+        } catch (ex: JsonProcessingException) {
+            throw VeriffException("Could not map Veriff response", ex)
+        }
+
+    private fun verifyUser(userInfo: UserInfo, vendorData: String?) {
+        vendorData?.let {
+            try {
+                userService.connectUserInfo(it, userInfo.sessionId)
+                ServiceUtils.wrapOptional(veriffSessionRepository.findById(userInfo.sessionId))?.let { session ->
+                    session.connected = true
+                }
+            } catch (ex: IllegalArgumentException) {
+                logger.warn("Vendor data: $it is not in valid format", ex)
+            }
+        }
     }
 }

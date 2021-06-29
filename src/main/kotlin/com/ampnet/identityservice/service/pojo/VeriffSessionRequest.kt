@@ -22,7 +22,7 @@ data class VeriffSessionVerificationRequest(
         ZonedDateTime.now()
     )
 }
-// TODO check if firstName and lastName is actually required for anything
+
 data class VeriffSessionPerson(
     val firstName: String?,
     val lastName: String?

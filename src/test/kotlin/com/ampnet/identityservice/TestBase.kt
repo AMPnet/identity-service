@@ -12,4 +12,6 @@ abstract class TestBase {
     protected fun verify(@Suppress("UNUSED_PARAMETER") description: String, function: () -> Unit) {
         function.invoke()
     }
+
+    protected fun getResourceAsText(path: String) = object {}.javaClass.getResource(path).readText()
 }
