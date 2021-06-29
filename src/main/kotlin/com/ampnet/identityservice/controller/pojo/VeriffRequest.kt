@@ -1,5 +1,5 @@
 package com.ampnet.identityservice.controller.pojo
 
-data class VeriffSessionRequest(
+data class VeriffRequest(
     val signedPayload: String
 )

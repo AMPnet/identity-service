@@ -1,5 +1,15 @@
 package com.ampnet.identityservice.service.impl
 
+import com.ampnet.identityservice.config.ApplicationProperties
+import com.ampnet.identityservice.exception.ErrorCode
+import com.ampnet.identityservice.exception.ResourceNotFoundException
+import com.ampnet.identityservice.persistence.model.VeriffSession
+import com.ampnet.identityservice.persistence.repository.VeriffDecisionRepository
+import com.ampnet.identityservice.persistence.repository.VeriffSessionRepository
+import com.ampnet.identityservice.service.UserService
+import com.ampnet.identityservice.service.VeriffService
+import com.ampnet.identityservice.service.pojo.ServiceVerificationResponse
+import com.ampnet.identityservice.service.pojo.VeriffSessionRequest
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -22,7 +32,6 @@ import java.util.UUID
 class VeriffServiceImpl(
     private val veriffSessionRepository: VeriffSessionRepository,
     private val veriffDecisionRepository: VeriffDecisionRepository,
-    private val userInfoRepository: UserInfoRepository,
     private val applicationProperties: ApplicationProperties,
     private val userService: UserService,
     private val restTemplate: RestTemplate,
@@ -42,18 +51,18 @@ class VeriffServiceImpl(
      * For more info see: <a href="https://developers.veriff.com/#session-status-diagram">Veriff diagram</a>
      * If the session is older than 7 days, create new session.
      *
-     * @param userUuid UUID of the user who initiated Veriff session flow.
+     * @param address String of the user who initiated Veriff session flow.
      * @param baseUrl String of the url from which request came from.
      * @return ServiceVerificationResponse containing Veriff session verificationUrl and state as mandatory data,
      * `decision` is null until Veriff sends the data to webhook. Null response is returned if
      * the new Veriff session cannot be created.
-     * @throws ResourceNotFoundException if the user is missing.
+     * @throws ResourceNotFoundException if the address is missing.
      */
     @Transactional
     @Throws(ResourceNotFoundException::class)
-    override fun getVeriffSession(userUuid: UUID, baseUrl: String): ServiceVerificationResponse? {
-        logger.debug { "Get Veriff session for user: $userUuid" }
-        val session = veriffSessionRepository.findByUserUuidOrderByCreatedAtDesc(userUuid).firstOrNull()
+    override fun getVeriffSession(address: String, baseUrl: String): ServiceVerificationResponse? {
+        logger.debug { "Get Veriff session for address: $address" }
+        val session = veriffSessionRepository.findByUserAddressOrderByCreatedAtDesc(address).firstOrNull()
             ?: return createVeriffSession(userUuid, baseUrl)?.let { newSession ->
                 ServiceVerificationResponse(newSession.url, newSession.state)
             }
@@ -146,11 +155,11 @@ class VeriffServiceImpl(
             throw VeriffException("Could not map Veriff response", ex)
         }
 
-    private fun createVeriffSession(userUuid: UUID, baseUrl: String): VeriffSession? {
-        logger.debug { "Creating Veriff session for user: $userUuid" }
-        val user = userService.find(userUuid)
-            ?: throw ResourceNotFoundException(ErrorCode.USER_JWT_MISSING, "Missing user: $userUuid")
-        val callback = if (baseUrl.startsWith("https:")) "$baseUrl/${user.coop}" else ""
+    private fun createVeriffSession(address: String, baseUrl: String): VeriffSession? {
+        logger.debug { "Creating Veriff session for address: $address" }
+        val user = userService.find(address)
+            ?: throw ResourceNotFoundException(ErrorCode.USER_JWT_MISSING, "Missing user with address: $address")
+        val callback = if (baseUrl.startsWith("https:")) baseUrl else ""
         logger.debug { "Callback url for Veriff: $callback. Base url: $baseUrl" }
         val request = objectMapper.writeValueAsString(VeriffSessionRequest(user, callback))
         val signature = generateSignature(request)
