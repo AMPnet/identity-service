@@ -12,6 +12,7 @@ import com.ampnet.identityservice.service.TokenService
 import com.ampnet.identityservice.service.pojo.AccessAndRefreshToken
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.security.SecureRandom
 import java.time.ZonedDateTime
 
 @Service
@@ -74,7 +75,7 @@ class TokenServiceImpl(
     override fun deleteRefreshToken(address: String) = refreshTokenRepository.deleteByUserAddress(address)
 
     private fun getRandomToken(): String = (1..REFRESH_TOKEN_LENGTH)
-        .map { kotlin.random.Random.nextInt(0, charPool.size) }
+        .map { SecureRandom().nextInt(charPool.size) }
         .map(charPool::get)
         .joinToString("")
 }
