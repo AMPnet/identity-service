@@ -13,7 +13,6 @@ import com.ampnet.identityservice.persistence.model.VeriffSessionState
 import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.VeriffDecisionRepository
 import com.ampnet.identityservice.persistence.repository.VeriffSessionRepository
-import com.ampnet.identityservice.service.ServiceUtils
 import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.VeriffService
 import com.ampnet.identityservice.service.pojo.ServiceVerificationResponse
@@ -26,6 +25,7 @@ import com.ampnet.identityservice.service.pojo.VeriffSessionRequest
 import com.ampnet.identityservice.service.pojo.VeriffSessionResponse
 import com.ampnet.identityservice.service.pojo.VeriffStatus
 import com.ampnet.identityservice.service.pojo.VeriffVerification
+import com.ampnet.identityservice.service.unwrap
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -42,6 +42,8 @@ import org.springframework.web.client.postForEntity
 import java.net.URI
 import java.security.MessageDigest
 import java.time.ZonedDateTime
+
+private const val VERIFF_SESSION_DURATION_IN_DAYS = 7L
 
 @Service
 @Suppress("TooManyFunctions", "ReturnCount")
@@ -85,15 +87,14 @@ class VeriffServiceImpl(
             }
         logger.debug { "User has pending Veriff session" }
 
-        @Suppress("MagicNumber")
-        if (session.createdAt.isBefore(ZonedDateTime.now().minusDays(7))) {
+        if (session.createdAt.isBefore(ZonedDateTime.now().minusDays(VERIFF_SESSION_DURATION_IN_DAYS))) {
             logger.warn { "Veriff session expired" }
             createVeriffSession(address, baseUrl)?.let { newSession ->
                 return ServiceVerificationResponse(newSession.url, newSession.state)
             }
         }
 
-        val decision = ServiceUtils.wrapOptional(veriffDecisionRepository.findById(session.id))
+        val decision = veriffDecisionRepository.findById(session.id).unwrap()
             ?: return ServiceVerificationResponse(session.url, session.state)
         logger.debug { "User session: ${session.id} has decision: ${decision.status.name}" }
 
@@ -129,7 +130,7 @@ class VeriffServiceImpl(
     override fun handleEvent(data: String): VeriffSession? {
         try {
             val event: VeriffEvent = objectMapper.readValue(data)
-            val veriffSession = ServiceUtils.wrapOptional(veriffSessionRepository.findById(event.id))
+            val veriffSession = veriffSessionRepository.findById(event.id).unwrap()
             return if (veriffSession == null) {
                 logger.info { "Missing veriff session for event: $event" }
                 null
@@ -248,7 +249,7 @@ class VeriffServiceImpl(
         vendorData?.let {
             try {
                 userService.connectUserInfo(it, userInfo.sessionId)
-                ServiceUtils.wrapOptional(veriffSessionRepository.findById(userInfo.sessionId))?.let { session ->
+                veriffSessionRepository.findById(userInfo.sessionId).unwrap()?.let { session ->
                     session.connected = true
                 }
             } catch (ex: IllegalArgumentException) {

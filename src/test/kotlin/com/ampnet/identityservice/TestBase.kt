@@ -13,5 +13,5 @@ abstract class TestBase {
         function.invoke()
     }
 
-    protected fun getResourceAsText(path: String) = object {}.javaClass.getResource(path).readText()
+    protected fun getResourceAsText(path: String) = this.javaClass.getResource(path).readText()
 }

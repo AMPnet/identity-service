@@ -23,6 +23,7 @@ class VeriffController(
 
     companion object : KLogging()
 
+    @Suppress("ReturnCount")
     @PostMapping("/veriff/session")
     fun getVeriffSession(
         @RequestBody request: VeriffRequest,
