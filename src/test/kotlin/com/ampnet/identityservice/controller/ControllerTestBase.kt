@@ -65,7 +65,7 @@ abstract class ControllerTestBase : TestBase() {
     protected lateinit var veriffDecisionRepository: VeriffDecisionRepository
 
     @Autowired
-    private lateinit var userRepository: UserRepository
+    protected lateinit var userRepository: UserRepository
 
     protected lateinit var mockMvc: MockMvc
 

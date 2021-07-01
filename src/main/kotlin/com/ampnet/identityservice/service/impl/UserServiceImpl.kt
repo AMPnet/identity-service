@@ -34,6 +34,11 @@ class UserServiceImpl(
         return user
     }
 
+    @Transactional
+    override fun updateEmail(email: String, address: String) {
+        getUser(address).apply { this.email = email }
+    }
+
     private fun disconnectUserInfo(user: User) {
         user.userInfoUuid?.let {
             userInfoRepository.findById(it).ifPresent { userInfo ->
