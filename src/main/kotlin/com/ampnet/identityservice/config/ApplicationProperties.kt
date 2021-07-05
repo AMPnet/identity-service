@@ -6,7 +6,8 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @ConfigurationProperties(prefix = "com.ampnet.identityservice")
 class ApplicationProperties {
-    val jwt: JwtProperties = JwtProperties()
+    val jwt = JwtProperties()
+    val veriff = VeriffProperties()
 }
 
 @Suppress("MagicNumber")
@@ -18,4 +19,10 @@ class JwtProperties {
 
     fun accessTokenValidityInMilliseconds(): Long = accessTokenValidityInMinutes * 60 * 1000
     fun refreshTokenValidityInMilliseconds(): Long = refreshTokenValidityInMinutes * 60 * 1000
+}
+
+class VeriffProperties {
+    lateinit var apiKey: String
+    lateinit var privateKey: String
+    var baseUrl: String = "https://stationapi.veriff.com"
 }

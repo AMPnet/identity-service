@@ -22,7 +22,6 @@ class VerificationServiceImpl : VerificationService {
     private val userPayload = mutableMapOf<String, String>()
 
     override fun generatePayload(address: String): String {
-        // TODO generates a negative number, find a function in kethereum
         val nonce = SecureRandom().nextLong().toString()
         userPayload[address] = nonce
         return nonce
