@@ -97,7 +97,7 @@ abstract class ControllerTestBase : TestBase() {
     protected fun createUser(
         address: String = ADDRESS.toString(),
     ): User {
-        val user = User(address, "email", null, ZonedDateTime.now(), null)
+        val user = User(address, "email@email", null, ZonedDateTime.now(), null)
         return userRepository.save(user)
     }
 }
