@@ -15,7 +15,6 @@ import java.security.SignatureException
 import kotlin.jvm.Throws
 
 @Service
-@Suppress("MagicNumber")
 class VerificationServiceImpl : VerificationService {
 
     companion object : KLogging()
@@ -37,8 +36,8 @@ class VerificationServiceImpl : VerificationService {
             )
         userPayload.remove(address)
         try {
-            val key = signedMessageToKey(payload.toByteArray(), getSignatureData(signedPayload))
-            return address == key.toAddress().toString()
+            val publicKey = signedMessageToKey(payload.toByteArray(), getSignatureData(signedPayload))
+            return address == publicKey.toAddress().toString()
         } catch (ex: SignatureException) {
             throw InvalidRequestException(
                 ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID, "Public key cannot be recovered from the signature", ex
@@ -50,6 +49,7 @@ class VerificationServiceImpl : VerificationService {
      ECDSA signatures consist of two numbers(integers): r and s.
      Ethereum uses an additional v(recovery identifier) variable. The signature can be notated as {r, s, v}.
      */
+    @Suppress("MagicNumber")
     private fun getSignatureData(signedPayload: String): SignatureData {
         if (signedPayload.length != 132)
             throw InvalidRequestException(

@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice
-@Suppress("TooManyFunctions")
 class GlobalExceptionHandler {
 
     companion object : KLogging()
