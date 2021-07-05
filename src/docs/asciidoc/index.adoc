@@ -20,7 +20,7 @@ include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayload/http-requ
 .Response
 include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayload/http-response.adoc[]
 
-=== Get jwt
+=== Get JWT
 To get JWT the user must sign the payload received from `POST /authorize` route using his private key.
 
 .Request
