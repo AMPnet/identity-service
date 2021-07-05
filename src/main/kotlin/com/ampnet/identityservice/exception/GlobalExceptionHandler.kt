@@ -26,6 +26,13 @@ class GlobalExceptionHandler {
         return generateErrorResponse(exception.errorCode, exception.message)
     }
 
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(InternalException::class)
+    fun handleInternalExceptions(exception: InternalException): ErrorResponse {
+        logger.error("InternalException", exception)
+        return generateErrorResponse(exception.errorCode, exception.message)
+    }
+
     private fun generateErrorResponse(
         errorCode: ErrorCode,
         systemMessage: String?,

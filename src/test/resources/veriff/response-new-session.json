@@ -1,0 +1,11 @@
+{
+  "status": "success",
+  "verification": {
+    "id": "47679394-b37d-4932-86e6-d751f45ae546",
+    "url": "https://alchemy.veriff.com/v/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.new-url",
+    "vendorData": "5ad36a1b-1c9e-4bf9-a88f-3c7fe68bdcf5",
+    "host": "https://alchemy.veriff.com",
+    "status": "created",
+    "sessionToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzZXNzaW9"
+  }
+}
