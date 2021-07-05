@@ -9,3 +9,67 @@ Version {version}, {date}
 
 == Introduction
 This document contains generated documentation for `AMPnet identity service`.
+
+== Authorization API
+
+=== Get payload
+Used to retrieve a unique nonce associated with user address.
+
+.Request
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayload/http-request.adoc[]
+.Response
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayload/http-response.adoc[]
+
+=== Get JWT
+To get JWT the user must sign the payload received from `POST /authorize` route using his private key.
+
+.Request
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwt/http-request.adoc[]
+.Response
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwt/http-response.adoc[]
+
+=== Refresh token
+.Request
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetAccessTokenWithRefreshToken/http-request.adoc[]
+.Response
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetAccessTokenWithRefreshToken/http-response.adoc[]
+
+== KYC API
+For KYC procedure the system supports Veriff provider.
+
+=== Get Veriff session
+Get Veriff session.
+For code explanation on `decision` response, see: https://developers.veriff.com/#response-and-error-codes
+Request requires header: `Authorization: Bearer JWT`.
+
+.Request
+include::{snippets}/VeriffControllerTest/mustReturnVeriffSession/http-request.adoc[]
+.Response
+include::{snippets}/VeriffControllerTest/mustReturnVeriffSession/http-response.adoc[]
+
+=== Handle Veriff session
+.Request
+include::{snippets}/VeriffControllerTest/mustStoreUserInfoFromVeriff/http-request.adoc[]
+.Response
+include::{snippets}/VeriffControllerTest/mustStoreUserInfoFromVeriff/http-response.adoc[]
+
+=== Handle Veriff event
+.Request
+include::{snippets}/VeriffControllerTest/mustHandleVeriffWebhookEvent/http-request.adoc[]
+.Response
+include::{snippets}/VeriffControllerTest/mustHandleVeriffWebhookEvent/http-response.adoc[]
+
+== User API
+All requests need header: `Authorization: Bearer JWT`.
+
+=== Update user email
+.Request
+include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-request.adoc[]
+.Response
+include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-response.adoc[]
+
+=== Get user data
+.Request
+include::{snippets}/UserControllerTest/mustBeAbleToGetUser/http-request.adoc[]
+.Response
+include::{snippets}/UserControllerTest/mustBeAbleToGetUser/http-response.adoc[]

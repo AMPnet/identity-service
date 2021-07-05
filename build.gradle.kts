@@ -17,9 +17,8 @@ plugins {
     idea
     jacoco
 }
-
 group = "com.ampnet"
-version = "0.0.1-SNAPSHOT"
+version = "0.0.2"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
@@ -32,6 +31,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-security")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -40,8 +40,12 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     implementation("io.github.microutils:kotlin-logging:2.0.5")
+    implementation("com.github.AMPnet:jwt:1.0.1")
+
+    implementation("com.github.komputing:kethereum:0.84.1")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
 }
 
