@@ -20,7 +20,6 @@ class VeriffController(
 
     companion object : KLogging()
 
-    @Suppress("ReturnCount")
     @PostMapping("/veriff/session")
     fun getVeriffSession(servlet: HttpServletRequest): ResponseEntity<ServiceVerificationResponse> {
         val address = ControllerUtils.getAddressFromSecurityContext()
