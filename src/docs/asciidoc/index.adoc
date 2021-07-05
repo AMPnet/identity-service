@@ -20,8 +20,8 @@ include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayload/http-requ
 .Response
 include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayload/http-response.adoc[]
 
-=== Authorize jwt
-When user signs payload received from `POST /authorize` route correctly with his private key he is authorized and receives jwt.
+=== Get JWT
+To get JWT the user must sign the payload received from `POST /authorize` route using his private key.
 
 .Request
 include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwt/http-request.adoc[]
