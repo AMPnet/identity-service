@@ -19,7 +19,8 @@ class UserServiceImpl(
     companion object : KLogging()
 
     @Transactional(readOnly = true)
-    override fun find(address: String): User? = userRepository.findByAddress(address)
+    override fun getUser(address: String): User = userRepository.findByAddress(address)
+        ?: throw ResourceNotFoundException(ErrorCode.USER_JWT_MISSING, "Missing user with address: $address")
 
     @Transactional
     @Throws(ResourceNotFoundException::class)
@@ -34,6 +35,9 @@ class UserServiceImpl(
         return user
     }
 
+    @Transactional
+    override fun updateEmail(email: String, address: String): User = getUser(address).apply { this.email = email }
+
     private fun disconnectUserInfo(user: User) {
         user.userInfoUuid?.let {
             userInfoRepository.findById(it).ifPresent { userInfo ->
@@ -43,7 +47,4 @@ class UserServiceImpl(
             }
         }
     }
-
-    private fun getUser(address: String): User = find(address)
-        ?: throw ResourceNotFoundException(ErrorCode.USER_JWT_MISSING, "Missing user with address: $address")
 }

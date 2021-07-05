@@ -40,6 +40,7 @@ For KYC procedure the system supports Veriff provider.
 === Get Veriff session
 Get Veriff session.
 For code explanation on `decision` response, see: https://developers.veriff.com/#response-and-error-codes
+Request requires header: `Authorization: Bearer JWT`.
 
 .Request
 include::{snippets}/VeriffControllerTest/mustReturnVeriffSession/http-request.adoc[]
@@ -57,3 +58,18 @@ include::{snippets}/VeriffControllerTest/mustStoreUserInfoFromVeriff/http-respon
 include::{snippets}/VeriffControllerTest/mustHandleVeriffWebhookEvent/http-request.adoc[]
 .Response
 include::{snippets}/VeriffControllerTest/mustHandleVeriffWebhookEvent/http-response.adoc[]
+
+== User API
+All requests need header: `Authorization: Bearer JWT`.
+
+=== Update user email
+.Request
+include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-request.adoc[]
+.Response
+include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-response.adoc[]
+
+=== Get user data
+.Request
+include::{snippets}/UserControllerTest/mustBeAbleToGetUser/http-request.adoc[]
+.Response
+include::{snippets}/UserControllerTest/mustBeAbleToGetUser/http-response.adoc[]

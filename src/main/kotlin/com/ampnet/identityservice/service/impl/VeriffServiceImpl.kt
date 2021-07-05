@@ -1,7 +1,6 @@
 package com.ampnet.identityservice.service.impl
 
 import com.ampnet.identityservice.config.ApplicationProperties
-import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.ResourceNotFoundException
 import com.ampnet.identityservice.exception.VeriffException
 import com.ampnet.identityservice.exception.VeriffReasonCode
@@ -164,8 +163,7 @@ class VeriffServiceImpl(
 
     private fun createVeriffSession(address: String, baseUrl: String): VeriffSession? {
         logger.debug { "Creating Veriff session for address: $address" }
-        val user = userService.find(address)
-            ?: throw ResourceNotFoundException(ErrorCode.USER_JWT_MISSING, "Missing user with address: $address")
+        val user = userService.getUser(address)
         val callback = if (baseUrl.startsWith("https:")) baseUrl else ""
         logger.debug { "Callback url for Veriff: $callback. Base url: $baseUrl" }
         val request = objectMapper.writeValueAsString(VeriffSessionRequest(user, callback))
