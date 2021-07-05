@@ -1,6 +1,5 @@
 package com.ampnet.identityservice.controller
 
-import com.ampnet.identityservice.controller.pojo.VeriffRequest
 import com.ampnet.identityservice.persistence.model.User
 import com.ampnet.identityservice.persistence.model.VeriffDecision
 import com.ampnet.identityservice.persistence.model.VeriffSession
@@ -12,10 +11,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.kethereum.crypto.signMessage
-import org.kethereum.crypto.test_data.ADDRESS
-import org.kethereum.crypto.test_data.KEY_PAIR
-import org.kethereum.crypto.toHex
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -26,6 +21,7 @@ import org.springframework.test.web.client.response.MockRestResponseCreators
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.security.MessageDigest
 import java.time.ZonedDateTime
 
 class VeriffControllerTest : ControllerTestBase() {
@@ -46,10 +42,6 @@ class VeriffControllerTest : ControllerTestBase() {
     @Test
     @WithMockCrowdFundUser
     fun mustReturnVeriffSession() {
-        suppose("User signs the payload") {
-            val payload = verificationService.generatePayload(ADDRESS.toString())
-            testContext.signedPayload = "0x" + KEY_PAIR.signMessage(payload.toByteArray()).toHex()
-        }
         suppose("User has an account") {
             databaseCleanerService.deleteAllUsers()
             databaseCleanerService.deleteAllUserInfos()
@@ -88,11 +80,9 @@ class VeriffControllerTest : ControllerTestBase() {
         }
 
         verify("Controller will return new veriff session") {
-            val request = objectMapper.writeValueAsString(VeriffRequest(testContext.signedPayload))
             val result = mockMvc.perform(
                 post("/veriff/session")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(request)
             )
                 .andExpect(status().isOk)
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -109,7 +99,7 @@ class VeriffControllerTest : ControllerTestBase() {
         suppose("User has no user info") {
             databaseCleanerService.deleteAllUsers()
             databaseCleanerService.deleteAllUserInfos()
-            testContext.user = createUser("5750f893-29fa-4910-8304-62f834338f47")
+            testContext.user = createUser()
         }
 
         verify("Controller will accept valid data") {
@@ -119,7 +109,7 @@ class VeriffControllerTest : ControllerTestBase() {
                     .content(request)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(xClientHeader, applicationProperties.veriff.apiKey)
-                    .header(xSignature, "0b65acb46ddb2a881f5adf742c03b81290ec783db3ef425d13a2c2448f400f64")
+                    .header(xSignature, generateSignature(request))
             )
                 .andExpect(status().isOk)
         }
@@ -136,8 +126,7 @@ class VeriffControllerTest : ControllerTestBase() {
             databaseCleanerService.deleteAllUsers()
             databaseCleanerService.deleteAllUserInfos()
             databaseCleanerService.deleteAllVeriffSessions()
-            testContext.user =
-                createUser()
+            testContext.user = createUser()
         }
         suppose("User has veriff session") {
             val veriffSession = VeriffSession(
@@ -161,7 +150,7 @@ class VeriffControllerTest : ControllerTestBase() {
                     .content(request)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(xClientHeader, applicationProperties.veriff.apiKey)
-                    .header(xSignature, "bf3da6e9aa47e6be208fec283097a5bcbdb2066dcb58f0d7c9879637700f013f")
+                    .header(xSignature, generateSignature(request))
             )
                 .andExpect(status().isOk)
         }
@@ -240,6 +229,24 @@ class VeriffControllerTest : ControllerTestBase() {
         )
             .andExpect(MockRestRequestMatchers.method(method))
             .andRespond(status.body(body).contentType(MediaType.APPLICATION_JSON))
+    }
+
+    private fun generateSignature(payload: String): String {
+        val request = payload + applicationProperties.veriff.privateKey
+        val hash = MessageDigest.getInstance("SHA-256").digest(request.toByteArray())
+        return bytesToHex(hash)
+    }
+
+    private fun bytesToHex(hash: ByteArray): String {
+        val hexString = StringBuilder(2 * hash.size)
+        for (i in hash.indices) {
+            val hex = Integer.toHexString(0xff and hash[i].toInt())
+            if (hex.length == 1) {
+                hexString.append('0')
+            }
+            hexString.append(hex)
+        }
+        return hexString.toString()
     }
 
     private class TestContext {

@@ -27,6 +27,7 @@ import org.springframework.test.web.client.MockRestServiceServer
 import org.springframework.test.web.client.match.MockRestRequestMatchers
 import org.springframework.test.web.client.response.MockRestResponseCreators
 import java.time.ZonedDateTime
+import java.util.Locale
 
 class VeriffServiceTest : JpaServiceTestBase() {
 
@@ -309,7 +310,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
             val response = veriffService.getVeriffSession(testContext.user.address, baseUrl)
                 ?: fail("Service didn't return session")
             assertThat(response.verificationUrl).isNotEqualTo(testContext.veriffSession.url)
-            assertThat(response.state).isEqualTo(VeriffSessionState.CREATED.name.toLowerCase())
+            assertThat(response.state).isEqualTo(VeriffSessionState.CREATED.name.lowercase(Locale.getDefault()))
             assertThat(response.decision).isNull()
         }
         verify("New veriff session is created") {
@@ -436,7 +437,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
     @Test
     fun mustVerifyUserForValidVendorData() {
         suppose("There is unverified user") {
-            testContext.user = createUser("5750f893-29fa-4910-8304-62f834338f47")
+            testContext.user = createUser()
         }
 
         verify("Service will store valid user data") {

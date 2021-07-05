@@ -107,6 +107,8 @@ class VeriffServiceImpl(
         }
     }
 
+    @Throws(VeriffException::class)
+    @Transactional
     override fun handleDecision(data: String): UserInfo? {
         val response = mapVeriffResponse(data)
         val verification = response.verification
