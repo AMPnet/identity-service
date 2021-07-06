@@ -8,6 +8,7 @@ import com.ampnet.identityservice.controller.pojo.response.AccessRefreshTokenRes
 import com.ampnet.identityservice.controller.pojo.response.PayloadResponse
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.persistence.model.RefreshToken
+import com.ampnet.identityservice.persistence.model.User
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -34,7 +35,6 @@ class AuthorizationControllerTest : ControllerTestBase() {
     fun init() {
         testContext = TestContext()
         databaseCleanerService.deleteAllRefreshTokens()
-        databaseCleanerService.deleteAllUsers()
     }
 
     @Test
@@ -56,6 +56,7 @@ class AuthorizationControllerTest : ControllerTestBase() {
 
     @Test
     fun mustBeAbleToAuthorizeJwt() {
+        databaseCleanerService.deleteAllUsers()
         suppose("Client signs the payload") {
             val payload = verificationService.generatePayload(ADDRESS.toString())
             testContext.signedPayload = "0x" + KEY_PAIR.signMessage(payload.toByteArray()).toHex()
@@ -77,6 +78,36 @@ class AuthorizationControllerTest : ControllerTestBase() {
         verify("User is created") {
             val user = userRepository.findByAddress(ADDRESS.toString())
             assertThat(user).isNotNull
+        }
+    }
+
+    @Test
+    fun mustBeAbleToAuthorizeJwtAndSkipUpdatingExistingUser() {
+        suppose("There is a user") {
+            testContext.user = createUser()
+        }
+        suppose("Client signs the payload") {
+            val payload = verificationService.generatePayload(ADDRESS.toString())
+            testContext.signedPayload = "0x" + KEY_PAIR.signMessage(payload.toByteArray()).toHex()
+        }
+
+        verify("Client is authorized and gets jwt") {
+            val request = AuthorizationRequest(ADDRESS.toString(), testContext.signedPayload)
+            val result = mockMvc.perform(
+                post(authorizeJwtPath)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+            )
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn()
+            val response: AccessRefreshTokenResponse = objectMapper.readValue(result.response.contentAsString)
+            verifyAccessRefreshTokenResponse(response)
+        }
+        verify("User is not updated in the database") {
+            val user = userRepository.findByAddress(ADDRESS.toString())
+            assertThat(user?.address).isEqualTo(testContext.user.address)
+            assertThat(user?.email).isEqualTo(testContext.user.email)
         }
     }
 
@@ -165,5 +196,6 @@ class AuthorizationControllerTest : ControllerTestBase() {
     private class TestContext {
         lateinit var signedPayload: String
         lateinit var refreshToken: RefreshToken
+        lateinit var user: User
     }
 }

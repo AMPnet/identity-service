@@ -39,12 +39,13 @@ class UserServiceImpl(
     override fun updateEmail(email: String, address: String): User = getUser(address).apply { this.email = email }
 
     @Transactional
-    override fun createUser(address: String) {
+    override fun createUser(address: String): User? {
         val user = userRepository.findByAddress(address)
         if (user == null) {
             logger.info { "User is created for address: $address" }
-            userRepository.save(User(address))
+            return userRepository.save(User(address))
         }
+        return null
     }
 
     private fun disconnectUserInfo(user: User) {
