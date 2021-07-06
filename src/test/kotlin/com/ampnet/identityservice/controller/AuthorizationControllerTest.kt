@@ -34,6 +34,7 @@ class AuthorizationControllerTest : ControllerTestBase() {
     fun init() {
         testContext = TestContext()
         databaseCleanerService.deleteAllRefreshTokens()
+        databaseCleanerService.deleteAllUsers()
     }
 
     @Test
@@ -72,6 +73,10 @@ class AuthorizationControllerTest : ControllerTestBase() {
                 .andReturn()
             val response: AccessRefreshTokenResponse = objectMapper.readValue(result.response.contentAsString)
             verifyAccessRefreshTokenResponse(response)
+        }
+        verify("User is created") {
+            val user = userRepository.findByAddress(ADDRESS.toString())
+            assertThat(user).isNotNull
         }
     }
 

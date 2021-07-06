@@ -6,4 +6,5 @@ interface UserService {
     fun getUser(address: String): User
     fun connectUserInfo(userAddress: String, sessionId: String): User
     fun updateEmail(email: String, address: String): User
+    fun createUser(address: String)
 }

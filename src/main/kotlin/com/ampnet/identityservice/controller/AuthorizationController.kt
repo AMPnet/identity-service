@@ -6,6 +6,7 @@ import com.ampnet.identityservice.controller.pojo.request.RefreshTokenRequest
 import com.ampnet.identityservice.controller.pojo.response.AccessRefreshTokenResponse
 import com.ampnet.identityservice.controller.pojo.response.PayloadResponse
 import com.ampnet.identityservice.service.TokenService
+import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.VerificationService
 import mu.KLogging
 import org.springframework.http.ResponseEntity
@@ -16,7 +17,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class AuthorizationController(
     private val verificationService: VerificationService,
-    private val tokenService: TokenService
+    private val tokenService: TokenService,
+    private val userService: UserService
 ) {
 
     companion object : KLogging()
@@ -35,6 +37,7 @@ class AuthorizationController(
         if (payloadValid.not()) return ResponseEntity.badRequest().build()
         val accessAndRefreshToken = tokenService.generateAccessAndRefreshForUser(request.address)
         logger.debug { "User address: ${request.address} successfully authorized." }
+        userService.createUser(request.address)
         return ResponseEntity.ok(AccessRefreshTokenResponse(accessAndRefreshToken))
     }
 
