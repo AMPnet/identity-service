@@ -55,8 +55,10 @@ class AuthorizationControllerTest : ControllerTestBase() {
     }
 
     @Test
-    fun mustBeAbleToAuthorizeJwt() {
-        databaseCleanerService.deleteAllUsers()
+    fun mustBeAbleToAuthorizeJwtForNewUser() {
+        suppose("There are no users in database") {
+            databaseCleanerService.deleteAllUsers()
+        }
         suppose("Client signs the payload") {
             val payload = verificationService.generatePayload(ADDRESS.toString())
             testContext.signedPayload = "0x" + KEY_PAIR.signMessage(payload.toByteArray()).toHex()
@@ -82,8 +84,9 @@ class AuthorizationControllerTest : ControllerTestBase() {
     }
 
     @Test
-    fun mustBeAbleToAuthorizeJwtAndSkipUpdatingExistingUser() {
+    fun mustBeAbleToAuthorizeJwtForExistingUser() {
         suppose("There is a user") {
+            databaseCleanerService.deleteAllUsers()
             testContext.user = createUser()
         }
         suppose("Client signs the payload") {
@@ -104,10 +107,8 @@ class AuthorizationControllerTest : ControllerTestBase() {
             val response: AccessRefreshTokenResponse = objectMapper.readValue(result.response.contentAsString)
             verifyAccessRefreshTokenResponse(response)
         }
-        verify("User is not updated in the database") {
-            val user = userRepository.findByAddress(ADDRESS.toString())
-            assertThat(user?.address).isEqualTo(testContext.user.address)
-            assertThat(user?.email).isEqualTo(testContext.user.email)
+        verify("New user is not created in database") {
+            assertThat(userRepository.count()).isEqualTo(1)
         }
     }
 
