@@ -1,14 +1,20 @@
 package com.ampnet.identityservice.service.impl
 
+import com.ampnet.identityservice.controller.pojo.request.KycTestRequest
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.ResourceNotFoundException
+import com.ampnet.identityservice.persistence.model.Document
 import com.ampnet.identityservice.persistence.model.User
+import com.ampnet.identityservice.persistence.model.UserInfo
 import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
 import com.ampnet.identityservice.service.UserService
+import com.ampnet.identityservice.service.pojo.UserWithInfo
 import mu.KLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.ZonedDateTime
+import java.util.UUID
 
 @Service
 class UserServiceImpl(
@@ -44,6 +50,19 @@ class UserServiceImpl(
             logger.info { "User is created for address: $address" }
             userRepository.save(User(address))
         }
+
+    @Transactional
+    override fun verifyUserWithUserInfo(request: KycTestRequest): UserWithInfo {
+        val user = getUser(request.address)
+        val userInfo = com.ampnet.identityservice.persistence.model.UserInfo(
+            UUID.randomUUID(), "44927492-8799-406e-8076-933bc9164ebc",
+            request.firstName, request.lastName, null, null,
+            Document(null, null, null, null, null),
+            null, null, ZonedDateTime.now(), true, false
+        )
+        user.userInfoUuid = userInfo.uuid
+        return UserWithInfo(user, userInfo)
+    }
 
     private fun disconnectUserInfo(user: User) {
         user.userInfoUuid?.let {
