@@ -9,5 +9,5 @@ interface UserService {
     fun connectUserInfo(userAddress: String, sessionId: String): User
     fun updateEmail(email: String, address: String): User
     fun createUser(address: String): User
-    fun verifyUserWithUserInfo(request: KycTestRequest): UserWithInfo
+    fun verifyUserWithTestData(request: KycTestRequest): UserWithInfo
 }

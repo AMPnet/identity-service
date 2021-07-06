@@ -52,14 +52,15 @@ class UserServiceImpl(
         }
 
     @Transactional
-    override fun verifyUserWithUserInfo(request: KycTestRequest): UserWithInfo {
+    override fun verifyUserWithTestData(request: KycTestRequest): UserWithInfo {
         val user = getUser(request.address)
-        val userInfo = com.ampnet.identityservice.persistence.model.UserInfo(
+        val userInfo = UserInfo(
             UUID.randomUUID(), "44927492-8799-406e-8076-933bc9164ebc",
             request.firstName, request.lastName, null, null,
-            Document(null, null, null, null, null),
+            Document("DRIVERS_LICENSE", "GB", "MORGA753116SM9IJ", "2022-04-20", null),
             null, null, ZonedDateTime.now(), true, false
         )
+        userInfoRepository.save(userInfo)
         user.userInfoUuid = userInfo.uuid
         return UserWithInfo(user, userInfo)
     }
