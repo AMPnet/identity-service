@@ -22,6 +22,7 @@ include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayload/http-resp
 
 === Get JWT
 To get JWT the user must sign the payload received from `POST /authorize` route using his private key.
+User is created in the database on his first login.
 
 .Request
 include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwt/http-request.adoc[]

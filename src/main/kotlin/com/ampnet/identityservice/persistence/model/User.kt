@@ -24,4 +24,6 @@ class User(
 
     @Column
     var language: String?
-)
+) {
+    constructor(address: String) : this (address, null, null, ZonedDateTime.now(), null)
+}
