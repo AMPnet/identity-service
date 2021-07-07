@@ -74,3 +74,15 @@ include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-response.ado
 include::{snippets}/UserControllerTest/mustBeAbleToGetUser/http-request.adoc[]
 .Response
 include::{snippets}/UserControllerTest/mustBeAbleToGetUser/http-response.adoc[]
+
+== Test API
+
+=== Verify User with Test Data
+Request needs header: `Authorization: Bearer JWT`.
+
+=== Verify user
+.Request
+include::{snippets}/TestKycControllerTest/mustBeAbleToVerifyUserWithTestData/http-request.adoc[]
+.Response
+include::{snippets}/TestKycControllerTest/mustBeAbleToVerifyUserWithTestData/http-response.adoc[]
+

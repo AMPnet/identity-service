@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration
 class ApplicationProperties {
     val jwt = JwtProperties()
     val veriff = VeriffProperties()
+    val test = TestProperties()
 }
 
 @Suppress("MagicNumber")
@@ -25,4 +26,8 @@ class VeriffProperties {
     lateinit var apiKey: String
     lateinit var privateKey: String
     var baseUrl: String = "https://stationapi.veriff.com"
+}
+
+class TestProperties {
+    var enabledTestKyc: Boolean = true
 }
