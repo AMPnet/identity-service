@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration
 class ApplicationProperties {
     val jwt = JwtProperties()
     val veriff = VeriffProperties()
+    val provider = ProviderProperties()
     val test = TestProperties()
 }
 
@@ -30,4 +31,8 @@ class VeriffProperties {
 
 class TestProperties {
     var enabledTestKyc: Boolean = true
+}
+
+class ProviderProperties {
+    var blockchainApi = "https://eth-goerli.alchemyapi.io/v2/Geqo-GtNKkGpfFbcCR2-67gPzI7wpTRd"
 }

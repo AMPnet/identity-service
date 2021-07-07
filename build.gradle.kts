@@ -14,6 +14,7 @@ plugins {
     id("org.asciidoctor.jvm.convert") version "3.3.2"
     id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
     id("io.gitlab.arturbosch.detekt").version("1.16.0")
+    id("org.web3j").version("4.8.4")
     idea
     jacoco
 }
@@ -43,6 +44,8 @@ dependencies {
     implementation("com.github.AMPnet:jwt:1.0.1")
 
     implementation("com.github.komputing:kethereum:0.84.1")
+    implementation("org.web3j:core:4.8.4")
+    implementation("com.squareup.okhttp3:okhttp:4.9.1")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
@@ -128,4 +131,20 @@ tasks.register<Copy>("copyDocs") {
     from(file("$buildDir/asciidoc/html5"))
     into(file("src/main/resources/static/docs"))
     dependsOn(tasks.asciidoctor)
+}
+
+node {
+    nodeProjectDir.set(file("node/"))
+}
+
+solidity {
+    version = "0.8.0"
+}
+
+web3j {
+    generatedPackageName = "com.ampnet.identityservice.contract"
+}
+
+sourceSets.main {
+    java.srcDirs("$buildDir/generated/sources/web3j/main/java")
 }
