@@ -6,6 +6,7 @@ import com.ampnet.identityservice.security.WithMockCrowdFundUser
 import com.ampnet.identityservice.service.pojo.UserWithInfo
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.kethereum.crypto.test_data.ADDRESS
@@ -49,13 +50,12 @@ class TestKycControllerTest : ControllerTestBase() {
         }
 
         verify("TestData is stored in the database") {
-            val userInfo = userInfoRepository.findByFirstNameAndLastName(
-                testContext.request.firstName, testContext.request.lastName
-            )
-            val user = userRepository.findByAddress(ADDRESS.toString())
+            val user = userRepository.findByAddress(ADDRESS.toString()) ?: fail("User not found")
+            val userInfoUuid = user.userInfoUuid ?: fail("User info uuid not set")
+            val userInfo = userInfoRepository.findById(userInfoUuid).get()
             assertThat(userInfo.firstName).isEqualTo(testContext.request.firstName)
             assertThat(userInfo.lastName).isEqualTo(testContext.request.lastName)
-            assertThat(user?.userInfoUuid).isEqualTo(userInfo.uuid)
+            assertThat(user.userInfoUuid).isEqualTo(userInfo.uuid)
         }
     }
 

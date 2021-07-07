@@ -6,5 +6,4 @@ import java.util.UUID
 
 interface UserInfoRepository : JpaRepository<UserInfo, UUID> {
     fun findBySessionIdOrderByCreatedAtDesc(sessionId: String): List<UserInfo>
-    fun findByFirstNameAndLastName(firstName: String, lastname: String): UserInfo
 }
