@@ -7,4 +7,5 @@ interface IIssuer {
     function info() external returns (string memory);
     function getAssets() external view returns (address[] memory);
     function getCfManagers() external view returns (address[] memory);
+    function approveWallet(address _wallet) external;
 }

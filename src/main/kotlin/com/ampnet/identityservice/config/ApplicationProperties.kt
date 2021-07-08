@@ -10,6 +10,7 @@ class ApplicationProperties {
     val veriff = VeriffProperties()
     val provider = ProviderProperties()
     val test = TestProperties()
+    val smartContract = SmartContractProperties()
 }
 
 @Suppress("MagicNumber")
@@ -34,5 +35,11 @@ class TestProperties {
 }
 
 class ProviderProperties {
-    var blockchainApi = "https://eth-goerli.alchemyapi.io/v2/Geqo-GtNKkGpfFbcCR2-67gPzI7wpTRd"
+    lateinit var blockchainApi: String
+}
+
+class SmartContractProperties {
+    lateinit var privateKey: String
+    lateinit var issuerContractAddress: String
+    lateinit var walletAddress: String
 }
