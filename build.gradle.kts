@@ -38,10 +38,10 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.flywaydb:flyway-core")
     runtimeOnly("org.postgresql:postgresql")
+    implementation("io.micrometer:micrometer-registry-prometheus")
 
     implementation("io.github.microutils:kotlin-logging:2.0.5")
     implementation("com.github.AMPnet:jwt:1.0.1")
-
     implementation("com.github.komputing:kethereum:0.84.1")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
