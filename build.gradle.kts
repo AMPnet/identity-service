@@ -125,7 +125,7 @@ tasks.asciidoctor {
 }
 
 tasks.register<Copy>("copyDocs") {
-    from(file("$buildDir/asciidoc/html5"))
+    from(file("$buildDir/docs/asciidoc"))
     into(file("src/main/resources/static/docs"))
     dependsOn(tasks.asciidoctor)
 }
