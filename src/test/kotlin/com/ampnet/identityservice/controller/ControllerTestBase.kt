@@ -6,11 +6,13 @@ import com.ampnet.identityservice.config.DatabaseCleanerService
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.ErrorResponse
 import com.ampnet.identityservice.persistence.model.User
+import com.ampnet.identityservice.persistence.repository.MailTokenRepository
 import com.ampnet.identityservice.persistence.repository.RefreshTokenRepository
 import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
 import com.ampnet.identityservice.persistence.repository.VeriffDecisionRepository
 import com.ampnet.identityservice.persistence.repository.VeriffSessionRepository
+import com.ampnet.identityservice.service.MailService
 import com.ampnet.identityservice.service.VerificationService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -19,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.kethereum.crypto.test_data.ADDRESS
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.restdocs.RestDocumentationContextProvider
 import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation
@@ -66,6 +69,12 @@ abstract class ControllerTestBase : TestBase() {
 
     @Autowired
     protected lateinit var userRepository: UserRepository
+
+    @Autowired
+    protected lateinit var mailTokenRepository: MailTokenRepository
+
+    @MockBean
+    protected lateinit var mailService: MailService
 
     protected lateinit var mockMvc: MockMvc
 

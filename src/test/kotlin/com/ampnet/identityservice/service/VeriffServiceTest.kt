@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.fail
+import org.mockito.kotlin.mock
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -35,7 +36,8 @@ class VeriffServiceTest : JpaServiceTestBase() {
     private val baseUrl = "http://localhost:8080"
 
     private val veriffService: VeriffServiceImpl by lazy {
-        val userService = UserServiceImpl(userRepository, userInfoRepository)
+        val mailService = mock<MailService>()
+        val userService = UserServiceImpl(userRepository, userInfoRepository, mailTokenRepository, mailService)
         VeriffServiceImpl(
             veriffSessionRepository, veriffDecisionRepository, userInfoRepository,
             applicationProperties, userService, restTemplate, camelCaseObjectMapper

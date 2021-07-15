@@ -2,12 +2,16 @@ package com.ampnet.identityservice.service.impl
 
 import com.ampnet.identityservice.controller.pojo.request.KycTestRequest
 import com.ampnet.identityservice.exception.ErrorCode
+import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.exception.ResourceNotFoundException
 import com.ampnet.identityservice.persistence.model.Document
+import com.ampnet.identityservice.persistence.model.MailToken
 import com.ampnet.identityservice.persistence.model.User
 import com.ampnet.identityservice.persistence.model.UserInfo
+import com.ampnet.identityservice.persistence.repository.MailTokenRepository
 import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
+import com.ampnet.identityservice.service.MailService
 import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.pojo.UserWithInfo
 import mu.KLogging
@@ -19,7 +23,9 @@ import java.util.UUID
 @Service
 class UserServiceImpl(
     private val userRepository: UserRepository,
-    private val userInfoRepository: UserInfoRepository
+    private val userInfoRepository: UserInfoRepository,
+    private val mailTokenRepository: MailTokenRepository,
+    private val mailService: MailService
 ) : UserService {
 
     companion object : KLogging()
@@ -42,14 +48,39 @@ class UserServiceImpl(
     }
 
     @Transactional
-    override fun updateEmail(email: String, address: String): User = getUser(address).apply { this.email = email }
-
-    @Transactional
     override fun createUser(address: String): User =
         userRepository.findByAddress(address) ?: kotlin.run {
             logger.info { "User is created for address: $address" }
             userRepository.save(User(address))
         }
+
+    @Transactional
+    override fun updateEmail(email: String, address: String): User {
+        val user = getUser(address)
+        val mailToken = MailToken(0, address, email, UUID.randomUUID(), ZonedDateTime.now())
+        mailTokenRepository.save(mailToken)
+        mailService.sendEmailConfirmation(email)
+        user.email = null
+        return user
+    }
+
+    @Transactional
+    override fun confirmMail(token: UUID): User? {
+        mailTokenRepository.findByToken(token)?.let { mailToken ->
+            if (mailToken.isExpired()) {
+                throw InvalidRequestException(
+                    ErrorCode.REG_EMAIL_EXPIRED_TOKEN,
+                    "User is trying to confirm mail with expired token: $token"
+                )
+            }
+            mailTokenRepository.delete(mailToken)
+            userRepository.findByAddress(mailToken.userAddress)?.let { user ->
+                user.email = mailToken.email
+                return user
+            }
+        }
+        return null
+    }
 
     @Transactional
     override fun verifyUserWithTestData(request: KycTestRequest): UserWithInfo {

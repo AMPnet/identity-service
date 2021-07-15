@@ -6,12 +6,17 @@ import com.ampnet.identityservice.service.UserService
 import mu.KLogging
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import java.util.UUID
 
 @RestController
-class UserController(private val userService: UserService) {
+class UserController(
+    private val userService: UserService
+) {
 
     companion object : KLogging()
 
@@ -30,4 +35,10 @@ class UserController(private val userService: UserService) {
         val user = userService.getUser(address)
         return ResponseEntity.ok(UserResponse(user))
     }
+
+    @PutMapping("/user/email/{token}")
+    fun confirmUserEmail(@PathVariable token: UUID): ResponseEntity<UserResponse> =
+        userService.confirmMail(token)?.let { user ->
+            ResponseEntity.ok(UserResponse(user))
+        } ?: ResponseEntity.badRequest().build()
 }

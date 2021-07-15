@@ -5,6 +5,7 @@ import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.config.DatabaseCleanerService
 import com.ampnet.identityservice.config.JsonConfig
 import com.ampnet.identityservice.persistence.model.User
+import com.ampnet.identityservice.persistence.repository.MailTokenRepository
 import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
 import com.ampnet.identityservice.persistence.repository.VeriffDecisionRepository
@@ -47,6 +48,9 @@ abstract class JpaServiceTestBase : TestBase() {
 
     @Autowired
     protected lateinit var userInfoRepository: UserInfoRepository
+
+    @Autowired
+    protected lateinit var mailTokenRepository: MailTokenRepository
 
     @Autowired
     @Qualifier("camelCaseObjectMapper")
