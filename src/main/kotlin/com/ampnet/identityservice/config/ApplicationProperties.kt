@@ -9,6 +9,7 @@ class ApplicationProperties {
     val jwt = JwtProperties()
     val veriff = VeriffProperties()
     val test = TestProperties()
+    val mail = MailProperties()
 }
 
 @Suppress("MagicNumber")
@@ -30,4 +31,10 @@ class VeriffProperties {
 
 class TestProperties {
     var enabledTestKyc: Boolean = true
+}
+
+class MailProperties {
+    var baseUrl: String = ""
+    var sender: String = "no-reply@ampnet.io"
+    var enabled: Boolean = false
 }
