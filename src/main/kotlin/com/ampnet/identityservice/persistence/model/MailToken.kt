@@ -28,7 +28,7 @@ class MailToken(
     @Column(nullable = false)
     val createdAt: ZonedDateTime
 ) {
-    fun isExpired(): Boolean {
-        return createdAt.plusDays(1).isBefore(ZonedDateTime.now())
+    fun isExpired(currentTime: ZonedDateTime): Boolean {
+        return createdAt.plusDays(1).isBefore(currentTime)
     }
 }

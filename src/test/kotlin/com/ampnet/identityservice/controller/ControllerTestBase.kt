@@ -13,7 +13,9 @@ import com.ampnet.identityservice.persistence.repository.UserRepository
 import com.ampnet.identityservice.persistence.repository.VeriffDecisionRepository
 import com.ampnet.identityservice.persistence.repository.VeriffSessionRepository
 import com.ampnet.identityservice.service.MailService
+import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.VerificationService
+import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.junit.jupiter.api.BeforeEach
@@ -34,7 +36,6 @@ import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.context.WebApplicationContext
-import java.time.ZonedDateTime
 
 @ExtendWith(value = [SpringExtension::class, RestDocumentationExtension::class])
 @SpringBootTest
@@ -73,6 +74,12 @@ abstract class ControllerTestBase : TestBase() {
     @Autowired
     protected lateinit var mailTokenRepository: MailTokenRepository
 
+    @Autowired
+    protected lateinit var zonedDateTimeProvider: ZonedDateTimeProvider
+
+    @Autowired
+    protected lateinit var uuidProvider: UuidProvider
+
     @MockBean
     protected lateinit var mailService: MailService
 
@@ -106,7 +113,7 @@ abstract class ControllerTestBase : TestBase() {
     protected fun createUser(
         address: String = ADDRESS.toString(),
     ): User {
-        val user = User(address, "email@email", null, ZonedDateTime.now(), null)
+        val user = User(address, "email@email", null, zonedDateTimeProvider.getZonedDateTime(), null)
         return userRepository.save(user)
     }
 }

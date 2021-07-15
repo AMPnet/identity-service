@@ -16,7 +16,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.ZonedDateTime
 import java.util.UUID
 
 class UserControllerTest : ControllerTestBase() {
@@ -116,9 +115,11 @@ class UserControllerTest : ControllerTestBase() {
             testContext.user = createUser()
         }
         suppose("The user has unconfirmed email") {
-            testContext.token = UUID.randomUUID()
-            val mailToken =
-                MailToken(0, testContext.user.address, testContext.email, testContext.token, ZonedDateTime.now())
+            testContext.token = uuidProvider.getUuid()
+            val mailToken = MailToken(
+                0, testContext.user.address, testContext.email,
+                testContext.token, zonedDateTimeProvider.getZonedDateTime()
+            )
             mailTokenRepository.save(mailToken)
         }
 
@@ -142,10 +143,10 @@ class UserControllerTest : ControllerTestBase() {
             testContext.user = createUser()
         }
         suppose("The token has expired") {
-            testContext.token = UUID.randomUUID()
+            testContext.token = uuidProvider.getUuid()
             val mailToken = MailToken(
                 0, testContext.user.address, testContext.email, testContext.token,
-                ZonedDateTime.now().minusDays(2)
+                zonedDateTimeProvider.getZonedDateTime().minusDays(2)
             )
             mailTokenRepository.save(mailToken)
         }

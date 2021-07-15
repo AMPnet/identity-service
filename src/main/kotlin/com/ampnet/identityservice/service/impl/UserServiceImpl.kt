@@ -13,15 +13,18 @@ import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
 import com.ampnet.identityservice.service.MailService
 import com.ampnet.identityservice.service.UserService
+import com.ampnet.identityservice.service.UuidProvider
+import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import com.ampnet.identityservice.service.pojo.UserWithInfo
 import mu.KLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.ZonedDateTime
 import java.util.UUID
 
 @Service
 class UserServiceImpl(
+    private val uuidProvider: UuidProvider,
+    private val zonedDateTimeProvider: ZonedDateTimeProvider,
     private val userRepository: UserRepository,
     private val userInfoRepository: UserInfoRepository,
     private val mailTokenRepository: MailTokenRepository,
@@ -57,7 +60,9 @@ class UserServiceImpl(
     @Transactional
     override fun updateEmail(email: String, address: String): User {
         val user = getUser(address)
-        val mailToken = MailToken(0, address, email, UUID.randomUUID(), ZonedDateTime.now())
+        val mailToken = MailToken(
+            0, address, email, uuidProvider.getUuid(), zonedDateTimeProvider.getZonedDateTime()
+        )
         mailTokenRepository.save(mailToken)
         mailService.sendEmailConfirmation(email)
         user.email = null
@@ -67,7 +72,7 @@ class UserServiceImpl(
     @Transactional
     override fun confirmMail(token: UUID): User? {
         mailTokenRepository.findByToken(token)?.let { mailToken ->
-            if (mailToken.isExpired()) {
+            if (mailToken.isExpired(zonedDateTimeProvider.getZonedDateTime())) {
                 throw InvalidRequestException(
                     ErrorCode.REG_EMAIL_EXPIRED_TOKEN,
                     "User is trying to confirm mail with expired token: $token"
@@ -86,10 +91,10 @@ class UserServiceImpl(
     override fun verifyUserWithTestData(request: KycTestRequest): UserWithInfo {
         val user = getUser(request.address)
         val userInfo = UserInfo(
-            UUID.randomUUID(), "44927492-8799-406e-8076-933bc9164ebc",
+            uuidProvider.getUuid(), "44927492-8799-406e-8076-933bc9164ebc",
             request.firstName, request.lastName, null, null,
             Document("DRIVERS_LICENSE", "GB", "MORGA753116SM9IJ", "2022-04-20", null),
-            null, null, ZonedDateTime.now(), true, false
+            null, null, zonedDateTimeProvider.getZonedDateTime(), true, false
         )
         userInfoRepository.save(userInfo)
         user.userInfoUuid = userInfo.uuid

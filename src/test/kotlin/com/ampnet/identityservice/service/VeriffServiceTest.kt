@@ -27,19 +27,22 @@ import org.springframework.test.web.client.ExpectedCount
 import org.springframework.test.web.client.MockRestServiceServer
 import org.springframework.test.web.client.match.MockRestRequestMatchers
 import org.springframework.test.web.client.response.MockRestResponseCreators
-import java.time.ZonedDateTime
 import java.util.Locale
 
 class VeriffServiceTest : JpaServiceTestBase() {
 
     private lateinit var mockServer: MockRestServiceServer
     private val baseUrl = "http://localhost:8080"
+    private val zonedDateTimeProvider = CurrentZonedDateTimeProvider()
 
     private val veriffService: VeriffServiceImpl by lazy {
         val mailService = mock<MailService>()
-        val userService = UserServiceImpl(userRepository, userInfoRepository, mailTokenRepository, mailService)
+        val uuidProvider = RandomUuidProvider()
+        val userService = UserServiceImpl(
+            uuidProvider, zonedDateTimeProvider, userRepository, userInfoRepository, mailTokenRepository, mailService
+        )
         VeriffServiceImpl(
-            veriffSessionRepository, veriffDecisionRepository, userInfoRepository,
+            zonedDateTimeProvider, veriffSessionRepository, veriffDecisionRepository, userInfoRepository,
             applicationProperties, userService, restTemplate, camelCaseObjectMapper
         )
     }
@@ -91,7 +94,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
                 "https://alchemy.veriff.com",
                 "created",
                 false,
-                ZonedDateTime.now(),
+                zonedDateTimeProvider.getZonedDateTime(),
                 VeriffSessionState.SUBMITTED
             )
             testContext.veriffSession = veriffSessionRepository.save(veriffSession)
@@ -127,7 +130,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
                 "https://alchemy.veriff.com/",
                 "created",
                 false,
-                ZonedDateTime.now(),
+                zonedDateTimeProvider.getZonedDateTime(),
                 VeriffSessionState.SUBMITTED
             )
             testContext.veriffSession = veriffSessionRepository.save(veriffSession)
@@ -163,7 +166,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
                 "https://alchemy.veriff.com/",
                 "created",
                 false,
-                ZonedDateTime.now(),
+                zonedDateTimeProvider.getZonedDateTime(),
                 VeriffSessionState.SUBMITTED
             )
             testContext.veriffSession = veriffSessionRepository.save(veriffSession)
@@ -208,7 +211,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
                 "https://alchemy.veriff.com/",
                 "created",
                 false,
-                ZonedDateTime.now(),
+                zonedDateTimeProvider.getZonedDateTime(),
                 VeriffSessionState.SUBMITTED
             )
             testContext.veriffSession = veriffSessionRepository.save(veriffSession)
@@ -253,7 +256,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
                 "https://alchemy.veriff.com/",
                 "created",
                 false,
-                ZonedDateTime.now(),
+                zonedDateTimeProvider.getZonedDateTime(),
                 VeriffSessionState.SUBMITTED
             )
             testContext.veriffSession = veriffSessionRepository.save(veriffSession)
@@ -298,7 +301,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
                 "https://alchemy.veriff.com/",
                 "created",
                 false,
-                ZonedDateTime.now().minusDays(8),
+                zonedDateTimeProvider.getZonedDateTime().minusDays(8),
                 VeriffSessionState.CREATED
             )
             testContext.veriffSession = veriffSessionRepository.save(veriffSession)
@@ -334,7 +337,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
                 "https://alchemy.veriff.com/",
                 "created",
                 false,
-                ZonedDateTime.now(),
+                zonedDateTimeProvider.getZonedDateTime(),
                 VeriffSessionState.CREATED
             )
             testContext.veriffSession = veriffSessionRepository.save(veriffSession)
@@ -360,7 +363,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
                 "https://alchemy.veriff.com/",
                 "created",
                 false,
-                ZonedDateTime.now(),
+                zonedDateTimeProvider.getZonedDateTime(),
                 VeriffSessionState.CREATED
             )
             testContext.veriffSession = veriffSessionRepository.save(veriffSession)
@@ -386,7 +389,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
                 "https://alchemy.veriff.com/",
                 "created",
                 false,
-                ZonedDateTime.now(),
+                zonedDateTimeProvider.getZonedDateTime(),
                 VeriffSessionState.SUBMITTED
             )
             testContext.veriffSession = veriffSessionRepository.save(veriffSession)
