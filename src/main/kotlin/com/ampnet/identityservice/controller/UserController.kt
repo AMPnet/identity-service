@@ -14,9 +14,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-class UserController(
-    private val userService: UserService
-) {
+class UserController(private val userService: UserService) {
 
     companion object : KLogging()
 

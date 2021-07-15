@@ -19,7 +19,8 @@ class MailServiceImpl(
     private val baseUrl = URL(applicationProperties.mail.baseUrl).toString()
     private val confirmationSubject = "Confirm your email"
     private val confirmationText = """<h2>Please confirmation your email</h2>
-<p>Follow the link the confirm your email: <a href="{{& link}}">{{& link}}</a></p>"""
+        |
+        |<p>Follow the link the confirm your email: <a href="{{& link}}">{{& link}}</a></p>""".trimMargin()
 
     override fun sendEmailConfirmation(receiver: String) {
         if (applicationProperties.mail.enabled.not()) return
