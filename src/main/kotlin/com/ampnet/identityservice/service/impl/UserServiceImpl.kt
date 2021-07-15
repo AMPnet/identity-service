@@ -15,6 +15,7 @@ import com.ampnet.identityservice.service.MailService
 import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
+import com.ampnet.identityservice.service.pojo.UserResponse
 import com.ampnet.identityservice.service.pojo.UserWithInfo
 import mu.KLogging
 import org.springframework.stereotype.Service
@@ -34,12 +35,11 @@ class UserServiceImpl(
     companion object : KLogging()
 
     @Transactional(readOnly = true)
-    override fun getUser(address: String): User = userRepository.findByAddress(address)
-        ?: throw ResourceNotFoundException(ErrorCode.USER_JWT_MISSING, "Missing user with address: $address")
+    override fun getUserResponse(address: String): UserResponse = generateUserResponse(getUser(address))
 
     @Transactional
     @Throws(ResourceNotFoundException::class)
-    override fun connectUserInfo(userAddress: String, sessionId: String): User {
+    override fun connectUserInfo(userAddress: String, sessionId: String): UserResponse {
         val userInfo = userInfoRepository.findBySessionIdOrderByCreatedAtDesc(sessionId).firstOrNull()
             ?: throw ResourceNotFoundException(ErrorCode.REG_INCOMPLETE, "Missing UserInfo with session id: $sessionId")
         val user = getUser(userAddress)
@@ -47,18 +47,20 @@ class UserServiceImpl(
         userInfo.connected = true
         user.userInfoUuid = userInfo.uuid
         logger.info { "Connected UserInfo: ${userInfo.uuid} to user: $userAddress" }
-        return user
+        return generateUserResponse(user)
     }
 
     @Transactional
-    override fun createUser(address: String): User =
-        userRepository.findByAddress(address) ?: kotlin.run {
+    override fun createUser(address: String): UserResponse {
+        val user = userRepository.findByAddress(address) ?: kotlin.run {
             logger.info { "User is created for address: $address" }
             userRepository.save(User(address))
         }
+        return generateUserResponse(user)
+    }
 
     @Transactional
-    override fun updateEmail(email: String, address: String): User {
+    override fun updateEmail(email: String, address: String): UserResponse {
         val user = getUser(address)
         val mailToken = MailToken(
             0, address, email, uuidProvider.getUuid(), zonedDateTimeProvider.getZonedDateTime()
@@ -66,11 +68,11 @@ class UserServiceImpl(
         mailTokenRepository.save(mailToken)
         mailService.sendEmailConfirmation(email)
         user.email = null
-        return user
+        return generateUserResponse(user)
     }
 
     @Transactional
-    override fun confirmMail(token: UUID): User? {
+    override fun confirmMail(token: UUID): UserResponse? {
         mailTokenRepository.findByToken(token)?.let { mailToken ->
             if (mailToken.isExpired(zonedDateTimeProvider.getZonedDateTime())) {
                 throw InvalidRequestException(
@@ -81,7 +83,7 @@ class UserServiceImpl(
             mailTokenRepository.delete(mailToken)
             userRepository.findByAddress(mailToken.userAddress)?.let { user ->
                 user.email = mailToken.email
-                return user
+                return generateUserResponse(user)
             }
         }
         return null
@@ -100,6 +102,19 @@ class UserServiceImpl(
         user.userInfoUuid = userInfo.uuid
         return UserWithInfo(user, userInfo)
     }
+
+    private fun generateUserResponse(user: User): UserResponse {
+        var email = user.email
+        var emailVerified = true
+        if (email == null) {
+            emailVerified = false
+            email = mailTokenRepository.findByUserAddressOrderByCreatedAtDesc(user.address).firstOrNull()?.email
+        }
+        return UserResponse(user.address, email, emailVerified, user.userInfoUuid != null)
+    }
+
+    private fun getUser(address: String): User = userRepository.findByAddress(address)
+        ?: throw ResourceNotFoundException(ErrorCode.USER_JWT_MISSING, "Missing user with address: $address")
 
     private fun disconnectUserInfo(user: User) {
         user.userInfoUuid?.let {

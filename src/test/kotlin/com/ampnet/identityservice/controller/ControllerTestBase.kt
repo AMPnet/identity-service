@@ -5,7 +5,9 @@ import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.config.DatabaseCleanerService
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.ErrorResponse
+import com.ampnet.identityservice.persistence.model.Document
 import com.ampnet.identityservice.persistence.model.User
+import com.ampnet.identityservice.persistence.model.UserInfo
 import com.ampnet.identityservice.persistence.repository.MailTokenRepository
 import com.ampnet.identityservice.persistence.repository.RefreshTokenRepository
 import com.ampnet.identityservice.persistence.repository.UserInfoRepository
@@ -36,6 +38,7 @@ import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.context.WebApplicationContext
+import java.util.UUID
 
 @ExtendWith(value = [SpringExtension::class, RestDocumentationExtension::class])
 @SpringBootTest
@@ -112,8 +115,19 @@ abstract class ControllerTestBase : TestBase() {
 
     protected fun createUser(
         address: String = ADDRESS.toString(),
+        verified: Boolean = false,
+        email: String? = "email@mail.com"
     ): User {
-        val user = User(address, "email@email", null, zonedDateTimeProvider.getZonedDateTime(), null)
+        var userInfo: UUID? = null
+        if (verified) {
+            val testUserInfo = UserInfo(
+                uuidProvider.getUuid(), uuidProvider.getUuid().toString(), "first", "last",
+                "id-num", "01-01-1001", Document(null, null, null, null, null),
+                null, null, zonedDateTimeProvider.getZonedDateTime(), true, false
+            )
+            userInfo = userInfoRepository.save(testUserInfo).uuid
+        }
+        val user = User(address, email, userInfo, zonedDateTimeProvider.getZonedDateTime(), null)
         return userRepository.save(user)
     }
 }
