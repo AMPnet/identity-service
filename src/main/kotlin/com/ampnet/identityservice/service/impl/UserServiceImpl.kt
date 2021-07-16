@@ -65,7 +65,7 @@ class UserServiceImpl(
             0, address, email, uuidProvider.getUuid(), zonedDateTimeProvider.getZonedDateTime()
         )
         mailTokenRepository.save(mailToken)
-        mailService.sendEmailConfirmation(email)
+        mailService.sendEmailConfirmation(email, mailToken.token)
         user.email = null
         return generateUserResponse(user)
     }

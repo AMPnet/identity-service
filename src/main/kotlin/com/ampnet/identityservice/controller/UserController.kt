@@ -6,9 +6,9 @@ import com.ampnet.identityservice.service.pojo.UserResponse
 import mu.KLogging
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
@@ -31,8 +31,8 @@ class UserController(private val userService: UserService) {
         return ResponseEntity.ok(userService.updateEmail(emailRequest.email, address))
     }
 
-    @PutMapping("/user/email/{token}")
-    fun confirmUserEmail(@PathVariable token: UUID): ResponseEntity<UserResponse> =
+    @GetMapping("/user/email")
+    fun confirmUserEmail(@RequestParam token: UUID): ResponseEntity<UserResponse> =
         userService.confirmMail(token)?.let { user ->
             ResponseEntity.ok(user)
         } ?: ResponseEntity.badRequest().build()

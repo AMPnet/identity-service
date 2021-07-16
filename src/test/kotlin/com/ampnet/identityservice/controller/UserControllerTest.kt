@@ -56,8 +56,9 @@ class UserControllerTest : ControllerTestBase() {
             assertThat(user?.email).isNull()
         }
         verify("Email verification is sent") {
+            val mailToken = mailTokenRepository.findByUserAddressOrderByCreatedAtDesc(testContext.user.address).first()
             Mockito.verify(mailService, Mockito.times(1))
-                .sendEmailConfirmation(testContext.email)
+                .sendEmailConfirmation(testContext.email, mailToken.token)
         }
     }
 
@@ -180,7 +181,7 @@ class UserControllerTest : ControllerTestBase() {
         }
 
         verify("The user can confirm email with mail token") {
-            mockMvc.perform(put("$userPath/email/${testContext.token}"))
+            mockMvc.perform(get("$userPath/email?token=${testContext.token}"))
                 .andExpect(status().isOk)
         }
         verify("The user is confirmed in database") {
@@ -208,7 +209,7 @@ class UserControllerTest : ControllerTestBase() {
         }
 
         verify("The user cannot confirm email with expired token") {
-            mockMvc.perform(put("$userPath/email/${testContext.token}"))
+            mockMvc.perform(get("$userPath/email?token=${testContext.token}"))
                 .andExpect(status().isBadRequest)
         }
     }

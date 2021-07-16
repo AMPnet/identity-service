@@ -7,6 +7,7 @@ import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.stereotype.Service
 import java.net.URL
 import java.util.Date
+import java.util.UUID
 
 // This class is a temporary solution for sending email.
 // For further extensions keep in mind that it will be extracted to new notification-service repo
@@ -22,9 +23,9 @@ class MailServiceImpl(
         |
         |<p>Follow the link the confirm your email: <a href="{{& link}}">{{& link}}</a></p>""".trimMargin()
 
-    override fun sendEmailConfirmation(receiver: String) {
+    override fun sendEmailConfirmation(receiver: String, token: UUID) {
         if (applicationProperties.mail.enabled.not()) return
-        val confirmationLink = "$baseUrl/user/email"
+        val confirmationLink = "$baseUrl/user/email?token=$token"
         val mail = mailSender.createMimeMessage().apply {
             val helper = MimeMessageHelper(this, "UTF-8")
             helper.isValidateAddresses = true
