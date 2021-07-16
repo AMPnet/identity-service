@@ -16,7 +16,6 @@ import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import com.ampnet.identityservice.service.pojo.UserResponse
-import com.ampnet.identityservice.service.pojo.UserWithInfo
 import mu.KLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -90,7 +89,7 @@ class UserServiceImpl(
     }
 
     @Transactional
-    override fun verifyUserWithTestData(request: KycTestRequest): UserWithInfo {
+    override fun verifyUserWithTestData(request: KycTestRequest): UserResponse {
         val user = getUser(request.address)
         val userInfo = UserInfo(
             uuidProvider.getUuid(), "44927492-8799-406e-8076-933bc9164ebc",
@@ -100,7 +99,7 @@ class UserServiceImpl(
         )
         userInfoRepository.save(userInfo)
         user.userInfoUuid = userInfo.uuid
-        return UserWithInfo(user, userInfo)
+        return generateUserResponse(user)
     }
 
     private fun generateUserResponse(user: User): UserResponse {

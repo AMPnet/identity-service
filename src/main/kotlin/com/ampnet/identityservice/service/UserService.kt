@@ -2,7 +2,6 @@ package com.ampnet.identityservice.service
 
 import com.ampnet.identityservice.controller.pojo.request.KycTestRequest
 import com.ampnet.identityservice.service.pojo.UserResponse
-import com.ampnet.identityservice.service.pojo.UserWithInfo
 import java.util.UUID
 
 interface UserService {
@@ -11,5 +10,5 @@ interface UserService {
     fun createUser(address: String): UserResponse
     fun updateEmail(email: String, address: String): UserResponse
     fun confirmMail(token: UUID): UserResponse?
-    fun verifyUserWithTestData(request: KycTestRequest): UserWithInfo
+    fun verifyUserWithTestData(request: KycTestRequest): UserResponse
 }
