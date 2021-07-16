@@ -104,11 +104,10 @@ class UserServiceImpl(
     }
 
     private fun generateUserResponse(user: User): UserResponse {
-        var email = user.email
-        var emailVerified = true
-        if (email == null) {
-            emailVerified = false
-            email = mailTokenRepository.findByUserAddressOrderByCreatedAtDesc(user.address).firstOrNull()?.email
+        val (email, emailVerified) = if (user.email == null) {
+            Pair(mailTokenRepository.findByUserAddressOrderByCreatedAtDesc(user.address).firstOrNull()?.email, false)
+        } else {
+            Pair(user.email, true)
         }
         return UserResponse(user.address, email, emailVerified, user.userInfoUuid != null)
     }
