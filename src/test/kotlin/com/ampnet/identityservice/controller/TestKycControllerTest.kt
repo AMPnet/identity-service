@@ -3,7 +3,7 @@ package com.ampnet.identityservice.controller
 import com.ampnet.identityservice.controller.pojo.request.KycTestRequest
 import com.ampnet.identityservice.persistence.model.User
 import com.ampnet.identityservice.security.WithMockCrowdFundUser
-import com.ampnet.identityservice.service.pojo.UserWithInfo
+import com.ampnet.identityservice.service.pojo.UserResponse
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
@@ -43,10 +43,9 @@ class TestKycControllerTest : ControllerTestBase() {
             )
                 .andExpect(status().isOk)
                 .andReturn()
-            val userWithInfo: UserWithInfo = objectMapper.readValue(result.response.contentAsString)
-            assertThat(userWithInfo.address).isEqualTo(testContext.user.address)
-            assertThat(userWithInfo.firstName).isEqualTo(testContext.request.firstName)
-            assertThat(userWithInfo.lastName).isEqualTo(testContext.request.lastName)
+            val userResponse: UserResponse = objectMapper.readValue(result.response.contentAsString)
+            assertThat(userResponse.address).isEqualTo(testContext.user.address)
+            assertThat(userResponse.kycCompleted).isEqualTo(true)
         }
 
         verify("TestData is stored in the database") {

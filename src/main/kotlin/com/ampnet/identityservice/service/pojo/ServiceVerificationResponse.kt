@@ -2,7 +2,6 @@ package com.ampnet.identityservice.service.pojo
 
 import com.ampnet.identityservice.persistence.model.VeriffDecision
 import com.ampnet.identityservice.persistence.model.VeriffSessionState
-import java.util.Locale
 
 data class ServiceVerificationResponse(
     val verificationUrl: String?,
@@ -10,7 +9,7 @@ data class ServiceVerificationResponse(
     val decision: ServiceVerificationDecision?
 ) {
     constructor(url: String?, state: VeriffSessionState, decision: VeriffDecision? = null) : this(
-        url, state.name.lowercase(Locale.getDefault()), decision?.let { ServiceVerificationDecision(it) }
+        url, state.name.lowercase(), decision?.let { ServiceVerificationDecision(it) }
     )
 }
 

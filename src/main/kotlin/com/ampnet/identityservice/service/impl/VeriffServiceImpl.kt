@@ -169,7 +169,7 @@ class VeriffServiceImpl(
 
     private fun createVeriffSession(address: String, baseUrl: String): VeriffSession? {
         logger.debug { "Creating Veriff session for address: $address" }
-        val user = userService.getUser(address)
+        val user = userService.getUserResponse(address)
         val callback = if (baseUrl.startsWith("https:")) baseUrl else ""
         logger.debug { "Callback url for Veriff: $callback. Base url: $baseUrl" }
         val request = objectMapper.writeValueAsString(VeriffSessionRequest(user, callback))

@@ -63,17 +63,17 @@ include::{snippets}/VeriffControllerTest/mustHandleVeriffWebhookEvent/http-respo
 == User API
 All requests need header: `Authorization: Bearer JWT`.
 
+=== Get user data
+.Request
+include::{snippets}/UserControllerTest/mustBeAbleToGetVerifiedUser/http-request.adoc[]
+.Response
+include::{snippets}/UserControllerTest/mustBeAbleToGetVerifiedUser/http-response.adoc[]
+
 === Update user email
 .Request
 include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-request.adoc[]
 .Response
 include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-response.adoc[]
-
-=== Get user data
-.Request
-include::{snippets}/UserControllerTest/mustBeAbleToGetUser/http-request.adoc[]
-.Response
-include::{snippets}/UserControllerTest/mustBeAbleToGetUser/http-response.adoc[]
 
 == Test API
 
