@@ -65,6 +65,9 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Run all tests
         run: ./gradlew test
+        env:
+          BLOCKCHAIN_API: ${{ secrets.BLOCKCHAIN_API }}
+          WALLET_PRIVATE_KEY: ${{ secrets.WALLET_PRIVATE_KEY }}
       - name: Generate test coverage report
         run: ./gradlew jacocoTestReport
       - name: Verify test coverage minimum limit

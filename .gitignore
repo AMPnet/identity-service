@@ -168,3 +168,6 @@ gradle-app.setting
 
 # Ignore generated docs
 src/main/resources/static/docs
+
+# Ignore secret properties
+src/main/resources/application-secret.properties

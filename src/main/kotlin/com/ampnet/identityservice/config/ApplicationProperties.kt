@@ -8,7 +8,9 @@ import org.springframework.context.annotation.Configuration
 class ApplicationProperties {
     val jwt = JwtProperties()
     val veriff = VeriffProperties()
+    val provider = ProviderProperties()
     val test = TestProperties()
+    val smartContract = SmartContractProperties()
     val mail = MailProperties()
 }
 
@@ -31,6 +33,16 @@ class VeriffProperties {
 
 class TestProperties {
     var enabledTestKyc: Boolean = true
+}
+
+class ProviderProperties {
+    lateinit var blockchainApi: String
+}
+
+class SmartContractProperties {
+    lateinit var privateKey: String
+    lateinit var issuerContractAddress: String
+    lateinit var walletAddress: String
 }
 
 class MailProperties {
