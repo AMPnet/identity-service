@@ -63,6 +63,7 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    this.testLogging.showStandardStreams = true
 }
 
 jib {
