@@ -11,7 +11,6 @@ import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
 import org.web3j.tx.gas.StaticGasProvider
 import java.math.BigInteger
-import org.kethereum.crypto.test_data.PRIVATE_KEY_STRING
 
 @ExtendWith(value = [SpringExtension::class])
 @ActiveProfiles("secret")
@@ -21,7 +20,7 @@ class Web3jControllerTest : ControllerTestBase() {
 
     @Test
     fun mustReturnTrueForWalletApproved() {
-        val credentials = Credentials.create(PRIVATE_KEY_STRING)
+        val credentials = Credentials.create(applicationProperties.smartContract.privateKey)
         val contract = IIssuer.load(
             applicationProperties.smartContract.issuerContractAddress, web3j, credentials,
             StaticGasProvider(BigInteger("22000000000"), BigInteger("510000"))
