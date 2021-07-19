@@ -11,21 +11,15 @@ import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
 import org.web3j.tx.gas.StaticGasProvider
 import java.math.BigInteger
-import mu.KLogging
 
 @ExtendWith(value = [SpringExtension::class])
 @ActiveProfiles("secret")
 class Web3jControllerTest : ControllerTestBase() {
 
-    companion object : KLogging()
-
     private val web3j by lazy { Web3j.build(HttpService(applicationProperties.provider.blockchainApi)) }
 
     @Test
     fun mustReturnTrueForWalletApproved() {
-        logger.error { "Private key: " + applicationProperties.smartContract.privateKey }
-        logger.error { "Alchemy api: " + applicationProperties.provider.blockchainApi }
-        logger.error {"Smart contract address: " + applicationProperties.smartContract.issuerContractAddress }
         val credentials = Credentials.create(applicationProperties.smartContract.privateKey)
         val contract = IIssuer.load(
             applicationProperties.smartContract.issuerContractAddress, web3j, credentials,
