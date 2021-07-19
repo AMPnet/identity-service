@@ -41,7 +41,7 @@ class AuthorizationController(
         return ResponseEntity.ok(AccessRefreshTokenResponse(accessAndRefreshToken))
     }
 
-    @PostMapping("/token/refresh")
+    @PostMapping("/authorize/refresh")
     fun refreshToken(@RequestBody request: RefreshTokenRequest): ResponseEntity<AccessRefreshTokenResponse> {
         logger.debug { "Received request to refresh token" }
         val accessAndRefreshToken = tokenService.generateAccessAndRefreshFromRefreshToken(request.refreshToken)

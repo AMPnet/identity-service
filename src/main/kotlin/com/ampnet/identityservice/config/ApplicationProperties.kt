@@ -11,6 +11,7 @@ class ApplicationProperties {
     val provider = ProviderProperties()
     val test = TestProperties()
     val smartContract = SmartContractProperties()
+    val mail = MailProperties()
 }
 
 @Suppress("MagicNumber")
@@ -42,4 +43,10 @@ class SmartContractProperties {
     lateinit var privateKey: String
     lateinit var issuerContractAddress: String
     lateinit var walletAddress: String
+}
+
+class MailProperties {
+    var baseUrl: String = ""
+    var sender: String = "no-reply@ampnet.io"
+    var enabled: Boolean = false
 }

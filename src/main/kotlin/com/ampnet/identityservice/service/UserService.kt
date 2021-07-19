@@ -1,13 +1,14 @@
 package com.ampnet.identityservice.service
 
 import com.ampnet.identityservice.controller.pojo.request.KycTestRequest
-import com.ampnet.identityservice.persistence.model.User
-import com.ampnet.identityservice.service.pojo.UserWithInfo
+import com.ampnet.identityservice.service.pojo.UserResponse
+import java.util.UUID
 
 interface UserService {
-    fun getUser(address: String): User
-    fun connectUserInfo(userAddress: String, sessionId: String): User
-    fun updateEmail(email: String, address: String): User
-    fun createUser(address: String): User
-    fun verifyUserWithTestData(request: KycTestRequest): UserWithInfo
+    fun getUserResponse(address: String): UserResponse
+    fun connectUserInfo(userAddress: String, sessionId: String): UserResponse
+    fun createUser(address: String): UserResponse
+    fun updateEmail(email: String, address: String): UserResponse
+    fun confirmMail(token: UUID): UserResponse?
+    fun verifyUserWithTestData(request: KycTestRequest): UserResponse
 }

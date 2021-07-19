@@ -25,9 +25,9 @@ To get JWT the user must sign the payload received from `POST /authorize` route 
 User is created in the database on his first login.
 
 .Request
-include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwt/http-request.adoc[]
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwtForNewUser/http-request.adoc[]
 .Response
-include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwt/http-response.adoc[]
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwtForNewUser/http-response.adoc[]
 
 === Refresh token
 .Request
@@ -63,17 +63,17 @@ include::{snippets}/VeriffControllerTest/mustHandleVeriffWebhookEvent/http-respo
 == User API
 All requests need header: `Authorization: Bearer JWT`.
 
+=== Get user data
+.Request
+include::{snippets}/UserControllerTest/mustBeAbleToGetVerifiedUser/http-request.adoc[]
+.Response
+include::{snippets}/UserControllerTest/mustBeAbleToGetVerifiedUser/http-response.adoc[]
+
 === Update user email
 .Request
 include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-request.adoc[]
 .Response
 include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-response.adoc[]
-
-=== Get user data
-.Request
-include::{snippets}/UserControllerTest/mustBeAbleToGetUser/http-request.adoc[]
-.Response
-include::{snippets}/UserControllerTest/mustBeAbleToGetUser/http-response.adoc[]
 
 == Test API
 

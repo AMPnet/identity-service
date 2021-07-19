@@ -5,13 +5,19 @@ import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.config.DatabaseCleanerService
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.ErrorResponse
+import com.ampnet.identityservice.persistence.model.Document
 import com.ampnet.identityservice.persistence.model.User
+import com.ampnet.identityservice.persistence.model.UserInfo
+import com.ampnet.identityservice.persistence.repository.MailTokenRepository
 import com.ampnet.identityservice.persistence.repository.RefreshTokenRepository
 import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
 import com.ampnet.identityservice.persistence.repository.VeriffDecisionRepository
 import com.ampnet.identityservice.persistence.repository.VeriffSessionRepository
+import com.ampnet.identityservice.service.MailService
+import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.VerificationService
+import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.junit.jupiter.api.BeforeEach
@@ -19,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.kethereum.crypto.test_data.ADDRESS
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.restdocs.RestDocumentationContextProvider
 import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation
@@ -31,7 +38,7 @@ import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.context.WebApplicationContext
-import java.time.ZonedDateTime
+import java.util.UUID
 
 @ExtendWith(value = [SpringExtension::class, RestDocumentationExtension::class])
 @SpringBootTest
@@ -67,6 +74,18 @@ abstract class ControllerTestBase : TestBase() {
     @Autowired
     protected lateinit var userRepository: UserRepository
 
+    @Autowired
+    protected lateinit var mailTokenRepository: MailTokenRepository
+
+    @Autowired
+    protected lateinit var zonedDateTimeProvider: ZonedDateTimeProvider
+
+    @Autowired
+    protected lateinit var uuidProvider: UuidProvider
+
+    @MockBean
+    protected lateinit var mailService: MailService
+
     protected lateinit var mockMvc: MockMvc
 
     @BeforeEach
@@ -96,8 +115,19 @@ abstract class ControllerTestBase : TestBase() {
 
     protected fun createUser(
         address: String = ADDRESS.toString(),
+        verified: Boolean = false,
+        email: String? = "email@mail.com"
     ): User {
-        val user = User(address, "email@email", null, ZonedDateTime.now(), null)
+        var userInfo: UUID? = null
+        if (verified) {
+            val testUserInfo = UserInfo(
+                uuidProvider.getUuid(), uuidProvider.getUuid().toString(), "first", "last",
+                "id-num", "01-01-1001", Document(null, null, null, null, null),
+                null, null, zonedDateTimeProvider.getZonedDateTime(), true, false
+            )
+            userInfo = userInfoRepository.save(testUserInfo).uuid
+        }
+        val user = User(address, email, userInfo, zonedDateTimeProvider.getZonedDateTime(), null)
         return userRepository.save(user)
     }
 }

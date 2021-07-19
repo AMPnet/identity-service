@@ -9,14 +9,15 @@ import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.persistence.model.RefreshToken
 import com.ampnet.identityservice.persistence.repository.RefreshTokenRepository
 import com.ampnet.identityservice.service.TokenService
+import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import com.ampnet.identityservice.service.pojo.AccessAndRefreshToken
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom
-import java.time.ZonedDateTime
 
 @Service
 class TokenServiceImpl(
+    private val zonedDateTimeProvider: ZonedDateTimeProvider,
     private val applicationProperties: ApplicationProperties,
     private val refreshTokenRepository: RefreshTokenRepository
 ) : TokenService {
@@ -33,7 +34,9 @@ class TokenServiceImpl(
     override fun generateAccessAndRefreshForUser(address: String): AccessAndRefreshToken {
         deleteRefreshToken(address)
         val token = getRandomToken()
-        val refreshToken = refreshTokenRepository.save(RefreshToken(0, address, token, ZonedDateTime.now()))
+        val refreshToken = refreshTokenRepository.save(
+            RefreshToken(0, address, token, zonedDateTimeProvider.getZonedDateTime())
+        )
         val accessToken = JwtTokenUtils.encodeToken(
             address,
             applicationProperties.jwt.privateKey,
@@ -54,7 +57,8 @@ class TokenServiceImpl(
             ?: throw InvalidRequestException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN, "Non existing refresh token")
         val expiration = refreshToken.createdAt
             .plusMinutes(applicationProperties.jwt.refreshTokenValidityInMinutes)
-        val refreshTokenExpiresIn: Long = expiration.toEpochSecond() - ZonedDateTime.now().toEpochSecond()
+        val refreshTokenExpiresIn: Long =
+            expiration.toEpochSecond() - zonedDateTimeProvider.getZonedDateTime().toEpochSecond()
         if (refreshTokenExpiresIn <= 0) {
             refreshTokenRepository.delete(refreshToken)
             throw InvalidRequestException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN, "Refresh token expired")

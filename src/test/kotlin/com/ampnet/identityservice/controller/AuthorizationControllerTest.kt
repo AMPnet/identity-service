@@ -28,8 +28,8 @@ class AuthorizationControllerTest : ControllerTestBase() {
     private lateinit var testContext: TestContext
 
     private val authorizePath = "/authorize"
-    private val authorizeJwtPath = "/authorize/jwt"
-    private val tokenRefreshPath = "/token/refresh"
+    private val authorizeJwtPath = "$authorizePath/jwt"
+    private val tokenRefreshPath = "$authorizePath/refresh"
 
     @BeforeEach
     fun init() {
@@ -115,7 +115,9 @@ class AuthorizationControllerTest : ControllerTestBase() {
     @Test
     fun mustBeAbleToGetAccessTokenWithRefreshToken() {
         suppose("Refresh token exists") {
-            testContext.refreshToken = createRefreshToken(ADDRESS.toString(), ZonedDateTime.now().minusHours(1))
+            testContext.refreshToken = createRefreshToken(
+                ADDRESS.toString(), zonedDateTimeProvider.getZonedDateTime().minusHours(1)
+            )
         }
 
         verify("User can get access token using refresh token") {
@@ -140,7 +142,7 @@ class AuthorizationControllerTest : ControllerTestBase() {
     @Test
     fun mustNotBeAbleToGetAccessTokenWithExpiredRefreshToken() {
         suppose("Refresh token expired") {
-            val createdAt = ZonedDateTime.now()
+            val createdAt = zonedDateTimeProvider.getZonedDateTime()
                 .minusMinutes(applicationProperties.jwt.refreshTokenValidityInMinutes + 1000L)
             testContext.refreshToken = createRefreshToken(ADDRESS.toString(), createdAt)
         }
@@ -188,7 +190,7 @@ class AuthorizationControllerTest : ControllerTestBase() {
 
     private fun createRefreshToken(
         address: String,
-        createdAt: ZonedDateTime = ZonedDateTime.now()
+        createdAt: ZonedDateTime = zonedDateTimeProvider.getZonedDateTime()
     ): RefreshToken {
         val refreshToken = RefreshToken(0, address, "9asdf90asf90asf9asfis90fkas90fkas", createdAt)
         return refreshTokenRepository.save(refreshToken)

@@ -14,6 +14,7 @@ import com.ampnet.identityservice.persistence.repository.VeriffDecisionRepositor
 import com.ampnet.identityservice.persistence.repository.VeriffSessionRepository
 import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.VeriffService
+import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import com.ampnet.identityservice.service.pojo.ServiceVerificationResponse
 import com.ampnet.identityservice.service.pojo.VeriffDocument
 import com.ampnet.identityservice.service.pojo.VeriffEvent
@@ -40,13 +41,13 @@ import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.postForEntity
 import java.net.URI
 import java.security.MessageDigest
-import java.time.ZonedDateTime
 
 private const val VERIFF_SESSION_DURATION_IN_DAYS = 7L
 
 @Service
 @Suppress("TooManyFunctions", "ReturnCount")
 class VeriffServiceImpl(
+    private val zonedDateTimeProvider: ZonedDateTimeProvider,
     private val veriffSessionRepository: VeriffSessionRepository,
     private val veriffDecisionRepository: VeriffDecisionRepository,
     private val userInfoRepository: UserInfoRepository,
@@ -86,7 +87,10 @@ class VeriffServiceImpl(
             }
         logger.debug { "User has pending Veriff session" }
 
-        if (session.createdAt.isBefore(ZonedDateTime.now().minusDays(VERIFF_SESSION_DURATION_IN_DAYS))) {
+        if (session.createdAt.isBefore(
+                zonedDateTimeProvider.getZonedDateTime().minusDays(VERIFF_SESSION_DURATION_IN_DAYS)
+            )
+        ) {
             logger.warn { "Veriff session expired" }
             createVeriffSession(address, baseUrl)?.let { newSession ->
                 return ServiceVerificationResponse(newSession.url, newSession.state)
@@ -165,7 +169,7 @@ class VeriffServiceImpl(
 
     private fun createVeriffSession(address: String, baseUrl: String): VeriffSession? {
         logger.debug { "Creating Veriff session for address: $address" }
-        val user = userService.getUser(address)
+        val user = userService.getUserResponse(address)
         val callback = if (baseUrl.startsWith("https:")) baseUrl else ""
         logger.debug { "Callback url for Veriff: $callback. Base url: $baseUrl" }
         val request = objectMapper.writeValueAsString(VeriffSessionRequest(user, callback))

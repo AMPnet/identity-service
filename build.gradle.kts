@@ -31,6 +31,7 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-security")
 
@@ -39,10 +40,10 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.flywaydb:flyway-core")
     runtimeOnly("org.postgresql:postgresql")
+    implementation("io.micrometer:micrometer-registry-prometheus")
 
     implementation("io.github.microutils:kotlin-logging:2.0.5")
     implementation("com.github.AMPnet:jwt:1.0.1")
-
     implementation("com.github.komputing:kethereum:0.84.1")
     implementation("org.web3j:core:4.8.4")
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
@@ -50,6 +51,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:3.2.0")
 }
 
 tasks.withType<KotlinCompile> {
@@ -128,7 +130,7 @@ tasks.asciidoctor {
 }
 
 tasks.register<Copy>("copyDocs") {
-    from(file("$buildDir/asciidoc/html5"))
+    from(file("$buildDir/docs/asciidoc"))
     into(file("src/main/resources/static/docs"))
     dependsOn(tasks.asciidoctor)
 }

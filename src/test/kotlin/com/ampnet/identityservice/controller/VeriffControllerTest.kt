@@ -22,7 +22,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.security.MessageDigest
-import java.time.ZonedDateTime
 
 class VeriffControllerTest : ControllerTestBase() {
 
@@ -55,7 +54,7 @@ class VeriffControllerTest : ControllerTestBase() {
                 "https://alchemy.veriff.com/",
                 "created",
                 false,
-                ZonedDateTime.now(),
+                zonedDateTimeProvider.getZonedDateTime(),
                 VeriffSessionState.SUBMITTED
             )
             testContext.veriffSession = veriffSessionRepository.save(veriffSession)
@@ -70,7 +69,7 @@ class VeriffControllerTest : ControllerTestBase() {
                 101,
                 "2020-12-04T10:45:37.907Z",
                 "2020-12-04T10:45:31.000Z",
-                ZonedDateTime.now()
+                zonedDateTimeProvider.getZonedDateTime()
             )
             veriffDecisionRepository.save(decision)
         }
@@ -137,7 +136,7 @@ class VeriffControllerTest : ControllerTestBase() {
                 "https://alchemy.veriff.com/",
                 "created",
                 false,
-                ZonedDateTime.now(),
+                zonedDateTimeProvider.getZonedDateTime(),
                 VeriffSessionState.CREATED
             )
             testContext.veriffSession = veriffSessionRepository.save(veriffSession)
@@ -252,6 +251,5 @@ class VeriffControllerTest : ControllerTestBase() {
     private class TestContext {
         lateinit var user: User
         lateinit var veriffSession: VeriffSession
-        lateinit var signedPayload: String
     }
 }
