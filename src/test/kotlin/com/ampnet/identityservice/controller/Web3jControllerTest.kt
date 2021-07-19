@@ -24,8 +24,8 @@ class Web3jControllerTest : ControllerTestBase() {
     @Test
     fun mustReturnTrueForWalletApproved() {
         logger.error { "Private key: " + applicationProperties.smartContract.privateKey }
-        logger.error { "Alchemy api is: " + applicationProperties.provider.blockchainApi }
-        logger.error {"Smart contract properties are: " + applicationProperties.smartContract }
+        logger.error { "Alchemy api: " + applicationProperties.provider.blockchainApi }
+        logger.error {"Smart contract address: " + applicationProperties.smartContract.issuerContractAddress }
         val credentials = Credentials.create(applicationProperties.smartContract.privateKey)
         val contract = IIssuer.load(
             applicationProperties.smartContract.issuerContractAddress, web3j, credentials,
