@@ -2,6 +2,7 @@ package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.contract.IIssuer
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.test.context.ActiveProfiles
@@ -14,6 +15,7 @@ import java.math.BigInteger
 
 @ExtendWith(value = [SpringExtension::class])
 @ActiveProfiles("secret")
+@Disabled("Not for automated testing. Error processing transaction request: insufficient funds for gas * price + value")
 class Web3jControllerTest : ControllerTestBase() {
 
     private val web3j by lazy { Web3j.build(HttpService(applicationProperties.provider.blockchainApi)) }
