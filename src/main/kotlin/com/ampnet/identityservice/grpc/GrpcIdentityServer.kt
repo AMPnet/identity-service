@@ -32,7 +32,7 @@ class GrpcIdentityServer(
         responseObserver.onCompleted()
     }
 
-    private fun generateUserResponse(user: User, userInfo: UserInfo?): UserResponse =
+    fun generateUserResponse(user: User, userInfo: UserInfo?): UserResponse =
         UserResponse.newBuilder().apply {
             address = user.address
             email = user.email

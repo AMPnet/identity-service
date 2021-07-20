@@ -3,7 +3,7 @@ package com.ampnet.identityservice.controller
 import com.ampnet.identityservice.controller.pojo.request.EmailRequest
 import com.ampnet.identityservice.persistence.model.MailToken
 import com.ampnet.identityservice.persistence.model.User
-import com.ampnet.identityservice.security.WithMockCrowdFundUser
+import com.ampnet.identityservice.security.WithMockCrowdfundUser
 import com.ampnet.identityservice.service.pojo.UserResponse
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
@@ -30,7 +30,7 @@ class UserControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdFundUser
+    @WithMockCrowdfundUser
     fun mustBeAbleToUpdateEmail() {
         suppose("User is existing") {
             testContext.user = createUser()
@@ -63,7 +63,7 @@ class UserControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdFundUser
+    @WithMockCrowdfundUser
     fun mustBeAbleToGetUnverifiedUser() {
         suppose("User is unverified") {
             testContext.user = createUser(verified = false)
@@ -85,7 +85,7 @@ class UserControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdFundUser
+    @WithMockCrowdfundUser
     fun mustBeAbleToGetVerifiedUser() {
         suppose("User is verified") {
             databaseCleanerService.deleteAllUserInfos()
@@ -108,7 +108,7 @@ class UserControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdFundUser
+    @WithMockCrowdfundUser
     fun mustThrowExceptionForNonExistingUserOnEmailUpdate() {
         verify("Must return bad request") {
             val request = objectMapper.writeValueAsString(EmailRequest(testContext.email))
@@ -123,7 +123,7 @@ class UserControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdFundUser
+    @WithMockCrowdfundUser
     fun mustThrowExceptionForNonExistingUser() {
         verify("Must return bad request") {
             mockMvc.perform(
@@ -136,7 +136,7 @@ class UserControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdFundUser
+    @WithMockCrowdfundUser
     fun mustBeAbleToGetUnconfirmedEmail() {
         suppose("The user is created without email") {
             testContext.user = createUser(verified = false, email = null)
@@ -166,7 +166,7 @@ class UserControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdFundUser
+    @WithMockCrowdfundUser
     fun mustBeAbleToConfirmEmail() {
         suppose("The user is created without email") {
             testContext.user = createUser()
@@ -194,7 +194,7 @@ class UserControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdFundUser
+    @WithMockCrowdfundUser
     fun mustNotBeAbleToConfirmEmailWithExpiredToken() {
         suppose("The user is created with unconfirmed email") {
             testContext.user = createUser()
