@@ -1,3 +1,9 @@
+import com.google.protobuf.gradle.generateProtoTasks
+import com.google.protobuf.gradle.id
+import com.google.protobuf.gradle.ofSourceSet
+import com.google.protobuf.gradle.plugins
+import com.google.protobuf.gradle.protobuf
+import com.google.protobuf.gradle.protoc
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -15,11 +21,12 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
     id("io.gitlab.arturbosch.detekt").version("1.16.0")
     id("org.web3j").version("4.8.4")
+    id("com.google.protobuf") version "0.8.17"
     idea
     jacoco
 }
 group = "com.ampnet"
-version = "0.0.2"
+version = "0.0.3"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
@@ -47,6 +54,7 @@ dependencies {
     implementation("com.github.komputing:kethereum:0.84.1")
     implementation("org.web3j:core:4.8.4")
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
+    implementation("net.devh:grpc-server-spring-boot-starter:2.12.0.RELEASE")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
@@ -149,4 +157,22 @@ web3j {
 
 sourceSets.main {
     java.srcDirs("$buildDir/generated/sources/web3j/main/java")
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.15.8"
+    }
+    plugins {
+        id("grpc") {
+            artifact = "io.grpc:protoc-gen-grpc-java:1.37.0"
+        }
+    }
+    generateProtoTasks {
+        ofSourceSet("main").forEach {
+            it.plugins {
+                id("grpc")
+            }
+        }
+    }
 }
