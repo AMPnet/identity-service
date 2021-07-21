@@ -29,13 +29,14 @@ class VerificationServiceImpl : VerificationService {
 
     @Throws(ResourceNotFoundException::class, InvalidRequestException::class)
     override fun verifyPayload(address: String, signedPayload: String): Boolean {
-        val payload = userPayload[address]
-            ?: throw ResourceNotFoundException(
-                ErrorCode.AUTH_PAYLOAD_MISSING, "There is no payload associated with address: $address."
-            )
+        val payload = userPayload[address] ?: throw ResourceNotFoundException(
+            ErrorCode.AUTH_PAYLOAD_MISSING, "There is no payload associated with address: $address."
+        )
         userPayload.remove(address)
         try {
             val publicKey = signedMessageToKey(payload.toByteArray(), getSignatureData(signedPayload))
+            logger.debug { "User address: $address" }
+            logger.debug { "Public key: ${publicKey.toAddress()}" }
             return address == publicKey.toAddress().toString()
         } catch (ex: SignatureException) {
             throw InvalidRequestException(
