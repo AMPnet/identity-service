@@ -54,8 +54,7 @@ class VerificationServiceImpl : VerificationService {
     }
 
     private fun generateEip191Message(message: ByteArray): ByteArray =
-        0x19.toByte().toByteArray() + 0x45.toByte().toByteArray() +
-            ("thereum Signed Message:\n" + message.size).toByteArray() + message
+        0x19.toByte().toByteArray() + ("Ethereum Signed Message:\n" + message.size).toByteArray() + message
 
     /*
      ECDSA signatures consist of two numbers(integers): r and s.
