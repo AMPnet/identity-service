@@ -34,8 +34,9 @@ class VerificationServiceImpl : VerificationService {
         try {
             val publicKey = signedMessageToKey(payload.toByteArray(), getSignatureData(signedPayload))
             logger.debug { "User address: $address" }
-            logger.debug { "Payload: $payload" }
             logger.debug { "Public key: ${publicKey.toAddress()}" }
+            logger.debug { "Payload: $payload" }
+            logger.debug { "Signed payload: $signedPayload" }
             if (address != publicKey.toAddress().toString()) {
                 throw InvalidRequestException(
                     ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID,
