@@ -27,7 +27,6 @@ class AuthorizationController(
     fun getPayload(@RequestBody request: PayloadRequest): ResponseEntity<PayloadResponse> {
         logger.debug { "Received request to get payload for address: ${request.address}" }
         val payload = verificationService.generatePayload(request.address)
-        logger.debug { "Generated payload: $payload for wallet: ${request.address}" }
         return ResponseEntity.ok(PayloadResponse(payload))
     }
 

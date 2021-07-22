@@ -31,13 +31,15 @@ class VerificationServiceImpl : VerificationService {
         val payload = userPayload[address] ?: throw ResourceNotFoundException(
             ErrorCode.AUTH_PAYLOAD_MISSING, "There is no payload associated with address: $address."
         )
+        verifySignedPayload(address, payload, signedPayload)
+    }
+
+    internal fun verifySignedPayload(address: String, payload: String, signedPayload: String) {
+        val eip919 = generateEip191Message(payload.toByteArray())
         try {
-            val publicKey = signedMessageToKey(payload.toByteArray(), getSignatureData(signedPayload))
-            logger.debug { "User address: $address" }
-            logger.debug { "Public key: ${publicKey.toAddress()}" }
-            logger.debug { "Payload: $payload" }
-            logger.debug { "Signed payload: $signedPayload" }
-            if (address != publicKey.toAddress().toString()) {
+            val signatureData = getSignatureData(signedPayload)
+            val publicKey = signedMessageToKey(eip919, signatureData)
+            if (address.lowercase() != publicKey.toAddress().toString().lowercase()) {
                 throw InvalidRequestException(
                     ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID,
                     "Address: $address not equal to signed address: ${publicKey.toAddress()}"
@@ -50,6 +52,10 @@ class VerificationServiceImpl : VerificationService {
             )
         }
     }
+
+    private fun generateEip191Message(message: ByteArray): ByteArray =
+        0x19.toByte().toByteArray() + 0x45.toByte().toByteArray() +
+            ("thereum Signed Message:\n" + message.size).toByteArray() + message
 
     /*
      ECDSA signatures consist of two numbers(integers): r and s.
@@ -73,3 +79,5 @@ class VerificationServiceImpl : VerificationService {
         }
     }
 }
+
+private fun Byte.toByteArray() = ByteArray(1) { this }

@@ -13,10 +13,10 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.kethereum.crypto.signMessage
 import org.kethereum.crypto.test_data.ADDRESS
 import org.kethereum.crypto.test_data.KEY_PAIR
 import org.kethereum.crypto.toHex
+import org.kethereum.eip191.signWithEIP191PersonalSign
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -61,7 +61,7 @@ class AuthorizationControllerTest : ControllerTestBase() {
         }
         suppose("Client signs the payload") {
             val payload = verificationService.generatePayload(ADDRESS.toString())
-            testContext.signedPayload = "0x" + KEY_PAIR.signMessage(payload.toByteArray()).toHex()
+            testContext.signedPayload = "0x" + KEY_PAIR.signWithEIP191PersonalSign(payload.toByteArray()).toHex()
         }
 
         verify("Client is authorized and gets jwt") {
@@ -91,7 +91,7 @@ class AuthorizationControllerTest : ControllerTestBase() {
         }
         suppose("Client signs the payload") {
             val payload = verificationService.generatePayload(ADDRESS.toString())
-            testContext.signedPayload = "0x" + KEY_PAIR.signMessage(payload.toByteArray()).toHex()
+            testContext.signedPayload = "0x" + KEY_PAIR.signWithEIP191PersonalSign(payload.toByteArray()).toHex()
         }
 
         verify("Client is authorized and gets jwt") {
