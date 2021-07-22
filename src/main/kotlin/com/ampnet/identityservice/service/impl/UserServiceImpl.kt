@@ -102,6 +102,16 @@ class UserServiceImpl(
         return generateUserResponse(user)
     }
 
+    @Transactional
+    override fun findAddressByUserInfoUuid(userInfoUuid: UUID): String {
+        userRepository.findByUserInfoUuid(userInfoUuid)?.let {
+            return it.address
+        }
+            ?: throw ResourceNotFoundException(
+                ErrorCode.REG_INCOMPLETE, "User info: $userInfoUuid is not connected to a user."
+            )
+    }
+
     private fun generateUserResponse(user: User): UserResponse {
         val (email, emailVerified) = if (user.email == null) {
             Pair(mailTokenRepository.findByUserAddressOrderByCreatedAtDesc(user.address).firstOrNull()?.email, false)

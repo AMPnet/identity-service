@@ -17,15 +17,19 @@ import com.ampnet.identityservice.persistence.repository.VeriffSessionRepository
 import com.ampnet.identityservice.service.MailService
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.VerificationService
+import com.ampnet.identityservice.service.Web3jService
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.jobrunr.configuration.JobRunrConfiguration
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.kethereum.crypto.test_data.ADDRESS
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.FilterType
 import org.springframework.restdocs.RestDocumentationContextProvider
 import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation
@@ -82,6 +86,9 @@ abstract class ControllerTestBase : TestBase() {
 
     @Autowired
     protected lateinit var uuidProvider: UuidProvider
+
+    @Autowired
+    protected lateinit var web3jService: Web3jService
 
     @MockBean
     protected lateinit var mailService: MailService

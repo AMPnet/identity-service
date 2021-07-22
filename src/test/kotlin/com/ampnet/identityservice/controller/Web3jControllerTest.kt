@@ -9,8 +9,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.web3j.crypto.Credentials
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
-import org.web3j.tx.gas.StaticGasProvider
-import java.math.BigInteger
+import org.web3j.tx.gas.DefaultGasProvider
 
 @ExtendWith(value = [SpringExtension::class])
 @ActiveProfiles("secret")
@@ -23,7 +22,7 @@ class Web3jControllerTest : ControllerTestBase() {
         val credentials = Credentials.create(applicationProperties.smartContract.privateKey)
         val contract = IIssuer.load(
             applicationProperties.smartContract.issuerContractAddress, web3j, credentials,
-            StaticGasProvider(BigInteger("22000000000"), BigInteger("510000"))
+            DefaultGasProvider()
         )
         contract.approveWallet(applicationProperties.smartContract.walletAddress).send()
         val isWalletApproved = contract.isWalletApproved(applicationProperties.smartContract.walletAddress).send()

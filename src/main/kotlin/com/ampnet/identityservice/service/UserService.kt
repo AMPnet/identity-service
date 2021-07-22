@@ -11,4 +11,5 @@ interface UserService {
     fun updateEmail(email: String, address: String): UserResponse
     fun confirmMail(token: UUID): UserResponse?
     fun verifyUserWithTestData(request: KycTestRequest): UserResponse
+    fun findAddressByUserInfoUuid(userInfoUuid: UUID): String
 }

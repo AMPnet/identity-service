@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.client.ExpectedCount
 import org.springframework.test.web.client.MockRestServiceServer
 import org.springframework.test.web.client.match.MockRestRequestMatchers
@@ -23,6 +24,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.security.MessageDigest
 
+@ActiveProfiles("secret")
 class VeriffControllerTest : ControllerTestBase() {
 
     private val veriffPath = "/veriff"
@@ -116,6 +118,11 @@ class VeriffControllerTest : ControllerTestBase() {
             val userInfoList = userInfoRepository
                 .findBySessionIdOrderByCreatedAtDesc("12df6045-3846-3e45-946a-14fa6136d78b")
             assertThat(userInfoList.first().connected).isTrue()
+        }
+        verify("User address is whitelisted") {
+            Thread.sleep(20000)
+            val approved = web3jService.isWalletApproved(testContext.user.address)
+            assertThat(approved).isTrue
         }
     }
 

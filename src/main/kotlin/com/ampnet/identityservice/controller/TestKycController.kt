@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class TestKycController(
     private val userService: UserService,
-    private val applicationProperties: ApplicationProperties
+    private val applicationProperties: ApplicationProperties,
 ) {
 
     @PostMapping("/test/kyc")

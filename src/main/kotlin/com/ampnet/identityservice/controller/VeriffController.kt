@@ -1,6 +1,8 @@
 package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.exception.VeriffException
+import com.ampnet.identityservice.service.JobSchedulingService
+import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.VeriffService
 import com.ampnet.identityservice.service.pojo.ServiceVerificationResponse
 import mu.KLogging
@@ -15,7 +17,9 @@ import javax.servlet.http.HttpServletRequest
 
 @RestController
 class VeriffController(
-    private val veriffService: VeriffService
+    private val veriffService: VeriffService,
+    private val userService: UserService,
+    private val jobSchedulingService: JobSchedulingService
 ) {
 
     companion object : KLogging()
@@ -55,6 +59,8 @@ class VeriffController(
                 logger.info { "Veriff profile not approved. Veriff data: $data" }
             } else {
                 logger.info { "Successfully verified Veriff session: ${userInfo.sessionId}" }
+                val userAddress = userService.findAddressByUserInfoUuid(userInfo.uuid)
+                jobSchedulingService.enqueueTransaction(userAddress)
             }
             ResponseEntity.ok().build()
         } catch (ex: VeriffException) {
