@@ -1,5 +1,7 @@
-package com.ampnet.identityservice.service
+package com.ampnet.identityservice.service.impl
 
+import com.ampnet.identityservice.service.JobSchedulingService
+import com.ampnet.identityservice.service.Web3jService
 import org.jobrunr.scheduling.JobScheduler
 import org.springframework.stereotype.Service
 import java.util.UUID

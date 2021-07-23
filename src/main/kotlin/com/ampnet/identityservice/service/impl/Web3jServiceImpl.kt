@@ -1,7 +1,8 @@
-package com.ampnet.identityservice.service
+package com.ampnet.identityservice.service.impl
 
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.contract.IIssuer
+import com.ampnet.identityservice.service.Web3jService
 import mu.KLogging
 import org.jobrunr.jobs.annotations.Job
 import org.springframework.stereotype.Service
