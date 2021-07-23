@@ -16,6 +16,8 @@ message UserResponse {
   string date_of_birth = 7;
   string document_number = 8;
   string personal_number = 9;
+  string document_valid_from = 10;
+  string document_valid_until = 11;
 }
 
 message UsersResponse {

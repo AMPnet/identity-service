@@ -44,6 +44,8 @@ class GrpcIdentityServer(
                 dateOfBirth = userInfo.dateOfBirth ?: ""
                 personalNumber = userInfo.idNumber ?: ""
                 documentNumber = userInfo.document.number ?: ""
+                documentValidFrom = userInfo.document.validFrom ?: ""
+                documentValidUntil = userInfo.document.validUntil ?: ""
             }
         }.build()
 }
