@@ -33,8 +33,7 @@ class AuthorizationController(
     @PostMapping("/authorize/jwt")
     fun authorizeJwt(@RequestBody request: AuthorizationRequest): ResponseEntity<AccessRefreshTokenResponse> {
         logger.debug { "Received request for token with address: ${request.address}" }
-        val payloadValid = verificationService.verifyPayload(request.address, request.signedPayload)
-        if (payloadValid.not()) return ResponseEntity.badRequest().build()
+        verificationService.verifyPayload(request.address, request.signedPayload)
         val accessAndRefreshToken = tokenService.generateAccessAndRefreshForUser(request.address)
         logger.debug { "User address: ${request.address} successfully authorized." }
         userService.createUser(request.address)

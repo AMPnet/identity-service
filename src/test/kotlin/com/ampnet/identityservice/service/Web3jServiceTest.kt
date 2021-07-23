@@ -21,7 +21,7 @@ class Web3jServiceTest : TestBase() {
     @Test
     fun mustBeAbleToApproveWallets() {
         val addresses = mutableListOf<String>()
-        suppose("There are three addresses whitelisted") {
+        suppose("There are two addresses whitelisted") {
             for (i in 0..1) {
                 val keyPair = Keys.createEcKeyPair()
                 val address = "0x" + Keys.getAddress(keyPair.publicKey)

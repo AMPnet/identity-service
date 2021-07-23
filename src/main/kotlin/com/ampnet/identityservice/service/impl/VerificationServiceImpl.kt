@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service
 import java.math.BigInteger
 import java.security.SecureRandom
 import java.security.SignatureException
-import kotlin.jvm.Throws
 
 @Service
 class VerificationServiceImpl : VerificationService {
@@ -28,21 +27,34 @@ class VerificationServiceImpl : VerificationService {
     }
 
     @Throws(ResourceNotFoundException::class, InvalidRequestException::class)
-    override fun verifyPayload(address: String, signedPayload: String): Boolean {
-        val payload = userPayload[address]
-            ?: throw ResourceNotFoundException(
-                ErrorCode.AUTH_PAYLOAD_MISSING, "There is no payload associated with address: $address."
-            )
-        userPayload.remove(address)
+    override fun verifyPayload(address: String, signedPayload: String) {
+        val payload = userPayload[address] ?: throw ResourceNotFoundException(
+            ErrorCode.AUTH_PAYLOAD_MISSING, "There is no payload associated with address: $address."
+        )
+        verifySignedPayload(address, payload, signedPayload)
+    }
+
+    internal fun verifySignedPayload(address: String, payload: String, signedPayload: String) {
+        val eip919 = generateEip191Message(payload.toByteArray())
         try {
-            val publicKey = signedMessageToKey(payload.toByteArray(), getSignatureData(signedPayload))
-            return address == publicKey.toAddress().toString()
+            val signatureData = getSignatureData(signedPayload)
+            val publicKey = signedMessageToKey(eip919, signatureData)
+            if (address.lowercase() != publicKey.toAddress().toString().lowercase()) {
+                throw InvalidRequestException(
+                    ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID,
+                    "Address: $address not equal to signed address: ${publicKey.toAddress()}"
+                )
+            }
+            userPayload.remove(address)
         } catch (ex: SignatureException) {
             throw InvalidRequestException(
                 ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID, "Public key cannot be recovered from the signature", ex
             )
         }
     }
+
+    private fun generateEip191Message(message: ByteArray): ByteArray =
+        0x19.toByte().toByteArray() + ("Ethereum Signed Message:\n" + message.size).toByteArray() + message
 
     /*
      ECDSA signatures consist of two numbers(integers): r and s.
@@ -66,3 +78,5 @@ class VerificationServiceImpl : VerificationService {
         }
     }
 }
+
+private fun Byte.toByteArray() = ByteArray(1) { this }
