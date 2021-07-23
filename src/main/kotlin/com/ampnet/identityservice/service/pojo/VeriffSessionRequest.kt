@@ -16,7 +16,7 @@ data class VeriffSessionVerificationRequest(
 ) {
     constructor(user: UserResponse, callback: String) : this(
         callback,
-        VeriffSessionPerson(null, null),
+        VeriffSessionPerson("Firstname", "Lastname"),
         user.address,
         ZonedDateTime.now()
     )
