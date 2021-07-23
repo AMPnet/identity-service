@@ -4,7 +4,7 @@ import com.ampnet.identityservice.persistence.model.User
 import com.ampnet.identityservice.persistence.model.VeriffDecision
 import com.ampnet.identityservice.persistence.model.VeriffSession
 import com.ampnet.identityservice.persistence.model.VeriffSessionState
-import com.ampnet.identityservice.security.WithMockCrowdFundUser
+import com.ampnet.identityservice.security.WithMockCrowdfundUser
 import com.ampnet.identityservice.service.pojo.ServiceVerificationResponse
 import com.ampnet.identityservice.service.pojo.VeriffStatus
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -39,7 +39,7 @@ class VeriffControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdFundUser
+    @WithMockCrowdfundUser
     fun mustReturnVeriffSession() {
         suppose("User has an account") {
             databaseCleanerService.deleteAllUsers()

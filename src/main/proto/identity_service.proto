@@ -1,0 +1,29 @@
+syntax = "proto3";
+option java_multiple_files = true;
+package com.ampnet.identityservice.proto;
+
+message GetUsersRequest {
+  repeated string addresses = 1;
+}
+
+message UserResponse {
+  string address = 1;
+  string email = 2;
+  uint64 created_at = 3;
+  string language = 4;
+  string first_name = 5;
+  string last_name = 6;
+  string date_of_birth = 7;
+  string document_number = 8;
+  string personal_number = 9;
+  string document_valid_from = 10;
+  string document_valid_until = 11;
+}
+
+message UsersResponse {
+  repeated UserResponse users = 1;
+}
+
+service IdentityService {
+  rpc GetUsers (GetUsersRequest) returns (UsersResponse);
+}

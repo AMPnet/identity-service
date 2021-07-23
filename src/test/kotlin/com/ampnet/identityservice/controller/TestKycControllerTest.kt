@@ -2,7 +2,7 @@ package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.controller.pojo.request.KycTestRequest
 import com.ampnet.identityservice.persistence.model.User
-import com.ampnet.identityservice.security.WithMockCrowdFundUser
+import com.ampnet.identityservice.security.WithMockCrowdfundUser
 import com.ampnet.identityservice.service.pojo.UserResponse
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
@@ -28,7 +28,7 @@ class TestKycControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdFundUser
+    @WithMockCrowdfundUser
     fun mustBeAbleToVerifyUserWithTestData() {
         suppose("There is unverified user") {
             testContext.user = createUser()
@@ -59,7 +59,7 @@ class TestKycControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdFundUser
+    @WithMockCrowdfundUser
     fun mustReturnForbiddenIfTestKycIsDisabled() {
         suppose("There is unverified user") {
             testContext.user = createUser()
