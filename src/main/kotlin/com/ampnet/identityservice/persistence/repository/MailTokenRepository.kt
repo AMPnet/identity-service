@@ -7,5 +7,4 @@ import java.util.UUID
 interface MailTokenRepository : JpaRepository<MailToken, Int> {
     fun findByToken(token: UUID): MailToken?
     fun findByUserAddressOrderByCreatedAtDesc(address: String): List<MailToken>
-    fun findByUserAddress(address: String): MailToken?
 }
