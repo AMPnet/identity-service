@@ -46,4 +46,12 @@ class AuthorizationController(
         val accessAndRefreshToken = tokenService.generateAccessAndRefreshFromRefreshToken(request.refreshToken)
         return ResponseEntity.ok(AccessRefreshTokenResponse(accessAndRefreshToken))
     }
+
+    @PostMapping("/logout")
+    fun logout(): ResponseEntity<Unit> {
+        val address = ControllerUtils.getAddressFromSecurityContext()
+        logger.debug { "Received request to logout user: $address" }
+        tokenService.deleteRefreshToken(address)
+        return ResponseEntity.ok().build()
+    }
 }
