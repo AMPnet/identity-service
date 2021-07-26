@@ -9,7 +9,6 @@ import com.ampnet.identityservice.controller.pojo.response.PayloadResponse
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.persistence.model.RefreshToken
 import com.ampnet.identityservice.persistence.model.User
-import com.ampnet.identityservice.security.WithMockCrowdfundUser
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -22,7 +21,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.ZonedDateTime
 
 class AuthorizationControllerTest : ControllerTestBase() {
 
@@ -31,7 +29,6 @@ class AuthorizationControllerTest : ControllerTestBase() {
     private val authorizePath = "/authorize"
     private val authorizeJwtPath = "$authorizePath/jwt"
     private val tokenRefreshPath = "$authorizePath/refresh"
-    private val logoutPath = "/logout"
 
     @BeforeEach
     fun init() {
@@ -177,24 +174,6 @@ class AuthorizationControllerTest : ControllerTestBase() {
         }
     }
 
-    @Test
-    @WithMockCrowdfundUser()
-    fun mustBeAbleToLogoutUser() {
-        suppose("Refresh token exists") {
-            testContext.user = createUser()
-            testContext.refreshToken = createRefreshToken(testContext.user.address)
-        }
-
-        verify("User can logout") {
-            mockMvc.perform(post(logoutPath))
-                .andExpect(status().isOk)
-        }
-        verify("Refresh token is deleted") {
-            val optionalRefreshToken = refreshTokenRepository.findById(testContext.refreshToken.id)
-            assertThat(optionalRefreshToken).isNotPresent
-        }
-    }
-
     private fun verifyAccessRefreshTokenResponse(response: AccessRefreshTokenResponse) {
         verifyTokenForUserAddress(response.accessToken)
         assertThat(response.expiresIn).isEqualTo(applicationProperties.jwt.accessTokenValidityInMilliseconds())
@@ -206,14 +185,6 @@ class AuthorizationControllerTest : ControllerTestBase() {
     private fun verifyTokenForUserAddress(token: String) {
         val address: String = JwtTokenUtils.decodeToken(token, applicationProperties.jwt.publicKey)
         assertThat(address).isEqualTo(ADDRESS.toString())
-    }
-
-    private fun createRefreshToken(
-        address: String,
-        createdAt: ZonedDateTime = zonedDateTimeProvider.getZonedDateTime()
-    ): RefreshToken {
-        val refreshToken = RefreshToken(0, address, "9asdf90asf90asf9asfis90fkas90fkas", createdAt)
-        return refreshTokenRepository.save(refreshToken)
     }
 
     private class TestContext {

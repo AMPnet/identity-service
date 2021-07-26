@@ -1,11 +1,13 @@
 package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.controller.pojo.request.EmailRequest
+import com.ampnet.identityservice.service.TokenService
 import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.pojo.UserResponse
 import mu.KLogging
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
@@ -13,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-class UserController(private val userService: UserService) {
+class UserController(private val userService: UserService, private val tokenService: TokenService) {
 
     companion object : KLogging()
 
@@ -36,4 +38,12 @@ class UserController(private val userService: UserService) {
         userService.confirmMail(token)?.let { user ->
             ResponseEntity.ok(user)
         } ?: ResponseEntity.badRequest().build()
+
+    @PostMapping("/user/logout")
+    fun logout(): ResponseEntity<Unit> {
+        val address = ControllerUtils.getAddressFromSecurityContext()
+        logger.debug { "Received request to logout user: $address" }
+        tokenService.deleteRefreshToken(address)
+        return ResponseEntity.ok().build()
+    }
 }

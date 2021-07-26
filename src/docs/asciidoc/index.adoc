@@ -35,14 +35,6 @@ include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetAccessTokenWithRe
 .Response
 include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetAccessTokenWithRefreshToken/http-response.adoc[]
 
-=== Logout
-Request needs header: `Authorization: Bearer JWT`.
-
-.Request
-include::{snippets}/AuthorizationControllerTest/mustBeAbleToLogoutUser/http-request.adoc[]
-.Response
-include::{snippets}/AuthorizationControllerTest/mustBeAbleToLogoutUser/http-response.adoc[]
-
 == KYC API
 For KYC procedure the system supports Veriff provider.
 
@@ -82,6 +74,12 @@ include::{snippets}/UserControllerTest/mustBeAbleToGetVerifiedUser/http-response
 include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-request.adoc[]
 .Response
 include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-response.adoc[]
+
+=== Logout
+.Request
+include::{snippets}/UserControllerTest/mustBeAbleToLogoutUser/http-request.adoc[]
+.Response
+include::{snippets}/UserControllerTest/mustBeAbleToLogoutUser/http-response.adoc[]
 
 == Test API
 
