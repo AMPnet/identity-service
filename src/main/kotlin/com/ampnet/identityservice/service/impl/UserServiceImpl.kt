@@ -1,5 +1,6 @@
 package com.ampnet.identityservice.service.impl
 
+import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.controller.pojo.request.KycTestRequest
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InvalidRequestException
@@ -28,7 +29,8 @@ class UserServiceImpl(
     private val userRepository: UserRepository,
     private val userInfoRepository: UserInfoRepository,
     private val mailTokenRepository: MailTokenRepository,
-    private val mailService: MailService
+    private val mailService: MailService,
+    private val applicationProperties: ApplicationProperties
 ) : UserService {
 
     companion object : KLogging()
@@ -61,6 +63,11 @@ class UserServiceImpl(
     @Transactional
     override fun updateEmail(email: String, address: String): UserResponse {
         val user = getUser(address)
+        logger.info { "Mail confirmation is ${if (applicationProperties.mail.enabled) "enabled" else "disabled"}" }
+        if (applicationProperties.mail.enabled.not()) {
+            user.email = email
+            return generateUserResponse(user)
+        }
         val mailToken = MailToken(
             0, address, email, uuidProvider.getUuid(), zonedDateTimeProvider.getZonedDateTime()
         )

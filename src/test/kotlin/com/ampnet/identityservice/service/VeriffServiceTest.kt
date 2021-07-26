@@ -39,7 +39,8 @@ class VeriffServiceTest : JpaServiceTestBase() {
         val mailService = mock<MailService>()
         val uuidProvider = RandomUuidProvider()
         val userService = UserServiceImpl(
-            uuidProvider, zonedDateTimeProvider, userRepository, userInfoRepository, mailTokenRepository, mailService
+            uuidProvider, zonedDateTimeProvider, userRepository, userInfoRepository, mailTokenRepository,
+            mailService, applicationProperties
         )
         VeriffServiceImpl(
             zonedDateTimeProvider, veriffSessionRepository, veriffDecisionRepository, userInfoRepository,

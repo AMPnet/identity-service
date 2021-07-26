@@ -38,6 +38,45 @@ class UserControllerTest : ControllerTestBase() {
         suppose("User is existing") {
             testContext.user = createUser()
         }
+        suppose("Email verification is disabled") {
+            applicationProperties.mail.enabled = false
+        }
+
+        verify("User must be able to update email") {
+            val request = objectMapper.writeValueAsString(EmailRequest(testContext.email))
+            val result = mockMvc.perform(
+                put(userPath)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(request)
+            )
+                .andExpect(status().isOk)
+                .andReturn()
+            val userResponse: UserResponse = objectMapper.readValue(result.response.contentAsString)
+            assertThat(userResponse.address).isEqualTo(testContext.user.address)
+            assertThat(userResponse.email).isEqualTo(testContext.email)
+            assertThat(userResponse.emailVerified).isEqualTo(true)
+            assertThat(userResponse.kycCompleted).isEqualTo(false)
+        }
+        verify("Email is set") {
+            val user = userRepository.findByAddress(testContext.user.address)
+            assertThat(user?.email).isEqualTo(testContext.email)
+        }
+        verify("Email verification token is not created") {
+            val mailTokens = mailTokenRepository.findByUserAddressOrderByCreatedAtDesc(testContext.user.address)
+            assertThat(mailTokens).isEmpty()
+        }
+    }
+
+    @Test
+    @WithMockCrowdfundUser
+    fun mustBeAbleToGenerateMailConfirmationTokenForEmailUpdate() {
+        suppose("User is existing") {
+            testContext.user = createUser()
+        }
+
+        suppose("Email verification is enabled") {
+            applicationProperties.mail.enabled = true
+        }
 
         verify("User must be able to update email") {
             val request = objectMapper.writeValueAsString(EmailRequest(testContext.email))
