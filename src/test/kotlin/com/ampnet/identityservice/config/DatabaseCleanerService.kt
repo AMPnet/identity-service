@@ -31,4 +31,9 @@ class DatabaseCleanerService(val em: EntityManager) {
     fun deleteAllVeriffDecisions() {
         em.createNativeQuery("DELETE FROM veriff_decision").executeUpdate()
     }
+
+    @Transactional
+    fun deleteAllBlockchainTasks() {
+        em.createNativeQuery("DELETE FROM blockchain_task").executeUpdate()
+    }
 }
