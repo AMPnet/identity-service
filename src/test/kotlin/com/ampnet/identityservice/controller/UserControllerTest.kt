@@ -62,9 +62,8 @@ class UserControllerTest : ControllerTestBase() {
             assertThat(user?.email).isEqualTo(testContext.email)
         }
         verify("Email verification token is not created") {
-            val mailToken = mailTokenRepository.findByUserAddressOrderByCreatedAtDesc(testContext.user.address)
-                .firstOrNull()
-            assertThat(mailToken).isNull()
+            val mailTokens = mailTokenRepository.findByUserAddressOrderByCreatedAtDesc(testContext.user.address)
+            assertThat(mailTokens).isEmpty()
         }
     }
 
