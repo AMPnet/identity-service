@@ -21,7 +21,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.time.ZonedDateTime
 
 class AuthorizationControllerTest : ControllerTestBase() {
 
@@ -186,14 +185,6 @@ class AuthorizationControllerTest : ControllerTestBase() {
     private fun verifyTokenForUserAddress(token: String) {
         val address: String = JwtTokenUtils.decodeToken(token, applicationProperties.jwt.publicKey)
         assertThat(address).isEqualTo(ADDRESS.toString())
-    }
-
-    private fun createRefreshToken(
-        address: String,
-        createdAt: ZonedDateTime = zonedDateTimeProvider.getZonedDateTime()
-    ): RefreshToken {
-        val refreshToken = RefreshToken(0, address, "9asdf90asf90asf9asfis90fkas90fkas", createdAt)
-        return refreshTokenRepository.save(refreshToken)
     }
 
     private class TestContext {

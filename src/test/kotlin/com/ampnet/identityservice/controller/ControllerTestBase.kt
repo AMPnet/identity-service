@@ -6,6 +6,7 @@ import com.ampnet.identityservice.config.DatabaseCleanerService
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.ErrorResponse
 import com.ampnet.identityservice.persistence.model.Document
+import com.ampnet.identityservice.persistence.model.RefreshToken
 import com.ampnet.identityservice.persistence.model.User
 import com.ampnet.identityservice.persistence.model.UserInfo
 import com.ampnet.identityservice.persistence.repository.MailTokenRepository
@@ -38,6 +39,7 @@ import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.context.WebApplicationContext
+import java.time.ZonedDateTime
 import java.util.UUID
 
 @ExtendWith(value = [SpringExtension::class, RestDocumentationExtension::class])
@@ -129,5 +131,13 @@ abstract class ControllerTestBase : TestBase() {
         }
         val user = User(address, email, userInfo, zonedDateTimeProvider.getZonedDateTime(), null)
         return userRepository.save(user)
+    }
+
+    protected fun createRefreshToken(
+        address: String,
+        createdAt: ZonedDateTime = zonedDateTimeProvider.getZonedDateTime()
+    ): RefreshToken {
+        val refreshToken = RefreshToken(0, address, "9asdf90asf90asf9asfis90fkas90fkas", createdAt)
+        return refreshTokenRepository.save(refreshToken)
     }
 }

@@ -2,6 +2,7 @@ package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.controller.pojo.request.EmailRequest
 import com.ampnet.identityservice.persistence.model.MailToken
+import com.ampnet.identityservice.persistence.model.RefreshToken
 import com.ampnet.identityservice.persistence.model.User
 import com.ampnet.identityservice.security.WithMockCrowdfundUser
 import com.ampnet.identityservice.service.pojo.UserResponse
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.UUID
@@ -22,6 +24,7 @@ class UserControllerTest : ControllerTestBase() {
     private lateinit var testContext: TestContext
 
     private val userPath = "/user"
+    private val logoutPath = "$userPath/logout"
 
     @BeforeEach
     fun init() {
@@ -214,9 +217,39 @@ class UserControllerTest : ControllerTestBase() {
         }
     }
 
+    @Test
+    @WithMockCrowdfundUser()
+    fun mustBeAbleToLogoutUser() {
+        suppose("Refresh token exists") {
+            testContext.user = createUser()
+            testContext.refreshToken = createRefreshToken(testContext.user.address)
+        }
+
+        verify("User can logout") {
+            mockMvc.perform(post(logoutPath))
+                .andExpect(status().isOk)
+        }
+        verify("Refresh token is deleted") {
+            val optionalRefreshToken = refreshTokenRepository.findById(testContext.refreshToken.id)
+            assertThat(optionalRefreshToken).isNotPresent
+        }
+    }
+
+    @Test
+    @WithMockCrowdfundUser()
+    fun mustBeAbleToCallLogoutRouteWhenRefreshTokenDoesNotExist() {
+        suppose("User exists") { testContext.user = createUser() }
+
+        verify("User can call logout") {
+            mockMvc.perform(post(logoutPath))
+                .andExpect(status().isOk)
+        }
+    }
+
     private class TestContext {
         lateinit var user: User
         lateinit var token: UUID
         val email = "new_email@gmail.com"
+        lateinit var refreshToken: RefreshToken
     }
 }

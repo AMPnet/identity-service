@@ -75,6 +75,12 @@ include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-request.adoc
 .Response
 include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-response.adoc[]
 
+=== Logout
+.Request
+include::{snippets}/UserControllerTest/mustBeAbleToLogoutUser/http-request.adoc[]
+.Response
+include::{snippets}/UserControllerTest/mustBeAbleToLogoutUser/http-response.adoc[]
+
 == Test API
 
 === Verify User with Test Data
