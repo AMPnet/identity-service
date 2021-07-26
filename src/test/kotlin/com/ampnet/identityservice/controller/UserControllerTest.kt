@@ -13,8 +13,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import org.springframework.http.MediaType
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.UUID
@@ -226,12 +226,23 @@ class UserControllerTest : ControllerTestBase() {
         }
 
         verify("User can logout") {
-            mockMvc.perform(MockMvcRequestBuilders.post(logoutPath))
+            mockMvc.perform(post(logoutPath))
                 .andExpect(status().isOk)
         }
         verify("Refresh token is deleted") {
             val optionalRefreshToken = refreshTokenRepository.findById(testContext.refreshToken.id)
             assertThat(optionalRefreshToken).isNotPresent
+        }
+    }
+
+    @Test
+    @WithMockCrowdfundUser()
+    fun mustBeAbleToCallLogoutRouteWhenRefreshTokenDoesNotExist() {
+        suppose("User exists") { testContext.user = createUser() }
+
+        verify("User can call logout") {
+            mockMvc.perform(post(logoutPath))
+                .andExpect(status().isOk)
         }
     }
 
