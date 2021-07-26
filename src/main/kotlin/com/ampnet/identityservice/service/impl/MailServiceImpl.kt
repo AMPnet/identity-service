@@ -24,7 +24,6 @@ class MailServiceImpl(
         |<p>Follow the link the confirm your email: <a href="{{& link}}">{{& link}}</a></p>""".trimMargin()
 
     override fun sendEmailConfirmation(receiver: String, token: UUID) {
-        if (applicationProperties.mail.enabled.not()) return
         val confirmationLink = "$baseUrl/user/email?token=$token"
         val mail = mailSender.createMimeMessage().apply {
             val helper = MimeMessageHelper(this, "UTF-8")

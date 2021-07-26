@@ -23,12 +23,12 @@ class DatabaseCleanerService(val em: EntityManager) {
     }
 
     @Transactional
-    fun deleteAllRefreshTokens() {
-        em.createNativeQuery("DELETE FROM refresh_token").executeUpdate()
+    fun deleteAllVeriffDecisions() {
+        em.createNativeQuery("DELETE FROM veriff_decision").executeUpdate()
     }
 
     @Transactional
-    fun deleteAllVeriffDecisions() {
-        em.createNativeQuery("DELETE FROM veriff_decision").executeUpdate()
+    fun deleteAllRefreshTokens() {
+        em.createNativeQuery("DELETE FROM refresh_token").executeUpdate()
     }
 }
