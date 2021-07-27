@@ -56,5 +56,5 @@ class MailProperties {
 class QueueProperties {
     var polling: Long = 5_000
     var initialDelay: Long = 15_000
-    var waiting: Long = 10 * 60 * 1000
+    var miningPeriod: Long = 10 * 60 * 1000
 }

@@ -131,7 +131,7 @@ class BlockchainQueueServiceTest : TestBase() {
             testContext.task = createBlockchainTask(
                 status = BlockchainTaskStatus.IN_PROCESS,
                 hash = hash,
-                updatedAt = zonedDateTimeProvider.getZonedDateTime().minusMinutes(applicationProperties.queue.waiting + 1)
+                updatedAt = zonedDateTimeProvider.getZonedDateTime().minusMinutes(applicationProperties.queue.miningPeriod * 2)
             )
         }
 
@@ -154,7 +154,7 @@ class BlockchainQueueServiceTest : TestBase() {
                 payload = "some_address",
                 status = BlockchainTaskStatus.IN_PROCESS,
                 hash = "some_hash",
-                updatedAt = zonedDateTimeProvider.getZonedDateTime().minusMinutes(applicationProperties.queue.waiting * 2)
+                updatedAt = zonedDateTimeProvider.getZonedDateTime().minusMinutes(applicationProperties.queue.miningPeriod * 2)
             )
         }
         suppose("Blockchain service will mine transaction") {

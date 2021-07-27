@@ -63,9 +63,9 @@ class BlockchainQueueServiceImpl(
                 logger.info { "Task is completed: $task" }
                 blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.COMPLETED, task.hash)
             } else {
-                if (task.updatedAt?.isBefore(getMaximumWaitingTime()) == true) {
+                if (task.updatedAt?.isBefore(getMaximumMiningPeriod()) == true) {
                     logger.warn {
-                        "Waiting for transaction: $hash exceeded: ${applicationProperties.queue.waiting} minutes"
+                        "Waiting for transaction: $hash exceeded: ${applicationProperties.queue.miningPeriod} minutes"
                     }
                     blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.FAILED, task.hash)
                 } else {
@@ -86,6 +86,6 @@ class BlockchainQueueServiceImpl(
         blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.IN_PROCESS, hash)
     }
 
-    private fun getMaximumWaitingTime() =
-        timeProvider.getZonedDateTime().minusSeconds(applicationProperties.queue.waiting)
+    private fun getMaximumMiningPeriod() =
+        timeProvider.getZonedDateTime().minusSeconds(applicationProperties.queue.miningPeriod)
 }
