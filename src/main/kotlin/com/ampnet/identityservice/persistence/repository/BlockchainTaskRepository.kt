@@ -11,13 +11,15 @@ import java.util.UUID
 
 interface BlockchainTaskRepository : JpaRepository<BlockchainTask, UUID> {
     @Query(
-        "SELECT * FROM blockchain_task WHERE status='IN_PROCESS' ORDER BY created_at ASC LIMIT 1;",
+        "SELECT * FROM blockchain_task WHERE status='IN_PROCESS' " +
+            "ORDER BY created_at ASC LIMIT 1 FOR UPDATE SKIP LOCKED;",
         nativeQuery = true
     )
     fun getInProcess(): BlockchainTask?
 
     @Query(
-        "SELECT * FROM blockchain_task WHERE status='CREATED' ORDER BY created_at ASC LIMIT 1 FOR UPDATE SKIP LOCKED;",
+        "SELECT * FROM blockchain_task WHERE status='CREATED' " +
+            "ORDER BY created_at ASC LIMIT 1 FOR UPDATE SKIP LOCKED;",
         nativeQuery = true
     )
     fun getFirstPending(): BlockchainTask?

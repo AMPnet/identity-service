@@ -83,5 +83,5 @@ class BlockchainQueueServiceImpl(
     }
 
     private fun getMaximumWaitingTime() =
-        timeProvider.getZonedDateTime().minusMinutes(applicationProperties.queue.waiting)
+        timeProvider.getZonedDateTime().minusSeconds(applicationProperties.queue.waiting)
 }
