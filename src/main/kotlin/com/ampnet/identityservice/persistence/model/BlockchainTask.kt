@@ -40,7 +40,8 @@ class BlockchainTask(
     ) : this(uuidProvider.getUuid(), payload, BlockchainTaskStatus.CREATED, null, timeProvider.getZonedDateTime(), null)
 
     override fun toString(): String =
-        "BlockchainTask(uuid=$uuid, payload='$payload', status=$status, hash=$hash, createdAt=$createdAt, updatedAt=$updatedAt)"
+        "BlockchainTask(uuid=$uuid, payload='$payload', status=$status, hash=$hash, " +
+            "createdAt=$createdAt, updatedAt=$updatedAt)"
 }
 
 enum class BlockchainTaskStatus {

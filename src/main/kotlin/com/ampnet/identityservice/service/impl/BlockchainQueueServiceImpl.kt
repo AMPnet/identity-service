@@ -47,7 +47,7 @@ class BlockchainQueueServiceImpl(
             handleInProcessTask(it)
             return
         }
-        blockchainTaskRepository.getFirstPending()?.let {
+        blockchainTaskRepository.getPending()?.let {
             handlePendingTask(it)
             return
         }
@@ -61,13 +61,13 @@ class BlockchainQueueServiceImpl(
         task.hash?.let { hash ->
             if (blockchainService.isMined(hash)) {
                 logger.info { "Task is completed: $task" }
-                blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.COMPLETED)
+                blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.COMPLETED, task.hash)
             } else {
                 if (task.updatedAt?.isBefore(getMaximumWaitingTime()) == true) {
                     logger.warn {
                         "Waiting for transaction: $hash exceeded: ${applicationProperties.queue.waiting} minutes"
                     }
-                    blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.FAILED)
+                    blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.FAILED, task.hash)
                 } else {
                     logger.info { "Waiting for task to be mined: $hash" }
                 }
@@ -78,6 +78,10 @@ class BlockchainQueueServiceImpl(
     private fun handlePendingTask(task: BlockchainTask) {
         logger.debug { "Starting to process task: $task" }
         val hash = blockchainService.whitelistAddress(task.payload)
+        if (hash.isNullOrEmpty()) {
+            logger.warn { "Failed to get has for whitelisting address: ${task.payload}" }
+            return
+        }
         logger.info { "Whitelisting address: ${task.payload} with hash: $hash" }
         blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.IN_PROCESS, hash)
     }
