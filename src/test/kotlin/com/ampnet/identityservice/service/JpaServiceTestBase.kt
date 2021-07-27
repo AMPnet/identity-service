@@ -56,9 +56,6 @@ abstract class JpaServiceTestBase : TestBase() {
     @Qualifier("camelCaseObjectMapper")
     protected lateinit var camelCaseObjectMapper: ObjectMapper
 
-    protected val uuidProvider = RandomUuidProvider()
-    protected val timeProvider = CurrentZonedDateTimeProvider()
-
     protected fun createUser(
         address: String = ADDRESS.toString(),
     ): User {

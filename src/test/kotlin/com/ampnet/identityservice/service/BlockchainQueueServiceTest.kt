@@ -77,17 +77,17 @@ class BlockchainQueueServiceTest : ControllerTestBase() {
 
     @Test
     fun mustHandleTaskInProcessAndNewTask() {
-        suppose("There is task in process") {
-            testContext.task = createBlockchainTask(status = BlockchainTaskStatus.IN_PROCESS, hash = hash)
-        }
-        suppose("New task is created") {
-            createBlockchainTask()
-        }
         suppose("Blockchain service will whitelist any address") {
             given(blockchainService.whitelistAddress(any())).willReturn(hash)
         }
         suppose("Transactions are mined") {
             given(blockchainService.isMined(any())).willReturn(true)
+        }
+        suppose("There is task in process") {
+            testContext.task = createBlockchainTask(status = BlockchainTaskStatus.IN_PROCESS, hash = hash)
+        }
+        suppose("New task is created") {
+            createBlockchainTask()
         }
 
         verify("Both tasks are handled in correct order") {
@@ -103,15 +103,15 @@ class BlockchainQueueServiceTest : ControllerTestBase() {
 
     @Test
     fun mustHandleNotMinedTransaction() {
+        suppose("Transaction is not mined") {
+            given(blockchainService.isMined(any())).willReturn(false)
+        }
         suppose("There is task in process") {
             testContext.task = createBlockchainTask(
                 status = BlockchainTaskStatus.IN_PROCESS,
                 hash = hash,
                 updatedAt = zonedDateTimeProvider.getZonedDateTime().minusMinutes(applicationProperties.queue.waiting + 1)
             )
-        }
-        suppose("Transaction is not mined") {
-            given(blockchainService.isMined(any())).willReturn(false)
         }
 
         verify("Task will fail") {
@@ -159,7 +159,7 @@ class BlockchainQueueServiceTest : ControllerTestBase() {
     }
 
     @Test
-    fun mustHandleMultipleTasks() {
+    fun mustHandleMultipleTasksInOrder() {
         suppose("Blockchain service will whitelist any address") {
             given(blockchainService.whitelistAddress(any())).willReturn(hash)
         }
@@ -172,16 +172,21 @@ class BlockchainQueueServiceTest : ControllerTestBase() {
             }
         }
 
-        verify("Tasks are handled") {
+        verify("Tasks are handled in order") {
             waitUntilTasksAreProcessed()
             val tasks = blockchainTaskRepository.findAll()
+            tasks.sortBy { it.createdAt }
             assertThat(tasks).hasSize(10)
             assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED }
+            for (i in 0..8) {
+                assertThat(tasks[i].createdAt).isBefore(tasks[i + 1].createdAt)
+                assertThat(tasks[i].updatedAt).isBefore(tasks[i + 1].updatedAt)
+            }
         }
     }
 
     private fun waitUntilTasksAreProcessed(retry: Int = 5) {
-        Thread.sleep(applicationProperties.queue.initialDelay * 10)
+        Thread.sleep(applicationProperties.queue.initialDelay * 2)
         if (retry == 0) return
         blockchainTaskRepository.getFirstPending()?.let {
             Thread.sleep(applicationProperties.queue.polling * 2)
