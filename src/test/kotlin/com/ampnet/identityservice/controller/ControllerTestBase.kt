@@ -15,6 +15,7 @@ import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
 import com.ampnet.identityservice.persistence.repository.VeriffDecisionRepository
 import com.ampnet.identityservice.persistence.repository.VeriffSessionRepository
+import com.ampnet.identityservice.service.BlockchainService
 import com.ampnet.identityservice.service.MailService
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.VerificationService
@@ -87,6 +88,9 @@ abstract class ControllerTestBase : TestBase() {
 
     @MockBean
     protected lateinit var mailService: MailService
+
+    @MockBean
+    protected lateinit var blockchainService: BlockchainService
 
     protected lateinit var mockMvc: MockMvc
 

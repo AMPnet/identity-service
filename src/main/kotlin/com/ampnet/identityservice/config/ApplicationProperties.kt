@@ -12,6 +12,7 @@ class ApplicationProperties {
     val test = TestProperties()
     val smartContract = SmartContractProperties()
     val mail = MailProperties()
+    val queue = QueueProperties()
 }
 
 @Suppress("MagicNumber")
@@ -49,4 +50,11 @@ class MailProperties {
     var baseUrl: String = ""
     var sender: String = "no-reply@ampnet.io"
     var enabled: Boolean = false
+}
+
+@Suppress("MagicNumber")
+class QueueProperties {
+    var polling: Long = 5_000
+    var initialDelay: Long = 15_000
+    var miningPeriod: Long = 10 * 60 * 1000
 }
