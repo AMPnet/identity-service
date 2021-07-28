@@ -1,6 +1,7 @@
 package com.ampnet.identityservice.service
 
 import com.ampnet.identityservice.TestBase
+import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.config.DatabaseCleanerService
 import com.ampnet.identityservice.persistence.model.BlockchainTask
@@ -47,6 +48,7 @@ class BlockchainQueueServiceTest : TestBase() {
     fun init() {
         testContext = TestContext()
         databaseCleanerService.deleteAllBlockchainTasks()
+        given(blockchainService.isWhitelisted(any())).willReturn(true)
     }
 
     @AfterEach
@@ -207,6 +209,30 @@ class BlockchainQueueServiceTest : TestBase() {
                 assertThat(tasks[i].createdAt).isBefore(tasks[i + 1].createdAt)
                 assertThat(tasks[i].updatedAt).isBefore(tasks[i + 1].updatedAt)
             }
+        }
+    }
+
+    @Test
+    fun mustHandleMinedButNotWhitelistedAddress() {
+        suppose("Blockchain service will whitelist address") {
+            given(blockchainService.whitelistAddress(address)).willReturn(hash)
+        }
+        suppose("Transaction is mined") {
+            given(blockchainService.isMined(hash)).willReturn(true)
+        }
+        suppose("Blockchain service did not managed to whitelist address") {
+            given(blockchainService.isWhitelisted(address)).willReturn(false)
+        }
+        suppose("There is a task in queue") {
+            testContext.task = createBlockchainTask()
+        }
+
+        verify("Service will handle the task") {
+            waitUntilTasksAreProcessed()
+            val tasks = blockchainTaskRepository.findAll()
+            assertThat(tasks).hasSize(1)
+            assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.FAILED)
+            assertThat(tasks.first().hash).isEqualTo(hash)
         }
     }
 

@@ -1,11 +1,11 @@
 package com.ampnet.identityservice.service.impl
 
+import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.persistence.model.BlockchainTask
 import com.ampnet.identityservice.persistence.model.BlockchainTaskStatus
 import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
 import com.ampnet.identityservice.service.BlockchainQueueService
-import com.ampnet.identityservice.service.BlockchainService
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import mu.KLogging
@@ -60,8 +60,7 @@ class BlockchainQueueServiceImpl(
         }
         task.hash?.let { hash ->
             if (blockchainService.isMined(hash)) {
-                logger.info { "Task is completed: $task" }
-                blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.COMPLETED, task.hash)
+                handleMinedTransaction(task)
             } else {
                 if (task.updatedAt?.isBefore(getMaximumMiningPeriod()) == true) {
                     logger.warn {
@@ -84,6 +83,17 @@ class BlockchainQueueServiceImpl(
         }
         logger.info { "Whitelisting address: ${task.payload} with hash: $hash" }
         blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.IN_PROCESS, hash)
+    }
+
+    private fun handleMinedTransaction(task: BlockchainTask) {
+        logger.info { "Transaction is mined: ${task.hash}" }
+        if (blockchainService.isWhitelisted(task.payload)) {
+            blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.COMPLETED, task.hash)
+            logger.info { "Address ${task.payload} is whitelisted. Task is completed: $task" }
+        } else {
+            blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.FAILED, task.hash)
+            logger.error { "Address: ${task.payload} is not whitelisted. Transaction is mined: ${task.hash}" }
+        }
     }
 
     private fun getMaximumMiningPeriod() =

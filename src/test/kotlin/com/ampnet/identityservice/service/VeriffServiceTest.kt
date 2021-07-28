@@ -38,9 +38,10 @@ class VeriffServiceTest : JpaServiceTestBase() {
     private val veriffService: VeriffServiceImpl by lazy {
         val mailService = mock<MailService>()
         val uuidProvider = RandomUuidProvider()
+        val blockchainQueueService = mock<BlockchainQueueService>()
         val userService = UserServiceImpl(
             uuidProvider, zonedDateTimeProvider, userRepository, userInfoRepository, mailTokenRepository,
-            mailService, applicationProperties
+            mailService, applicationProperties, blockchainQueueService
         )
         VeriffServiceImpl(
             zonedDateTimeProvider, veriffSessionRepository, veriffDecisionRepository, userInfoRepository,
