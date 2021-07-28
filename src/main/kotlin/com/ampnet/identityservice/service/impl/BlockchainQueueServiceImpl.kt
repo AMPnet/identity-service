@@ -79,7 +79,7 @@ class BlockchainQueueServiceImpl(
         logger.debug { "Starting to process task: $task" }
         val hash = blockchainService.whitelistAddress(task.payload)
         if (hash.isNullOrEmpty()) {
-            logger.warn { "Failed to get has for whitelisting address: ${task.payload}" }
+            logger.warn { "Failed to get hash for whitelisting address: ${task.payload}" }
             return
         }
         logger.info { "Whitelisting address: ${task.payload} with hash: $hash" }

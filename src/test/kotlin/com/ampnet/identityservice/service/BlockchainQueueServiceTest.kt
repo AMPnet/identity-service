@@ -26,22 +26,22 @@ class BlockchainQueueServiceTest : TestBase() {
     private lateinit var testContext: TestContext
 
     @Autowired
-    protected lateinit var databaseCleanerService: DatabaseCleanerService
+    private lateinit var databaseCleanerService: DatabaseCleanerService
 
     @Autowired
     private lateinit var blockchainTaskRepository: BlockchainTaskRepository
 
     @Autowired
-    protected lateinit var applicationProperties: ApplicationProperties
+    private lateinit var applicationProperties: ApplicationProperties
 
     @Autowired
-    protected lateinit var zonedDateTimeProvider: ZonedDateTimeProvider
+    private lateinit var zonedDateTimeProvider: ZonedDateTimeProvider
 
     @Autowired
-    protected lateinit var uuidProvider: UuidProvider
+    private lateinit var uuidProvider: UuidProvider
 
     @MockBean
-    protected lateinit var blockchainService: BlockchainService
+    private lateinit var blockchainService: BlockchainService
 
     @BeforeEach
     fun init() {
