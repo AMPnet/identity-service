@@ -1,7 +1,6 @@
 package com.ampnet.identityservice.blockchain
 
 import com.ampnet.identityservice.config.ApplicationProperties
-import com.ampnet.identityservice.contract.IIssuer
 import com.ampnet.identityservice.service.unwrap
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
