@@ -24,12 +24,10 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
     private val web3j by lazy { Web3j.build(HttpService(applicationProperties.provider.blockchainApi)) }
 
     @Suppress("ReturnCount")
-    override fun whitelistAddress(address: String): String? {
+    override fun whitelistAddress(address: String, issuerAddress: String): String? {
         logger.info { "Whitelisting address: $address" }
         val credentials = Credentials.create(applicationProperties.smartContract.privateKey)
-        val contract = IIssuer.load(
-            applicationProperties.smartContract.issuerContractAddress, web3j, credentials, DefaultGasProvider()
-        )
+        val contract = IIssuer.load(issuerAddress, web3j, credentials, DefaultGasProvider())
         val approveWalletCall = contract.approveWallet(address).encodeFunctionCall()
         val nonce = web3j.ethGetTransactionCount(address, DefaultBlockParameterName.LATEST)
             .sendSafely()?.transactionCount ?: return null
@@ -47,11 +45,9 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
         return transaction?.transactionReceipt?.unwrap()?.isStatusOK ?: false
     }
 
-    override fun isWhitelisted(address: String): Boolean {
+    override fun isWhitelisted(address: String, issuerAddress: String): Boolean {
         val transactionManager = ReadonlyTransactionManager(web3j, applicationProperties.smartContract.walletAddress)
-        val contract = IIssuer.load(
-            applicationProperties.smartContract.issuerContractAddress, web3j, transactionManager, DefaultGasProvider()
-        )
+        val contract = IIssuer.load(issuerAddress, web3j, transactionManager, DefaultGasProvider())
         return contract.isWalletApproved(address).sendSafely() ?: false
     }
 }

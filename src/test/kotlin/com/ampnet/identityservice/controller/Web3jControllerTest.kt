@@ -23,7 +23,7 @@ class Web3jControllerTest : ControllerTestBase() {
     fun mustReturnTrueForWalletApproved() {
         val credentials = Credentials.create(applicationProperties.smartContract.privateKey)
         val contract = IIssuer.load(
-            applicationProperties.smartContract.issuerContractAddress, web3j, credentials,
+            "0x8Ba5082E853b87E8D92970506EBb7c7097d6F640", web3j, credentials,
             StaticGasProvider(BigInteger("22000000000"), BigInteger("510000"))
         )
         contract.approveWallet(applicationProperties.smartContract.walletAddress).send()

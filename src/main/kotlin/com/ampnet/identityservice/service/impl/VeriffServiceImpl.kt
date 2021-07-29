@@ -70,7 +70,7 @@ class VeriffServiceImpl(
      * For more info see: <a href="https://developers.veriff.com/#session-status-diagram">Veriff diagram</a>
      * If the session is older than 7 days, create new session.
      *
-     * @param address String of the user who initiated Veriff session flow.
+     * @param address String user wallet address which initiated Veriff session flow.
      * @param baseUrl String of the url from which request came from.
      * @return ServiceVerificationResponse containing Veriff session verificationUrl and state as mandatory data,
      * `decision` is null until Veriff sends the data to webhook. Null response is returned if

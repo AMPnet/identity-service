@@ -78,6 +78,7 @@ class UserServiceImpl(
     }
 
     @Transactional
+    @Throws(InvalidRequestException::class)
     override fun confirmMail(token: UUID): UserResponse? {
         mailTokenRepository.findByToken(token)?.let { mailToken ->
             if (mailToken.isExpired(zonedDateTimeProvider.getZonedDateTime())) {
@@ -109,11 +110,20 @@ class UserServiceImpl(
         return generateUserResponse(user)
     }
 
+    @Throws(InvalidRequestException::class)
+    override fun whitelistForIssuer(userAddress: String, issuerAddress: String) {
+        val user = getUser(userAddress)
+        if (user.userInfoUuid != null) {
+            blockchainQueueService.createWhitelistAddressTask(userAddress, issuerAddress)
+        } else {
+            throw InvalidRequestException(ErrorCode.REG_VERIFF, "Missing KYC data for user: $userAddress")
+        }
+    }
+
     private fun verifyUser(user: User, userInfo: UserInfo): User {
         disconnectUserInfo(user)
         userInfo.connected = true
         user.userInfoUuid = userInfo.uuid
-        blockchainQueueService.createWhitelistAddressTask(user.address)
         return user
     }
 

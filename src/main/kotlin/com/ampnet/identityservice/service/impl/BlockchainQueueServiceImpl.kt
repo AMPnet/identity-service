@@ -35,9 +35,13 @@ class BlockchainQueueServiceImpl(
         )
     }
 
-    override fun createWhitelistAddressTask(address: String) {
+    override fun createWhitelistAddressTask(address: String, issuerAddress: String) {
+        if (isWhitelistedOrInProcess(address, issuerAddress)) {
+            logger.info { "Address: $address for issuer: $issuerAddress already whitelisted or in process" }
+            return
+        }
         logger.info { "Received task for address: $address" }
-        val blockchainTask = BlockchainTask(address, uuidProvider, timeProvider)
+        val blockchainTask = BlockchainTask(address, issuerAddress, uuidProvider, timeProvider)
         blockchainTaskRepository.save(blockchainTask)
         logger.info { "Created BlockchainTask: $blockchainTask" }
     }
@@ -76,7 +80,7 @@ class BlockchainQueueServiceImpl(
 
     private fun handlePendingTask(task: BlockchainTask) {
         logger.debug { "Starting to process task: $task" }
-        val hash = blockchainService.whitelistAddress(task.payload)
+        val hash = blockchainService.whitelistAddress(task.payload, task.contractAddress)
         if (hash.isNullOrEmpty()) {
             logger.warn { "Failed to get hash for whitelisting address: ${task.payload}" }
             return
@@ -87,7 +91,7 @@ class BlockchainQueueServiceImpl(
 
     private fun handleMinedTransaction(task: BlockchainTask) {
         logger.info { "Transaction is mined: ${task.hash}" }
-        if (blockchainService.isWhitelisted(task.payload)) {
+        if (blockchainService.isWhitelisted(task.payload, task.contractAddress)) {
             blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.COMPLETED, task.hash)
             logger.info { "Address ${task.payload} is whitelisted. Task is completed: $task" }
         } else {
@@ -98,4 +102,8 @@ class BlockchainQueueServiceImpl(
 
     private fun getMaximumMiningPeriod() =
         timeProvider.getZonedDateTime().minusSeconds(applicationProperties.queue.miningPeriod)
+
+    private fun isWhitelistedOrInProcess(address: String, issuerAddress: String): Boolean =
+        blockchainTaskRepository.findByPayloadAndContractAddress(address, issuerAddress)
+            .any { it.status != BlockchainTaskStatus.FAILED }
 }

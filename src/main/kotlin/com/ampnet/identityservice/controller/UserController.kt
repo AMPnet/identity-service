@@ -1,6 +1,7 @@
 package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.controller.pojo.request.EmailRequest
+import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
 import com.ampnet.identityservice.service.TokenService
 import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.pojo.UserResponse
@@ -31,6 +32,14 @@ class UserController(private val userService: UserService, private val tokenServ
         val address = ControllerUtils.getAddressFromSecurityContext()
         logger.debug { "Received request to update mail for address: $address" }
         return ResponseEntity.ok(userService.updateEmail(emailRequest.email, address))
+    }
+
+    @PostMapping("/user/whitelist")
+    fun whitelistForIssuer(@RequestBody request: WhitelistRequest): ResponseEntity<Unit> {
+        val address = ControllerUtils.getAddressFromSecurityContext()
+        logger.debug { "Received request to update mail for address: $address" }
+        userService.whitelistForIssuer(address, request.issuerAddress)
+        return ResponseEntity.ok().build()
     }
 
     @GetMapping("/user/email")
