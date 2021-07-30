@@ -1,5 +1,6 @@
 package com.ampnet.identityservice.controller
 
+import com.ampnet.identityservice.blockchain.IIssuer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
