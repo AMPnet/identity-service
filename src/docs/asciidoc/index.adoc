@@ -76,7 +76,7 @@ include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-request.adoc
 include::{snippets}/UserControllerTest/mustBeAbleToUpdateEmail/http-response.adoc[]
 
 === Whitelist address for issuer
-User must complete KYC to enable whitelisting his address for any issuer
+User must complete KYC to enable whitelisting his address for any issuer.
 
 .Request
 include::{snippets}/UserControllerTest/mustBeAbleToWhitelistAddressForIssuer/http-request.adoc[]

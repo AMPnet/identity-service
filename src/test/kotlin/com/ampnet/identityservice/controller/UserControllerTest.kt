@@ -306,7 +306,7 @@ class UserControllerTest : ControllerTestBase() {
             )
                 .andExpect(status().isOk)
         }
-        verify("Whitelisting user has been called") {
+        verify("Whitelisting user address has been called") {
             verifyMock(queueService)
                 .createWhitelistAddressTask(testContext.user.address, testContext.issuerAddress)
         }
@@ -319,7 +319,7 @@ class UserControllerTest : ControllerTestBase() {
             testContext.user = createUser(verified = false)
         }
 
-        verify("User can call logout") {
+        verify("User cannot whitelist address without KYC") {
             val request = objectMapper.writeValueAsString(WhitelistRequest(testContext.issuerAddress))
             val result = mockMvc.perform(
                 post(whitelistPath)
@@ -330,7 +330,7 @@ class UserControllerTest : ControllerTestBase() {
                 .andReturn()
             verifyResponseErrorCode(result, ErrorCode.REG_VERIFF)
         }
-        verify("Whitelisting user has been called") {
+        verify("Whitelisting user address has not been called") {
             verifyMock(queueService, times(0))
                 .createWhitelistAddressTask(testContext.user.address, testContext.issuerAddress)
         }

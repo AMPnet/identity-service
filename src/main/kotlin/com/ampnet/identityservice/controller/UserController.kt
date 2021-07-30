@@ -37,7 +37,7 @@ class UserController(private val userService: UserService, private val tokenServ
     @PostMapping("/user/whitelist")
     fun whitelistForIssuer(@RequestBody request: WhitelistRequest): ResponseEntity<Unit> {
         val address = ControllerUtils.getAddressFromSecurityContext()
-        logger.debug { "Received request to update mail for address: $address" }
+        logger.debug { "Received request to whitelist address: $address for issuer: ${request.issuerAddress}" }
         userService.whitelistForIssuer(address, request.issuerAddress)
         return ResponseEntity.ok().build()
     }
