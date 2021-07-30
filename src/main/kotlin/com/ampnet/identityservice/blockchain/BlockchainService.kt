@@ -1,9 +1,7 @@
-package com.ampnet.identityservice.service
+package com.ampnet.identityservice.blockchain
 
-import org.springframework.stereotype.Service
-
-@Service
 interface BlockchainService {
     fun whitelistAddress(address: String): String?
     fun isMined(hash: String): Boolean
+    fun isWhitelisted(address: String): Boolean
 }

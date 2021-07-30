@@ -12,6 +12,7 @@ import com.ampnet.identityservice.persistence.model.UserInfo
 import com.ampnet.identityservice.persistence.repository.MailTokenRepository
 import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
+import com.ampnet.identityservice.service.BlockchainQueueService
 import com.ampnet.identityservice.service.MailService
 import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.UuidProvider
@@ -30,7 +31,8 @@ class UserServiceImpl(
     private val userInfoRepository: UserInfoRepository,
     private val mailTokenRepository: MailTokenRepository,
     private val mailService: MailService,
-    private val applicationProperties: ApplicationProperties
+    private val applicationProperties: ApplicationProperties,
+    private val blockchainQueueService: BlockchainQueueService
 ) : UserService {
 
     companion object : KLogging()
@@ -44,9 +46,7 @@ class UserServiceImpl(
         val userInfo = userInfoRepository.findBySessionIdOrderByCreatedAtDesc(sessionId).firstOrNull()
             ?: throw ResourceNotFoundException(ErrorCode.REG_INCOMPLETE, "Missing UserInfo with session id: $sessionId")
         val user = getUser(userAddress)
-        disconnectUserInfo(user)
-        userInfo.connected = true
-        user.userInfoUuid = userInfo.uuid
+        verifyUser(user, userInfo)
         logger.info { "Connected UserInfo: ${userInfo.uuid} to user: $userAddress" }
         return generateUserResponse(user)
     }
@@ -105,8 +105,16 @@ class UserServiceImpl(
             null, null, zonedDateTimeProvider.getZonedDateTime(), true, false
         )
         userInfoRepository.save(userInfo)
-        user.userInfoUuid = userInfo.uuid
+        verifyUser(user, userInfo)
         return generateUserResponse(user)
+    }
+
+    private fun verifyUser(user: User, userInfo: UserInfo): User {
+        disconnectUserInfo(user)
+        userInfo.connected = true
+        user.userInfoUuid = userInfo.uuid
+        blockchainQueueService.createWhitelistAddressTask(user.address)
+        return user
     }
 
     private fun generateUserResponse(user: User): UserResponse {

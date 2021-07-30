@@ -1,6 +1,7 @@
 package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.TestBase
+import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.config.DatabaseCleanerService
 import com.ampnet.identityservice.exception.ErrorCode
@@ -15,7 +16,6 @@ import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
 import com.ampnet.identityservice.persistence.repository.VeriffDecisionRepository
 import com.ampnet.identityservice.persistence.repository.VeriffSessionRepository
-import com.ampnet.identityservice.service.BlockchainService
 import com.ampnet.identityservice.service.MailService
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.VerificationService
