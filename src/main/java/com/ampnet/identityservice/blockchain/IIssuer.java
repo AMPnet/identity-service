@@ -100,13 +100,4 @@ public class IIssuer extends org.web3j.tx.Contract {
     public static IIssuer load(String contractAddress, org.web3j.protocol.Web3j web3j, org.web3j.tx.TransactionManager transactionManager, org.web3j.tx.gas.ContractGasProvider contractGasProvider) {
         return new IIssuer(contractAddress, web3j, transactionManager, contractGasProvider);
     }
-
-    public static org.web3j.protocol.core.RemoteCall<IIssuer> deploy(org.web3j.protocol.Web3j web3j, org.web3j.crypto.Credentials credentials, org.web3j.tx.gas.ContractGasProvider contractGasProvider) {
-        return deployRemoteCall(IIssuer.class, web3j, credentials, contractGasProvider, BINARY, "");
-    }
-
-
-    public static org.web3j.protocol.core.RemoteCall<IIssuer> deploy(org.web3j.protocol.Web3j web3j, org.web3j.tx.TransactionManager transactionManager, org.web3j.tx.gas.ContractGasProvider contractGasProvider) {
-        return deployRemoteCall(IIssuer.class, web3j, transactionManager, contractGasProvider, BINARY, "");
-    }
 }
