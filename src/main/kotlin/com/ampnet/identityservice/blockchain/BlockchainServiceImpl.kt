@@ -33,8 +33,8 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
     override fun whitelistAddress(address: String, issuerAddress: String): String? {
         logger.info { "Whitelisting address: $address" }
         val nonce = web3j.ethGetTransactionCount(credentials.address, DefaultBlockParameterName.LATEST)
-            .send().transactionCount ?: return null
-        val gasPrice = web3j.ethGasPrice().send().gasPrice ?: return null
+            .sendSafely()?.transactionCount ?: return null
+        val gasPrice = web3j.ethGasPrice().sendSafely()?.gasPrice ?: return null
         val function = Function("approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList())
         val encoded = FunctionEncoder.encode(function)
         val chainId = 80001L
