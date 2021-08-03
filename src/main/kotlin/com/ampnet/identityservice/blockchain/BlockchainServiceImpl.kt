@@ -37,8 +37,8 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
         val gasPrice = web3j.ethGasPrice().sendSafely()?.gasPrice ?: return null
         val function = Function("approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList())
         val encoded = FunctionEncoder.encode(function)
-        val chainId = 80001L
-        val manager = RawTransactionManager(web3j, credentials, chainId)
+        val mumbaiChainId = 80001L
+        val manager = RawTransactionManager(web3j, credentials, mumbaiChainId)
         val rawTransaction = RawTransaction.createTransaction(
             nonce, gasPrice, BigInteger.valueOf(200_000),
             applicationProperties.smartContract.walletApproverServiceAddress, encoded
