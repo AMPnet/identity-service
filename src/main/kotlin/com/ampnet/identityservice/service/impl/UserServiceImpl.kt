@@ -2,6 +2,7 @@ package com.ampnet.identityservice.service.impl
 
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.controller.pojo.request.KycTestRequest
+import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.exception.ResourceNotFoundException
@@ -111,10 +112,10 @@ class UserServiceImpl(
     }
 
     @Throws(InvalidRequestException::class)
-    override fun whitelistForIssuer(userAddress: String, issuerAddress: String) {
+    override fun whitelistAddress(userAddress: String, request: WhitelistRequest) {
         val user = getUser(userAddress)
         if (user.userInfoUuid != null) {
-            blockchainQueueService.createWhitelistAddressTask(userAddress, issuerAddress)
+            blockchainQueueService.createWhitelistAddressTask(userAddress, request)
         } else {
             throw InvalidRequestException(ErrorCode.REG_VERIFF, "Missing KYC data for user: $userAddress")
         }

@@ -1,5 +1,6 @@
 package com.ampnet.identityservice.controller
 
+import com.ampnet.identityservice.blockchain.Chain
 import com.ampnet.identityservice.controller.pojo.request.EmailRequest
 import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
 import com.ampnet.identityservice.exception.ErrorCode
@@ -298,7 +299,8 @@ class UserControllerTest : ControllerTestBase() {
         }
 
         verify("User can whitelist address for issuer") {
-            val request = objectMapper.writeValueAsString(WhitelistRequest(testContext.issuerAddress))
+            testContext.whitelistRequest = WhitelistRequest(testContext.issuerAddress, Chain.MATIC_TESTNET_MUMBAI.id)
+            val request = objectMapper.writeValueAsString(testContext.whitelistRequest)
             mockMvc.perform(
                 post(whitelistPath)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -308,7 +310,7 @@ class UserControllerTest : ControllerTestBase() {
         }
         verify("Whitelisting user address has been called") {
             verifyMock(queueService)
-                .createWhitelistAddressTask(testContext.user.address, testContext.issuerAddress)
+                .createWhitelistAddressTask(testContext.user.address, testContext.whitelistRequest)
         }
     }
 
@@ -320,7 +322,8 @@ class UserControllerTest : ControllerTestBase() {
         }
 
         verify("User cannot whitelist address without KYC") {
-            val request = objectMapper.writeValueAsString(WhitelistRequest(testContext.issuerAddress))
+            testContext.whitelistRequest = WhitelistRequest(testContext.issuerAddress, Chain.MATIC_TESTNET_MUMBAI.id)
+            val request = objectMapper.writeValueAsString(testContext.whitelistRequest)
             val result = mockMvc.perform(
                 post(whitelistPath)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -332,7 +335,7 @@ class UserControllerTest : ControllerTestBase() {
         }
         verify("Whitelisting user address has not been called") {
             verifyMock(queueService, times(0))
-                .createWhitelistAddressTask(testContext.user.address, testContext.issuerAddress)
+                .createWhitelistAddressTask(testContext.user.address, testContext.whitelistRequest)
         }
     }
 
@@ -342,5 +345,6 @@ class UserControllerTest : ControllerTestBase() {
         val email = "new_email@gmail.com"
         lateinit var refreshToken: RefreshToken
         val issuerAddress = "0xb070a65b1dd7f49c90a59000bd8cca3259064d81"
+        lateinit var whitelistRequest: WhitelistRequest
     }
 }

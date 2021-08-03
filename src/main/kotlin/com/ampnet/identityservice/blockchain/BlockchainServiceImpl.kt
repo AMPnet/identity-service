@@ -1,6 +1,8 @@
 package com.ampnet.identityservice.blockchain
 
 import com.ampnet.identityservice.config.ApplicationProperties
+import com.ampnet.identityservice.exception.ErrorCode
+import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.service.unwrap
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
@@ -26,19 +28,21 @@ private val logger = KotlinLogging.logger {}
 @Service
 class BlockchainServiceImpl(private val applicationProperties: ApplicationProperties) : BlockchainService {
 
-    private val web3j: Web3j by lazy { Web3j.build(HttpService(applicationProperties.provider.blockchainApi)) }
+    private val web3js = mutableMapOf<Long, Web3j>()
     private val credentials: Credentials by lazy { Credentials.create(applicationProperties.smartContract.privateKey) }
 
     @Suppress("ReturnCount", "MagicNumber")
-    override fun whitelistAddress(address: String, issuerAddress: String): String? {
-        logger.info { "Whitelisting address: $address" }
+    override fun whitelistAddress(address: String, issuerAddress: String, chainId: Long): String? {
+        logger.info { "Whitelisting address: $address on chain: $chainId for issuer: $issuerAddress" }
+        val web3j = getWeb3j(chainId)
         val nonce = web3j.ethGetTransactionCount(credentials.address, DefaultBlockParameterName.LATEST)
             .sendSafely()?.transactionCount ?: return null
         val gasPrice = web3j.ethGasPrice().sendSafely()?.gasPrice ?: return null
-        val function = Function("approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList())
+        val function = Function(
+            "approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList()
+        )
         val encoded = FunctionEncoder.encode(function)
-        val mumbaiChainId = 80001L
-        val manager = RawTransactionManager(web3j, credentials, mumbaiChainId)
+        val manager = RawTransactionManager(web3j, credentials, chainId)
         val rawTransaction = RawTransaction.createTransaction(
             nonce, gasPrice, BigInteger.valueOf(200_000),
             applicationProperties.smartContract.walletApproverServiceAddress, encoded
@@ -47,15 +51,26 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
         return sentTransaction?.transactionHash
     }
 
-    override fun isMined(hash: String): Boolean {
+    override fun isMined(hash: String, chainId: Long): Boolean {
+        val web3j = getWeb3j(chainId)
         val transaction = web3j.ethGetTransactionReceipt(hash).sendSafely()
         return transaction?.transactionReceipt?.unwrap()?.isStatusOK ?: false
     }
 
-    override fun isWhitelisted(address: String, issuerAddress: String): Boolean {
+    override fun isWhitelisted(address: String, issuerAddress: String, chainId: Long): Boolean {
+        val web3j = getWeb3j(chainId)
         val transactionManager = ReadonlyTransactionManager(web3j, address)
         val contract = IIssuer.load(issuerAddress, web3j, transactionManager, DefaultGasProvider())
         return contract.isWalletApproved(address).sendSafely() ?: false
+    }
+
+    private fun getWeb3j(chainId: Long): Web3j {
+        web3js[chainId]?.let { return it }
+        val chain = Chain.fromId(chainId)
+            ?: throw (InvalidRequestException(ErrorCode.BLOCKCHAIN_ID, "Blockchain id: $chainId not supported"))
+        val web3j = Web3j.build(HttpService(chain.infura + applicationProperties.provider.infuraId))
+        web3js[chainId] = web3j
+        return web3j
     }
 }
 

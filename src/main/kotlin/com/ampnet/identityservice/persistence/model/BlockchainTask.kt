@@ -21,6 +21,9 @@ class BlockchainTask(
     val payload: String,
 
     @Column(nullable = false)
+    val chainId: Long,
+
+    @Column(nullable = false)
     val contractAddress: String,
 
     @Enumerated(EnumType.STRING)
@@ -39,11 +42,13 @@ class BlockchainTask(
     constructor(
         payload: String,
         contractAddress: String,
+        chainId: Long,
         uuidProvider: UuidProvider,
         timeProvider: ZonedDateTimeProvider
     ) : this(
         uuidProvider.getUuid(),
         payload,
+        chainId,
         contractAddress,
         BlockchainTaskStatus.CREATED,
         null,
@@ -52,7 +57,7 @@ class BlockchainTask(
     )
 
     override fun toString(): String =
-        "BlockchainTask(uuid=$uuid, payload='$payload', contractAddress='$contractAddress', " +
+        "BlockchainTask(uuid=$uuid, payload='$payload', chainId='$chainId' contractAddress='$contractAddress', " +
             "status=$status, hash=$hash, createdAt=$createdAt, updatedAt=$updatedAt)"
 }
 

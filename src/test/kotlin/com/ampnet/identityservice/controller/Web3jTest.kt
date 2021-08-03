@@ -2,6 +2,7 @@ package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.TestBase
 import com.ampnet.identityservice.blockchain.BlockchainService
+import com.ampnet.identityservice.blockchain.Chain
 import com.ampnet.identityservice.blockchain.IIssuer
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.config.DatabaseCleanerService
@@ -65,10 +66,11 @@ class Web3jTest : TestBase() {
     @Autowired
     private lateinit var blockchainService: BlockchainService
 
-    private val web3j by lazy { Web3j.build(HttpService(applicationProperties.provider.blockchainApi)) }
+    private val web3j by lazy { Web3j.build(HttpService(chain.infura + applicationProperties.provider.infuraId)) }
 
     private val address = "0x9a72aD187229e9338c7f21E019544947Fb25d473"
     private val issuerAddress = "0xD17574450885C1b898bc835Ff9CB5b44A3601c24"
+    private val chain = Chain.MATIC_TESTNET_MUMBAI
 
     private lateinit var mockMvc: MockMvc
 
@@ -119,7 +121,8 @@ class Web3jTest : TestBase() {
         }
 
         verify("User can whitelist address for issuer") {
-            val request = objectMapper.writeValueAsString(WhitelistRequest(issuerAddress))
+            val whitelistRequest = WhitelistRequest(issuerAddress, chain.id)
+            val request = objectMapper.writeValueAsString(whitelistRequest)
             mockMvc.perform(
                 MockMvcRequestBuilders.post("/user/whitelist")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -130,7 +133,7 @@ class Web3jTest : TestBase() {
         verify("Wait for task to complete") {
             sleep(1000)
             waitUntilTasksAreProcessed(10)
-            val isWhitelisted = blockchainService.isWhitelisted(address, issuerAddress)
+            val isWhitelisted = blockchainService.isWhitelisted(address, issuerAddress, chain.id)
             assertThat(isWhitelisted).isTrue()
         }
     }

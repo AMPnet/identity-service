@@ -37,7 +37,7 @@ class TestProperties {
 }
 
 class ProviderProperties {
-    lateinit var blockchainApi: String
+    lateinit var infuraId: String
 }
 
 class SmartContractProperties {
