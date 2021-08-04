@@ -42,8 +42,8 @@ class ProviderProperties {
 
 class SmartContractProperties {
     lateinit var privateKey: String
-    lateinit var issuerContractAddress: String
     lateinit var walletAddress: String
+    lateinit var walletApproverServiceAddress: String
 }
 
 class MailProperties {

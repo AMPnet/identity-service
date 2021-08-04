@@ -33,4 +33,7 @@ interface BlockchainTaskRepository : JpaRepository<BlockchainTask, UUID> {
         hash: String? = null,
         time: ZonedDateTime = ZonedDateTime.now()
     )
+
+    @Query
+    fun findByPayloadAndContractAddress(payload: String, contractAddress: String): List<BlockchainTask>
 }

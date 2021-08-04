@@ -1,6 +1,8 @@
 package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.controller.pojo.request.EmailRequest
+import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
+import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.persistence.model.MailToken
 import com.ampnet.identityservice.persistence.model.RefreshToken
 import com.ampnet.identityservice.persistence.model.User
@@ -12,18 +14,21 @@ import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
+import org.mockito.kotlin.times
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.UUID
+import org.mockito.kotlin.verify as verifyMock
 
 class UserControllerTest : ControllerTestBase() {
 
     private lateinit var testContext: TestContext
 
     private val userPath = "/user"
+    private val whitelistPath = "$userPath/whitelist"
     private val logoutPath = "$userPath/logout"
 
     @BeforeEach
@@ -257,7 +262,7 @@ class UserControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdfundUser()
+    @WithMockCrowdfundUser
     fun mustBeAbleToLogoutUser() {
         suppose("Refresh token exists") {
             testContext.user = createUser()
@@ -275,7 +280,7 @@ class UserControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdfundUser()
+    @WithMockCrowdfundUser
     fun mustBeAbleToCallLogoutRouteWhenRefreshTokenDoesNotExist() {
         suppose("User exists") { testContext.user = createUser() }
 
@@ -285,10 +290,57 @@ class UserControllerTest : ControllerTestBase() {
         }
     }
 
+    @Test
+    @WithMockCrowdfundUser
+    fun mustBeAbleToWhitelistAddressForIssuer() {
+        suppose("User has completed KYC") {
+            testContext.user = createUser(verified = true)
+        }
+
+        verify("User can whitelist address for issuer") {
+            val request = objectMapper.writeValueAsString(WhitelistRequest(testContext.issuerAddress))
+            mockMvc.perform(
+                post(whitelistPath)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(request)
+            )
+                .andExpect(status().isOk)
+        }
+        verify("Whitelisting user address has been called") {
+            verifyMock(queueService)
+                .createWhitelistAddressTask(testContext.user.address, testContext.issuerAddress)
+        }
+    }
+
+    @Test
+    @WithMockCrowdfundUser
+    fun mustNotBeAbleToWhitelistAddressForIssuerWithoutKyc() {
+        suppose("User exists without KYC") {
+            testContext.user = createUser(verified = false)
+        }
+
+        verify("User cannot whitelist address without KYC") {
+            val request = objectMapper.writeValueAsString(WhitelistRequest(testContext.issuerAddress))
+            val result = mockMvc.perform(
+                post(whitelistPath)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(request)
+            )
+                .andExpect(status().isBadRequest)
+                .andReturn()
+            verifyResponseErrorCode(result, ErrorCode.REG_VERIFF)
+        }
+        verify("Whitelisting user address has not been called") {
+            verifyMock(queueService, times(0))
+                .createWhitelistAddressTask(testContext.user.address, testContext.issuerAddress)
+        }
+    }
+
     private class TestContext {
         lateinit var user: User
         lateinit var token: UUID
         val email = "new_email@gmail.com"
         lateinit var refreshToken: RefreshToken
+        val issuerAddress = "0xb070a65b1dd7f49c90a59000bd8cca3259064d81"
     }
 }
