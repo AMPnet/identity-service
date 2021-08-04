@@ -8,11 +8,13 @@ import org.springframework.context.annotation.Configuration
 class ApplicationProperties {
     val jwt = JwtProperties()
     val veriff = VeriffProperties()
-    val provider = ProviderProperties()
     val test = TestProperties()
-    val smartContract = SmartContractProperties()
     val mail = MailProperties()
     val queue = QueueProperties()
+    val chainEthereum = ChainProperties()
+    val chainMatic = ChainProperties()
+    val chainMumbai = ChainProperties()
+    lateinit var infuraId: String
 }
 
 @Suppress("MagicNumber")
@@ -36,13 +38,8 @@ class TestProperties {
     var enabledTestKyc: Boolean = true
 }
 
-class ProviderProperties {
-    lateinit var infuraId: String
-}
-
-class SmartContractProperties {
+class ChainProperties {
     lateinit var privateKey: String
-    lateinit var walletAddress: String
     lateinit var walletApproverServiceAddress: String
 }
 

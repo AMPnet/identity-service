@@ -28,50 +28,68 @@ private val logger = KotlinLogging.logger {}
 @Service
 class BlockchainServiceImpl(private val applicationProperties: ApplicationProperties) : BlockchainService {
 
-    private val web3js = mutableMapOf<Long, Web3j>()
-    private val credentials: Credentials by lazy { Credentials.create(applicationProperties.smartContract.privateKey) }
+    private val blockchainPropertiesMap = mutableMapOf<Long, BlockchainProperties>()
+    @Suppress("MagicNumber")
+    private val walletApproveGasLimit = BigInteger.valueOf(200_000)
 
-    @Suppress("ReturnCount", "MagicNumber")
+    @Suppress("ReturnCount")
     override fun whitelistAddress(address: String, issuerAddress: String, chainId: Long): String? {
         logger.info { "Whitelisting address: $address on chain: $chainId for issuer: $issuerAddress" }
-        val web3j = getWeb3j(chainId)
-        val nonce = web3j.ethGetTransactionCount(credentials.address, DefaultBlockParameterName.LATEST)
+        val blockchainProperties = getBlockchainProperties(chainId)
+        val nonce = blockchainProperties.web3j
+            .ethGetTransactionCount(blockchainProperties.credentials.address, DefaultBlockParameterName.LATEST)
             .sendSafely()?.transactionCount ?: return null
-        val gasPrice = web3j.ethGasPrice().sendSafely()?.gasPrice ?: return null
-        val function = Function(
-            "approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList()
-        )
+        val gasPrice = blockchainProperties.web3j.ethGasPrice().sendSafely()?.gasPrice ?: return null
+
+        val function = Function("approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList())
         val encoded = FunctionEncoder.encode(function)
-        val manager = RawTransactionManager(web3j, credentials, chainId)
+        val manager = RawTransactionManager(blockchainProperties.web3j, blockchainProperties.credentials, chainId)
         val rawTransaction = RawTransaction.createTransaction(
-            nonce, gasPrice, BigInteger.valueOf(200_000),
-            applicationProperties.smartContract.walletApproverServiceAddress, encoded
+            nonce, gasPrice, walletApproveGasLimit, blockchainProperties.walletApproverAddress, encoded
         )
-        val sentTransaction = web3j.ethSendRawTransaction(manager.sign(rawTransaction)).sendSafely()
+
+        val sentTransaction = blockchainProperties.web3j
+            .ethSendRawTransaction(manager.sign(rawTransaction)).sendSafely()
+        logger.info { "Successfully whitelisted address: $address on chain: $chainId for issuer: $issuerAddress" }
         return sentTransaction?.transactionHash
     }
 
     override fun isMined(hash: String, chainId: Long): Boolean {
-        val web3j = getWeb3j(chainId)
+        val web3j = getBlockchainProperties(chainId).web3j
         val transaction = web3j.ethGetTransactionReceipt(hash).sendSafely()
         return transaction?.transactionReceipt?.unwrap()?.isStatusOK ?: false
     }
 
     override fun isWhitelisted(address: String, issuerAddress: String, chainId: Long): Boolean {
-        val web3j = getWeb3j(chainId)
+        val web3j = getBlockchainProperties(chainId).web3j
         val transactionManager = ReadonlyTransactionManager(web3j, address)
         val contract = IIssuer.load(issuerAddress, web3j, transactionManager, DefaultGasProvider())
         return contract.isWalletApproved(address).sendSafely() ?: false
     }
 
-    private fun getWeb3j(chainId: Long): Web3j {
-        web3js[chainId]?.let { return it }
+    private fun getBlockchainProperties(chainId: Long): BlockchainProperties {
+        blockchainPropertiesMap[chainId]?.let { return it }
         val chain = Chain.fromId(chainId)
             ?: throw (InvalidRequestException(ErrorCode.BLOCKCHAIN_ID, "Blockchain id: $chainId not supported"))
-        val web3j = Web3j.build(HttpService(chain.infura + applicationProperties.provider.infuraId))
-        web3js[chainId] = web3j
-        return web3j
+        val properties = generateBlockchainProperties(chain)
+        blockchainPropertiesMap[chainId] = properties
+        return properties
     }
+
+    private fun generateBlockchainProperties(chain: Chain): BlockchainProperties {
+        val chainProperties = when (chain) {
+            Chain.MATIC_MAIN -> applicationProperties.chainMatic
+            Chain.MATIC_TESTNET_MUMBAI -> applicationProperties.chainMumbai
+            Chain.ETHEREUM_MAIN -> applicationProperties.chainEthereum
+        }
+        return BlockchainProperties(
+            Credentials.create(chainProperties.privateKey),
+            Web3j.build(HttpService(chain.infura + applicationProperties.infuraId)),
+            chainProperties.walletApproverServiceAddress
+        )
+    }
+
+    data class BlockchainProperties(val credentials: Credentials, val web3j: Web3j, val walletApproverAddress: String)
 }
 
 @Suppress("ReturnCount")
