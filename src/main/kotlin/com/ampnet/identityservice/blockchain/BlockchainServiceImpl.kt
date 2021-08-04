@@ -42,12 +42,12 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
         val gasPrice = blockchainProperties.web3j.ethGasPrice().sendSafely()?.gasPrice ?: return null
 
         val function = Function("approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList())
-        val encoded = FunctionEncoder.encode(function)
-        val manager = RawTransactionManager(blockchainProperties.web3j, blockchainProperties.credentials, chainId)
         val rawTransaction = RawTransaction.createTransaction(
-            nonce, gasPrice, walletApproveGasLimit, blockchainProperties.walletApproverAddress, encoded
+            nonce, gasPrice, walletApproveGasLimit,
+            blockchainProperties.walletApproverAddress, FunctionEncoder.encode(function)
         )
 
+        val manager = RawTransactionManager(blockchainProperties.web3j, blockchainProperties.credentials, chainId)
         val sentTransaction = blockchainProperties.web3j
             .ethSendRawTransaction(manager.sign(rawTransaction)).sendSafely()
         logger.info { "Successfully whitelisted address: $address on chain: $chainId for issuer: $issuerAddress" }
