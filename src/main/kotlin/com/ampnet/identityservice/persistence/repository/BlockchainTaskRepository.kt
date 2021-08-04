@@ -35,5 +35,9 @@ interface BlockchainTaskRepository : JpaRepository<BlockchainTask, UUID> {
     )
 
     @Query
-    fun findByPayloadAndContractAddress(payload: String, contractAddress: String): List<BlockchainTask>
+    fun findByPayloadAndChainIdAndContractAddress(
+        payload: String,
+        chainId: Long,
+        contractAddress: String
+    ): List<BlockchainTask>
 }

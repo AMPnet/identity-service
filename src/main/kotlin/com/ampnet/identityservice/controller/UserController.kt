@@ -38,7 +38,7 @@ class UserController(private val userService: UserService, private val tokenServ
     fun whitelistForIssuer(@RequestBody request: WhitelistRequest): ResponseEntity<Unit> {
         val address = ControllerUtils.getAddressFromSecurityContext()
         logger.debug { "Received request to whitelist address: $address for issuer: ${request.issuerAddress}" }
-        userService.whitelistForIssuer(address, request.issuerAddress)
+        userService.whitelistAddress(address, request)
         return ResponseEntity.ok().build()
     }
 
