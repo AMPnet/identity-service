@@ -16,4 +16,5 @@ enum class ErrorCode(val categoryCode: String, var specificCode: String, var mes
 
     // Blockchain: 04
     BLOCKCHAIN_ID("04", "01", "Blockchain id not supported"),
+    BLOCKCHAIN_CONFIG_MISSING("04", "02", "Blockchain data is not provided"),
 }

@@ -2,6 +2,7 @@ package com.ampnet.identityservice.blockchain
 
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.exception.ErrorCode
+import com.ampnet.identityservice.exception.InternalException
 import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.service.unwrap
 import mu.KotlinLogging
@@ -29,6 +30,7 @@ private val logger = KotlinLogging.logger {}
 class BlockchainServiceImpl(private val applicationProperties: ApplicationProperties) : BlockchainService {
 
     private val blockchainPropertiesMap = mutableMapOf<Long, BlockchainProperties>()
+
     @Suppress("MagicNumber")
     private val walletApproveGasLimit = BigInteger.valueOf(200_000)
 
@@ -67,6 +69,13 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
         return contract.isWalletApproved(address).sendSafely() ?: false
     }
 
+    internal fun getChainRpcUrl(chain: Chain): String =
+        if (applicationProperties.infuraId.isBlank()) {
+            chain.rpcUrl
+        } else {
+            "${chain.infura}${applicationProperties.infuraId}"
+        }
+
     private fun getBlockchainProperties(chainId: Long): BlockchainProperties {
         blockchainPropertiesMap[chainId]?.let { return it }
         val chain = Chain.fromId(chainId)
@@ -82,14 +91,24 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
             Chain.MATIC_TESTNET_MUMBAI -> applicationProperties.chainMumbai
             Chain.ETHEREUM_MAIN -> applicationProperties.chainEthereum
         }
+        if (chainProperties.privateKey.isBlank() || chainProperties.walletApproverServiceAddress.isBlank())
+            throw InternalException(
+                ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
+                "Wallet approver config for chain: ${chain.name} not defined in the application properties"
+            )
+        val rpcUrl = getChainRpcUrl(chain)
         return BlockchainProperties(
             Credentials.create(chainProperties.privateKey),
-            Web3j.build(HttpService(chain.infura + applicationProperties.infuraId)),
+            Web3j.build(HttpService(rpcUrl)),
             chainProperties.walletApproverServiceAddress
         )
     }
 
-    data class BlockchainProperties(val credentials: Credentials, val web3j: Web3j, val walletApproverAddress: String)
+    private data class BlockchainProperties(
+        val credentials: Credentials,
+        val web3j: Web3j,
+        val walletApproverAddress: String
+    )
 }
 
 @Suppress("ReturnCount")

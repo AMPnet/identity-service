@@ -39,8 +39,8 @@ class TestProperties {
 }
 
 class ChainProperties {
-    lateinit var privateKey: String
-    lateinit var walletApproverServiceAddress: String
+    var privateKey: String = ""
+    var walletApproverServiceAddress: String = ""
 }
 
 class MailProperties {
