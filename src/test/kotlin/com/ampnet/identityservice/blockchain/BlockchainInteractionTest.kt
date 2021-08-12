@@ -7,7 +7,6 @@ import com.ampnet.identityservice.controller.pojo.request.KycTestRequest
 import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InternalException
-import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.persistence.model.User
 import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
@@ -86,7 +85,7 @@ class BlockchainInteractionTest : TestBase() {
         verify("Service will throw exception for invalid chain id") {
             val hash = "0x6f7dea8d5d98d119de31204dfbdc69bb1944db04891ad0c45ab577da8e6de04a"
             val invalidChainId = -1L
-            val exception = assertThrows<InvalidRequestException> {
+            val exception = assertThrows<InternalException> {
                 blockchainService.isMined(hash, invalidChainId)
             }
             assertThat(exception.errorCode).isEqualTo(ErrorCode.BLOCKCHAIN_ID)
@@ -167,17 +166,6 @@ class BlockchainInteractionTest : TestBase() {
             val isWhitelisted = blockchainService.isWhitelisted(address, issuerAddress, chain.id)
             assertThat(isWhitelisted).isTrue()
         }
-    }
-
-    @Test
-    @Disabled("Not for automated testing")
-    fun isAddressWhitelisted() {
-        val address = "0x9a72aD187229e9338c7f21E019544947Fb25d473"
-        val issuer = "0x521B0200138CeF507769F6d8E8d4999F60B6b319"
-        val isMined = blockchainService.isMined("0x5275633b53ef12ecc2440467d43a237837d7767f167c9d8c21adea1a3fab50d7", chain.id)
-        println("Mined: $isMined")
-        val isWhitelisted = blockchainService.isWhitelisted(address, issuer, chain.id)
-        println("Whitelisted: $isWhitelisted")
     }
 
     private fun waitUntilTasksAreProcessed(retry: Int = 5) {

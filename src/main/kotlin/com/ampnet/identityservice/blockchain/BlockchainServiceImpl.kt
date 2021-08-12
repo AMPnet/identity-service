@@ -3,7 +3,6 @@ package com.ampnet.identityservice.blockchain
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InternalException
-import com.ampnet.identityservice.exception.InvalidRequestException
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.web3j.abi.FunctionEncoder
@@ -22,6 +21,7 @@ import org.web3j.tx.ReadonlyTransactionManager
 import org.web3j.tx.gas.DefaultGasProvider
 import java.io.IOException
 import java.math.BigInteger
+import kotlin.jvm.Throws
 
 private val logger = KotlinLogging.logger {}
 
@@ -34,6 +34,7 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
     private val walletApproveGasLimit = BigInteger.valueOf(200_000)
 
     @Suppress("ReturnCount")
+    @Throws(InternalException::class)
     override fun whitelistAddress(address: String, issuerAddress: String, chainId: Long): String? {
         logger.info { "Whitelisting address: $address on chain: $chainId for issuer: $issuerAddress" }
         val blockchainProperties = getBlockchainProperties(chainId)
@@ -55,12 +56,14 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
         return sentTransaction?.transactionHash
     }
 
+    @Throws(InternalException::class)
     override fun isMined(hash: String, chainId: Long): Boolean {
         val web3j = getBlockchainProperties(chainId).web3j
         val transaction = web3j.ethGetTransactionReceipt(hash).sendSafely()
         return transaction?.transactionReceipt?.isPresent ?: false
     }
 
+    @Throws(InternalException::class)
     override fun isWhitelisted(address: String, issuerAddress: String, chainId: Long): Boolean {
         val web3j = getBlockchainProperties(chainId).web3j
         val transactionManager = ReadonlyTransactionManager(web3j, address)
@@ -78,7 +81,7 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
     private fun getBlockchainProperties(chainId: Long): BlockchainProperties {
         blockchainPropertiesMap[chainId]?.let { return it }
         val chain = Chain.fromId(chainId)
-            ?: throw (InvalidRequestException(ErrorCode.BLOCKCHAIN_ID, "Blockchain id: $chainId not supported"))
+            ?: throw InternalException(ErrorCode.BLOCKCHAIN_ID, "Blockchain id: $chainId not supported")
         val properties = generateBlockchainProperties(chain)
         blockchainPropertiesMap[chainId] = properties
         return properties
@@ -91,11 +94,12 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
             Chain.ETHEREUM_MAIN -> applicationProperties.chainEthereum
             Chain.HARDHAT_TESTNET -> applicationProperties.chainHardhatTestnet
         }
-        if (chainProperties.privateKey.isBlank() || chainProperties.walletApproverServiceAddress.isBlank())
+        if (chainProperties.privateKey.isBlank() || chainProperties.walletApproverServiceAddress.isBlank()) {
             throw InternalException(
                 ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
                 "Wallet approver config for chain: ${chain.name} not defined in the application properties"
             )
+        }
         val rpcUrl = getChainRpcUrl(chain)
         return BlockchainProperties(
             Credentials.create(chainProperties.privateKey),
@@ -116,7 +120,7 @@ fun <S, T : Response<*>?> Request<S, T>.sendSafely(): T? {
     try {
         val value = this.send()
         if (value?.hasError() == true) {
-            logger.warn { "Errors: ${value.error.message}" }
+            logger.warn { "Web3j call errors: ${value.error.message}" }
             return null
         }
         return value

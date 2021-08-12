@@ -339,6 +339,31 @@ class UserControllerTest : ControllerTestBase() {
         }
     }
 
+    @Test
+    @WithMockCrowdfundUser
+    fun mustNotBeAbleToWhitelistAddressForInvalidChainId() {
+        suppose("User exists without KYC") {
+            testContext.user = createUser(verified = false)
+        }
+
+        verify("User cannot whitelist address without KYC") {
+            testContext.whitelistRequest = WhitelistRequest(testContext.issuerAddress, -1)
+            val request = objectMapper.writeValueAsString(testContext.whitelistRequest)
+            val result = mockMvc.perform(
+                post(whitelistPath)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(request)
+            )
+                .andExpect(status().isBadRequest)
+                .andReturn()
+            verifyResponseErrorCode(result, ErrorCode.BLOCKCHAIN_ID)
+        }
+        verify("Whitelisting user address has not been called") {
+            verifyMock(queueService, times(0))
+                .createWhitelistAddressTask(testContext.user.address, testContext.whitelistRequest)
+        }
+    }
+
     private class TestContext {
         lateinit var user: User
         lateinit var token: UUID
