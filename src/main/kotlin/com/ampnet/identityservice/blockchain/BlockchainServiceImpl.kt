@@ -21,7 +21,6 @@ import org.web3j.tx.ReadonlyTransactionManager
 import org.web3j.tx.gas.DefaultGasProvider
 import java.io.IOException
 import java.math.BigInteger
-import kotlin.jvm.Throws
 
 private val logger = KotlinLogging.logger {}
 
@@ -52,7 +51,9 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
         val manager = RawTransactionManager(blockchainProperties.web3j, blockchainProperties.credentials, chainId)
         val sentTransaction = blockchainProperties.web3j
             .ethSendRawTransaction(manager.sign(rawTransaction)).sendSafely()
-        logger.info { "Successfully whitelisted address: $address on chain: $chainId for issuer: $issuerAddress" }
+        logger.info {
+            "Successfully send request to whitelist address: $address on chain: $chainId for issuer: $issuerAddress"
+        }
         return sentTransaction?.transactionHash
     }
 
