@@ -3,6 +3,7 @@ package com.ampnet.identityservice.service.impl
 import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
+import com.ampnet.identityservice.exception.InternalException
 import com.ampnet.identityservice.persistence.model.BlockchainTask
 import com.ampnet.identityservice.persistence.model.BlockchainTaskStatus
 import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
@@ -49,11 +50,21 @@ class BlockchainQueueServiceImpl(
 
     private fun processTasks() {
         blockchainTaskRepository.getInProcess()?.let {
-            handleInProcessTask(it)
+            try {
+                handleInProcessTask(it)
+            } catch (ex: InternalException) {
+                logger.error("Failed to handle in process task: ${ex.message}")
+                blockchainTaskRepository.setStatus(it.uuid, BlockchainTaskStatus.FAILED, it.hash)
+            }
             return
         }
         blockchainTaskRepository.getPending()?.let {
-            handlePendingTask(it)
+            try {
+                handlePendingTask(it)
+            } catch (ex: InternalException) {
+                logger.error("Failed to handle pending task: ${ex.message}")
+                blockchainTaskRepository.setStatus(it.uuid, BlockchainTaskStatus.FAILED, it.hash)
+            }
             return
         }
     }
@@ -94,10 +105,10 @@ class BlockchainQueueServiceImpl(
         logger.info { "Transaction is mined: ${task.hash}" }
         if (blockchainService.isWhitelisted(task.payload, task.contractAddress, task.chainId)) {
             blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.COMPLETED, task.hash)
-            logger.info { "Address ${task.payload} is whitelisted. Task is completed: $task" }
+            logger.info { "Address ${task.payload} is whitelisted. Task is completed: ${task.hash}" }
         } else {
             blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.FAILED, task.hash)
-            logger.error { "Address: ${task.payload} is not whitelisted. Transaction is mined: ${task.hash}" }
+            logger.error { "Address: ${task.payload} is not whitelisted. Transaction is failed: ${task.hash}" }
         }
     }
 

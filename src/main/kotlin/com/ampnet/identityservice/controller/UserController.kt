@@ -1,7 +1,10 @@
 package com.ampnet.identityservice.controller
 
+import com.ampnet.identityservice.blockchain.Chain
 import com.ampnet.identityservice.controller.pojo.request.EmailRequest
 import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
+import com.ampnet.identityservice.exception.ErrorCode
+import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.service.TokenService
 import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.pojo.UserResponse
@@ -37,7 +40,10 @@ class UserController(private val userService: UserService, private val tokenServ
     @PostMapping("/user/whitelist")
     fun whitelistForIssuer(@RequestBody request: WhitelistRequest): ResponseEntity<Unit> {
         val address = ControllerUtils.getAddressFromSecurityContext()
-        logger.debug { "Received request to whitelist address: $address for issuer: ${request.issuerAddress}" }
+        logger.debug { "Received request to whitelist address: $address for request: $request" }
+        if (Chain.fromId(request.chainId) == null) {
+            throw InvalidRequestException(ErrorCode.BLOCKCHAIN_ID, "Chain ID: ${request.chainId} not supported")
+        }
         userService.whitelistAddress(address, request)
         return ResponseEntity.ok().build()
     }
