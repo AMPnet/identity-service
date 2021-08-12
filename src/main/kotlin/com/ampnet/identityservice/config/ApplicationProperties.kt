@@ -14,6 +14,7 @@ class ApplicationProperties {
     val chainEthereum = ChainProperties()
     val chainMatic = ChainProperties()
     val chainMumbai = ChainProperties()
+    val chainHardhatTestnet = ChainProperties()
     lateinit var infuraId: String
 }
 

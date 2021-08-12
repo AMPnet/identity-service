@@ -4,7 +4,6 @@ import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InternalException
 import com.ampnet.identityservice.exception.InvalidRequestException
-import com.ampnet.identityservice.service.unwrap
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.web3j.abi.FunctionEncoder
@@ -59,7 +58,7 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
     override fun isMined(hash: String, chainId: Long): Boolean {
         val web3j = getBlockchainProperties(chainId).web3j
         val transaction = web3j.ethGetTransactionReceipt(hash).sendSafely()
-        return transaction?.transactionReceipt?.unwrap()?.isStatusOK ?: false
+        return transaction?.transactionReceipt?.isPresent ?: false
     }
 
     override fun isWhitelisted(address: String, issuerAddress: String, chainId: Long): Boolean {
@@ -70,7 +69,7 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
     }
 
     internal fun getChainRpcUrl(chain: Chain): String =
-        if (applicationProperties.infuraId.isBlank()) {
+        if (chain.infura == null || applicationProperties.infuraId.isBlank()) {
             chain.rpcUrl
         } else {
             "${chain.infura}${applicationProperties.infuraId}"
@@ -90,6 +89,7 @@ class BlockchainServiceImpl(private val applicationProperties: ApplicationProper
             Chain.MATIC_MAIN -> applicationProperties.chainMatic
             Chain.MATIC_TESTNET_MUMBAI -> applicationProperties.chainMumbai
             Chain.ETHEREUM_MAIN -> applicationProperties.chainEthereum
+            Chain.HARDHAT_TESTNET -> applicationProperties.chainHardhatTestnet
         }
         if (chainProperties.privateKey.isBlank() || chainProperties.walletApproverServiceAddress.isBlank())
             throw InternalException(
