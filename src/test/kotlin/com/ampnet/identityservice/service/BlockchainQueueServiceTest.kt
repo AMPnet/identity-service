@@ -2,7 +2,7 @@ package com.ampnet.identityservice.service
 
 import com.ampnet.identityservice.TestBase
 import com.ampnet.identityservice.blockchain.BlockchainService
-import com.ampnet.identityservice.blockchain.Chain
+import com.ampnet.identityservice.blockchain.properties.Chain
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.config.DatabaseCleanerService
 import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest

@@ -1,4 +1,4 @@
-package com.ampnet.identityservice.blockchain
+package com.ampnet.identityservice.blockchain.properties
 
 @Suppress("MagicNumber")
 enum class Chain(val id: Long, val rpcUrl: String, val infura: String?) {
