@@ -19,6 +19,7 @@ import org.web3j.protocol.core.Response
 import org.web3j.tx.RawTransactionManager
 import org.web3j.tx.ReadonlyTransactionManager
 import org.web3j.tx.gas.DefaultGasProvider
+import org.web3j.utils.Convert
 import java.io.IOException
 import java.math.BigInteger
 
@@ -44,6 +45,7 @@ class BlockchainServiceImpl(
             .ethGetTransactionCount(blockchainProperties.credentials.address, DefaultBlockParameterName.LATEST)
             .sendSafely()?.transactionCount ?: return null
         val gasPrice = getGasPrice(chainId)
+        logger.debug { "Gas price: $gasPrice" }
 
         val function = Function("approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList())
         val rawTransaction = RawTransaction.createTransaction(
@@ -81,7 +83,9 @@ class BlockchainServiceImpl(
                 val response = restTemplate
                     .getForObject<GasPriceFeedResponse>(url, GasPriceFeedResponse::class)
                 response.fast?.let { price ->
-                    return BigInteger.valueOf(price)
+                    val gWei = Convert.toWei(price.toString(), Convert.Unit.GWEI).toBigInteger()
+                    logger.debug { "Fetched gas price in GWei: $gWei" }
+                    return gWei
                 }
             } catch (ex: RestClientException) {
                 logger.warn { "Failed to get price for feed: $url" }
