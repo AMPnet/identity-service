@@ -80,6 +80,13 @@ class BlockchainInteractionTest : TestBase() {
 
     @Test
     @Disabled("Not for automated testing")
+    fun getPriceFeed() {
+        val price = blockchainService.getGasPrice(Chain.MATIC_MAIN.id)
+        println("Price: $price")
+    }
+
+    @Test
+    @Disabled("Not for automated testing")
     @WithMockCrowdfundUser(address = "0x9a72aD187229e9338c7f21E019544947Fb25d473")
     fun mustWhitelistAddress() {
         suppose("There is a user") {

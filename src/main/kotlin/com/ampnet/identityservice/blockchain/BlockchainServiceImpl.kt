@@ -5,6 +5,9 @@ import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.exception.InternalException
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
+import org.springframework.web.client.RestClientException
+import org.springframework.web.client.RestTemplate
+import org.springframework.web.client.getForObject
 import org.web3j.abi.FunctionEncoder
 import org.web3j.abi.datatypes.Address
 import org.web3j.abi.datatypes.Function
@@ -22,7 +25,10 @@ import java.math.BigInteger
 private val logger = KotlinLogging.logger {}
 
 @Service
-class BlockchainServiceImpl(applicationProperties: ApplicationProperties) : BlockchainService {
+class BlockchainServiceImpl(
+    applicationProperties: ApplicationProperties,
+    private val restTemplate: RestTemplate
+) : BlockchainService {
 
     private val chainHandler = ChainPropertiesHandler(applicationProperties)
 
@@ -37,7 +43,7 @@ class BlockchainServiceImpl(applicationProperties: ApplicationProperties) : Bloc
         val nonce = blockchainProperties.web3j
             .ethGetTransactionCount(blockchainProperties.credentials.address, DefaultBlockParameterName.LATEST)
             .sendSafely()?.transactionCount ?: return null
-        val gasPrice = blockchainProperties.web3j.ethGasPrice().sendSafely()?.gasPrice ?: return null
+        val gasPrice = getGasPrice(chainId)
 
         val function = Function("approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList())
         val rawTransaction = RawTransaction.createTransaction(
@@ -68,6 +74,31 @@ class BlockchainServiceImpl(applicationProperties: ApplicationProperties) : Bloc
         val contract = IIssuer.load(issuerAddress, web3j, transactionManager, DefaultGasProvider())
         return contract.isWalletApproved(address).sendSafely() ?: false
     }
+
+    internal fun getGasPrice(chainId: Long): BigInteger? {
+        chainHandler.getGasPriceFeed(chainId)?.let { url ->
+            try {
+                val response = restTemplate
+                    .getForObject<GasPriceFeedResponse>(url, GasPriceFeedResponse::class)
+                response.fast?.let { price ->
+                    return BigInteger.valueOf(price)
+                }
+            } catch (ex: RestClientException) {
+                logger.warn { "Failed to get price for feed: $url" }
+            }
+        }
+        return chainHandler.getBlockchainProperties(chainId)
+            .web3j.ethGasPrice().sendSafely()?.gasPrice
+    }
+
+    private data class GasPriceFeedResponse(
+        val safeLow: Long?,
+        val standard: Long?,
+        val fast: Long?,
+        val fastest: Long?,
+        val blockTime: Long?,
+        val blockNumber: Long?
+    )
 }
 
 @Suppress("ReturnCount")
