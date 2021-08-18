@@ -25,7 +25,7 @@ plugins {
     jacoco
 }
 group = "com.ampnet"
-version = "0.0.5"
+version = "0.0.6"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
@@ -51,7 +51,7 @@ dependencies {
     implementation("io.github.microutils:kotlin-logging:2.0.5")
     implementation("com.github.AMPnet:jwt:1.0.1")
     implementation("com.github.komputing:kethereum:0.84.1")
-    implementation("org.web3j:core:4.8.4")
+    implementation("org.web3j:core:4.8.7")
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
     implementation("net.devh:grpc-server-spring-boot-starter:2.12.0.RELEASE")
 

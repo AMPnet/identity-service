@@ -1,6 +1,6 @@
 package com.ampnet.identityservice.controller
 
-import com.ampnet.identityservice.blockchain.Chain
+import com.ampnet.identityservice.blockchain.properties.Chain
 import com.ampnet.identityservice.controller.pojo.request.EmailRequest
 import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
 import com.ampnet.identityservice.exception.ErrorCode
