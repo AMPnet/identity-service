@@ -59,7 +59,7 @@ class BlockchainInteractionTest : TestBase() {
     private lateinit var blockchainService: BlockchainServiceImpl
 
     private val address = "0x9a72aD187229e9338c7f21E019544947Fb25d473"
-    private val issuerAddress = "0xD17574450885C1b898bc835Ff9CB5b44A3601c24"
+    private val issuerAddress = "0x521B0200138CeF507769F6d8E8d4999F60B6b319"
     private val chain = Chain.MATIC_TESTNET_MUMBAI
 
     private lateinit var mockMvc: MockMvc
