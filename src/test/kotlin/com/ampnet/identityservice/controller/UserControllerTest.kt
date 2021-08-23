@@ -8,13 +8,16 @@ import com.ampnet.identityservice.persistence.model.MailToken
 import com.ampnet.identityservice.persistence.model.RefreshToken
 import com.ampnet.identityservice.persistence.model.User
 import com.ampnet.identityservice.security.WithMockCrowdfundUser
+import com.ampnet.identityservice.service.impl.PinataResponse
 import com.ampnet.identityservice.service.pojo.UserResponse
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.kethereum.crypto.test_data.ADDRESS
 import org.mockito.Mockito
+import org.mockito.kotlin.given
 import org.mockito.kotlin.times
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -364,6 +367,29 @@ class UserControllerTest : ControllerTestBase() {
         }
     }
 
+    @Test
+    @WithMockCrowdfundUser
+    fun mustBeAbleToGetPinataJwt() {
+        suppose("User exists") {
+            testContext.user = createUser()
+        }
+        suppose("Pinata will return JWT") {
+            testContext.pinataResponse = PinataResponse("api-key", "api-secret", "JWT")
+            given(pinataService.getUserJwt(ADDRESS.toString())).willReturn(testContext.pinataResponse)
+        }
+
+        verify("User can get Pinata JWT") {
+            val result = mockMvc.perform(
+                get("$userPath/pinata")
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+                .andExpect(status().isOk)
+                .andReturn()
+            val pinataResponse: PinataResponse = objectMapper.readValue(result.response.contentAsString)
+            assertThat(pinataResponse).isEqualTo(testContext.pinataResponse)
+        }
+    }
+
     private class TestContext {
         lateinit var user: User
         lateinit var token: UUID
@@ -371,5 +397,6 @@ class UserControllerTest : ControllerTestBase() {
         lateinit var refreshToken: RefreshToken
         val issuerAddress = "0xb070a65b1dd7f49c90a59000bd8cca3259064d81"
         lateinit var whitelistRequest: WhitelistRequest
+        lateinit var pinataResponse: PinataResponse
     }
 }

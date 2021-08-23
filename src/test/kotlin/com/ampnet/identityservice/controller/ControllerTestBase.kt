@@ -18,6 +18,7 @@ import com.ampnet.identityservice.persistence.repository.VeriffDecisionRepositor
 import com.ampnet.identityservice.persistence.repository.VeriffSessionRepository
 import com.ampnet.identityservice.service.BlockchainQueueService
 import com.ampnet.identityservice.service.MailService
+import com.ampnet.identityservice.service.PinataService
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.VerificationService
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
@@ -95,6 +96,9 @@ abstract class ControllerTestBase : TestBase() {
 
     @MockBean
     protected lateinit var queueService: BlockchainQueueService
+
+    @MockBean
+    protected lateinit var pinataService: PinataService
 
     protected lateinit var mockMvc: MockMvc
 
