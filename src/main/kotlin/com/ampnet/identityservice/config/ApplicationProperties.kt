@@ -15,6 +15,7 @@ class ApplicationProperties {
     val chainMatic = ChainProperties()
     val chainMumbai = ChainProperties()
     val chainHardhatTestnet = ChainProperties()
+    val pinata = PinataProperties()
     lateinit var infuraId: String
 }
 
@@ -55,4 +56,10 @@ class QueueProperties {
     var polling: Long = 5_000
     var initialDelay: Long = 15_000
     var miningPeriod: Long = 10 * 60 * 1000
+}
+
+@Suppress("MagicNumber")
+class PinataProperties {
+    var jwt: String = ""
+    var maxUses: Int = 10
 }

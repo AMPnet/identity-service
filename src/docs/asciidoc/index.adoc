@@ -83,12 +83,20 @@ include::{snippets}/UserControllerTest/mustBeAbleToWhitelistAddressForIssuer/htt
 .Response
 include::{snippets}/UserControllerTest/mustBeAbleToWhitelistAddressForIssuer/http-response.adoc[]
 
-
 === Logout
 .Request
 include::{snippets}/UserControllerTest/mustBeAbleToLogoutUser/http-request.adoc[]
 .Response
 include::{snippets}/UserControllerTest/mustBeAbleToLogoutUser/http-response.adoc[]
+
+=== Pinata JWT
+Generate Pinata JWT for pinning(storing) files to Pinata IPFS. JWT is generated for a limited number of usages.
+It is recommended to generate a new one before storing data to Pinata IPFS.
+
+.Request
+include::{snippets}/UserControllerTest/mustBeAbleToGetPinataJwt/http-request.adoc[]
+.Response
+include::{snippets}/UserControllerTest/mustBeAbleToGetPinataJwt/http-response.adoc[]
 
 == Test API
 

@@ -25,7 +25,7 @@ plugins {
     jacoco
 }
 group = "com.ampnet"
-version = "0.0.6"
+version = "0.0.7"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {

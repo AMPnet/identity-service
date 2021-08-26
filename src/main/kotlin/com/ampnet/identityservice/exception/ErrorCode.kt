@@ -13,6 +13,7 @@ enum class ErrorCode(val categoryCode: String, var specificCode: String, var mes
 
     // Users: 03
     USER_JWT_MISSING("03", "01", "Missing user address defined in JWT"),
+    USER_PINATA_JWT("03", "02", "Failed to get Pinata JWT for user"),
 
     // Blockchain: 04
     BLOCKCHAIN_ID("04", "01", "Blockchain id not supported"),
