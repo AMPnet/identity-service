@@ -10,7 +10,9 @@ import com.ampnet.identityservice.proto.UserResponse
 import com.ampnet.identityservice.proto.UsersResponse
 import io.grpc.stub.StreamObserver
 import mu.KLogging
+import net.devh.boot.grpc.server.service.GrpcService
 
+@GrpcService
 class GrpcIdentityServer(
     private val userRepository: UserRepository,
     private val userInfoRepository: UserInfoRepository
