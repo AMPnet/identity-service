@@ -54,9 +54,10 @@ class UserServiceImpl(
 
     @Transactional
     override fun createUser(address: String): UserResponse {
-        val user = userRepository.findByAddress(address.lowercase()) ?: kotlin.run {
-            logger.info { "User is created for address: $address" }
-            userRepository.save(User(address))
+        val lowercaseAddress = address.lowercase()
+        val user = userRepository.findByAddress(lowercaseAddress) ?: kotlin.run {
+            logger.info { "User is created for address: $lowercaseAddress" }
+            userRepository.save(User(lowercaseAddress))
         }
         return generateUserResponse(user)
     }
