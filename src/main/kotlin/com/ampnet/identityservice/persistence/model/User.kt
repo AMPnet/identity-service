@@ -25,5 +25,5 @@ class User(
     @Column
     var language: String?
 ) {
-    constructor(address: String) : this (address, null, null, ZonedDateTime.now(), null)
+    constructor(address: String) : this(address.lowercase(), null, null, ZonedDateTime.now(), null)
 }

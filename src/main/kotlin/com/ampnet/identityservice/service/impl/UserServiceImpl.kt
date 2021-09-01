@@ -54,9 +54,10 @@ class UserServiceImpl(
 
     @Transactional
     override fun createUser(address: String): UserResponse {
-        val user = userRepository.findByAddress(address) ?: kotlin.run {
-            logger.info { "User is created for address: $address" }
-            userRepository.save(User(address))
+        val lowercaseAddress = address.lowercase()
+        val user = userRepository.findByAddress(lowercaseAddress) ?: kotlin.run {
+            logger.info { "User is created for address: $lowercaseAddress" }
+            userRepository.save(User(lowercaseAddress))
         }
         return generateUserResponse(user)
     }
@@ -137,7 +138,7 @@ class UserServiceImpl(
         return UserResponse(user.address, email, emailVerified, user.userInfoUuid != null)
     }
 
-    private fun getUser(address: String): User = userRepository.findByAddress(address)
+    private fun getUser(address: String): User = userRepository.findByAddress(address.lowercase())
         ?: throw ResourceNotFoundException(ErrorCode.USER_JWT_MISSING, "Missing user with address: $address")
 
     private fun disconnectUserInfo(user: User) {

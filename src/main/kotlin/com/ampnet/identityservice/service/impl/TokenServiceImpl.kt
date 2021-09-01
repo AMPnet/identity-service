@@ -32,13 +32,14 @@ class TokenServiceImpl(
     @Transactional
     @Throws(KeyException::class, TokenException::class)
     override fun generateAccessAndRefreshForUser(address: String): AccessAndRefreshToken {
-        deleteRefreshToken(address)
+        val lowercaseAddress = address.lowercase()
+        deleteRefreshToken(lowercaseAddress)
         val token = getRandomToken()
         val refreshToken = refreshTokenRepository.save(
-            RefreshToken(0, address, token, zonedDateTimeProvider.getZonedDateTime())
+            RefreshToken(0, lowercaseAddress, token, zonedDateTimeProvider.getZonedDateTime())
         )
         val accessToken = JwtTokenUtils.encodeToken(
-            address,
+            lowercaseAddress,
             applicationProperties.jwt.privateKey,
             applicationProperties.jwt.accessTokenValidityInMilliseconds()
         )
@@ -77,7 +78,7 @@ class TokenServiceImpl(
     }
 
     @Transactional
-    override fun deleteRefreshToken(address: String) = refreshTokenRepository.deleteByUserAddress(address)
+    override fun deleteRefreshToken(address: String) = refreshTokenRepository.deleteByUserAddress(address.lowercase())
 
     private fun getRandomToken(): String = (1..REFRESH_TOKEN_LENGTH)
         .map { secureRandom.nextInt(charPool.size) }
