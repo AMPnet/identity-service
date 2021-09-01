@@ -37,7 +37,7 @@ class GrpcIdentityServer(
     fun generateUserResponse(user: User, userInfo: UserInfo?): UserResponse =
         UserResponse.newBuilder().apply {
             address = user.address
-            email = user.email
+            email = user.email ?: ""
             createdAt = user.createdAt.toEpochSecond()
             language = user.language ?: ""
             userInfo?.let {
