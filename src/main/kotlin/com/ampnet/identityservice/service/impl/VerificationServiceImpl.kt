@@ -22,30 +22,32 @@ class VerificationServiceImpl : VerificationService {
 
     override fun generatePayload(address: String): String {
         val nonce = SecureRandom().nextLong().toString()
-        userPayload[address] = nonce
+        userPayload[address.lowercase()] = nonce
         return nonce
     }
 
     @Throws(ResourceNotFoundException::class, InvalidRequestException::class)
     override fun verifyPayload(address: String, signedPayload: String) {
-        val payload = userPayload[address] ?: throw ResourceNotFoundException(
-            ErrorCode.AUTH_PAYLOAD_MISSING, "There is no payload associated with address: $address."
+        val lowercaseAddress = address.lowercase()
+        val payload = userPayload[lowercaseAddress] ?: throw ResourceNotFoundException(
+            ErrorCode.AUTH_PAYLOAD_MISSING, "There is no payload associated with address: $lowercaseAddress."
         )
-        verifySignedPayload(address, payload, signedPayload)
+        verifySignedPayload(lowercaseAddress, payload, signedPayload)
     }
 
     internal fun verifySignedPayload(address: String, payload: String, signedPayload: String) {
+        val lowercaseAddress = address.lowercase()
         val eip919 = generateEip191Message(payload.toByteArray())
         try {
             val signatureData = getSignatureData(signedPayload)
             val publicKey = signedMessageToKey(eip919, signatureData)
-            if (address.lowercase() != publicKey.toAddress().toString().lowercase()) {
+            if (lowercaseAddress != publicKey.toAddress().toString().lowercase()) {
                 throw InvalidRequestException(
                     ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID,
-                    "Address: $address not equal to signed address: ${publicKey.toAddress()}"
+                    "Address: $lowercaseAddress not equal to signed address: ${publicKey.toAddress()}"
                 )
             }
-            userPayload.remove(address)
+            userPayload.remove(lowercaseAddress)
         } catch (ex: SignatureException) {
             throw InvalidRequestException(
                 ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID, "Public key cannot be recovered from the signature", ex
