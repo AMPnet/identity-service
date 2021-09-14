@@ -3,6 +3,7 @@ package com.ampnet.identityservice.service.impl
 import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
+import com.ampnet.identityservice.exception.InternalException
 import com.ampnet.identityservice.persistence.model.BlockchainTask
 import com.ampnet.identityservice.persistence.model.BlockchainTaskStatus
 import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
@@ -47,12 +48,12 @@ class BlockchainQueueServiceImpl(
         logger.info { "Created BlockchainTask: $blockchainTask" }
     }
 
-    @Suppress("TooGenericExceptionCaught")
+//    @Suppress("TooGenericExceptionCaught")
     private fun processTasks() {
         blockchainTaskRepository.getInProcess()?.let {
             try {
                 handleInProcessTask(it)
-            } catch (ex: Throwable) {
+            } catch (ex: InternalException) {
                 logger.error("Failed to handle in process task: ${ex.message}")
                 blockchainTaskRepository.setStatus(it.uuid, BlockchainTaskStatus.FAILED, it.hash)
             }
@@ -61,7 +62,7 @@ class BlockchainQueueServiceImpl(
         blockchainTaskRepository.getPending()?.let {
             try {
                 handlePendingTask(it)
-            } catch (ex: Throwable) {
+            } catch (ex: InternalException) {
                 logger.error("Failed to handle pending task: ${ex.message}")
                 blockchainTaskRepository.setStatus(it.uuid, BlockchainTaskStatus.FAILED, it.hash)
             }
