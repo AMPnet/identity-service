@@ -9,23 +9,23 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 plugins {
-    val kotlinVersion = "1.5.10"
+    val kotlinVersion = "1.5.21"
     kotlin("plugin.jpa") version kotlinVersion
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.spring") version kotlinVersion
 
-    id("org.springframework.boot") version "2.5.1"
+    id("org.springframework.boot") version "2.5.4"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
-    id("com.google.cloud.tools.jib") version "2.8.0"
+    id("com.google.cloud.tools.jib") version "3.1.4"
     id("org.asciidoctor.jvm.convert") version "3.3.2"
-    id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
-    id("io.gitlab.arturbosch.detekt").version("1.16.0")
+    id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
+    id("io.gitlab.arturbosch.detekt").version("1.18.1")
     id("com.google.protobuf") version "0.8.17"
     idea
     jacoco
 }
 group = "com.ampnet"
-version = "0.0.9"
+version = "0.1.0"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
@@ -48,7 +48,7 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     implementation("io.micrometer:micrometer-registry-prometheus")
 
-    implementation("io.github.microutils:kotlin-logging:2.0.5")
+    implementation("io.github.microutils:kotlin-logging:2.0.11")
     implementation("com.github.AMPnet:jwt:1.0.1")
     implementation("com.github.komputing:kethereum:0.84.1")
     implementation("org.web3j:core:4.8.7")
