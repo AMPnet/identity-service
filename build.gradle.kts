@@ -25,7 +25,7 @@ plugins {
     jacoco
 }
 group = "com.ampnet"
-version = "0.0.8"
+version = "0.0.9"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
@@ -54,6 +54,10 @@ dependencies {
     implementation("org.web3j:core:4.8.7")
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
     implementation("net.devh:grpc-server-spring-boot-starter:2.12.0.RELEASE")
+
+    val sentryVersion = "5.1.2"
+    implementation("io.sentry:sentry-spring-boot-starter:$sentryVersion")
+    implementation("io.sentry:sentry-logback:$sentryVersion")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
