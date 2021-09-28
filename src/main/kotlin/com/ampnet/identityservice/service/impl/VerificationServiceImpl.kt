@@ -19,11 +19,13 @@ class VerificationServiceImpl : VerificationService {
     companion object : KLogging()
 
     private val userPayload = mutableMapOf<String, String>()
+    private val message = "Welcome!\nClick “Sign” to sign in. No password needed!\nNonce: "
 
     override fun generatePayload(address: String): String {
-        val nonce = SecureRandom().nextLong().toString()
-        userPayload[address.lowercase()] = nonce
-        return nonce
+        val nonce = SecureRandom().nextInt(Integer.MAX_VALUE).toString()
+        val userMessage = message + nonce
+        userPayload[address.lowercase()] = userMessage
+        return userMessage
     }
 
     @Throws(ResourceNotFoundException::class, InvalidRequestException::class)

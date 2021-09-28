@@ -25,7 +25,7 @@ class VerificationServiceTest : JpaServiceTestBase() {
         val address = ADDRESS.toString()
         val payload = verificationService.generatePayload(address)
         val signedPayload = "0x" + KEY_PAIR.signWithEIP191PersonalSign(payload.toByteArray()).toHex()
-        verificationService.verifyPayload(address.lowercase(), signedPayload)
+        verificationService.verifyPayload(address, signedPayload)
     }
 
     @Test
@@ -34,7 +34,7 @@ class VerificationServiceTest : JpaServiceTestBase() {
         val address = keyPair.publicKey.toAddress().hex
         val payload = verificationService.generatePayload(address)
         val signedPayload = keyPair.signWithEIP191PersonalSign(payload.toByteArray()).toHex()
-        verificationService.verifyPayload(address.lowercase(), "0x$signedPayload")
+        verificationService.verifyPayload(address, "0x$signedPayload")
     }
 
     @Test
@@ -46,7 +46,7 @@ class VerificationServiceTest : JpaServiceTestBase() {
         val payload = "4305308538901004665"
         val mySigned = "0x" + keyPair.signWithEIP191PersonalSign(payload.toByteArray()).toHex()
         assertThat(mySigned).isEqualTo(customSignature)
-        verificationService.verifySignedPayload(address.lowercase(), payload, mySigned)
+        verificationService.verifySignedPayload(address, payload, mySigned)
     }
 
     @Test
@@ -54,7 +54,7 @@ class VerificationServiceTest : JpaServiceTestBase() {
         verificationService.generatePayload(ADDRESS.toString())
         val signedPayload = "0xb2c945a6cec73f6fac442eef9a59f9c35af728211b974167f581fc61954749e25259adb2034cdd15241ead0e6e9e7524c2f2126f02c0404a7c9403cec4b99dc01b"
         val error = assertThrows<InvalidRequestException> {
-            assertThat(verificationService.verifyPayload(ADDRESS.toString().lowercase(), signedPayload))
+            assertThat(verificationService.verifyPayload(ADDRESS.toString(), signedPayload))
         }
         assertThat(error.errorCode).isEqualTo(ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID)
     }
