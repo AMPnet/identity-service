@@ -298,7 +298,10 @@ class UserControllerTest : ControllerTestBase() {
     @WithMockCrowdfundUser
     fun mustBeAbleToWhitelistAddressForIssuer() {
         suppose("User has completed KYC") {
-            testContext.user = createUser(verified = true)
+            testContext.user = createUser(
+                verified = true,
+                expiryDate = zonedDateTimeProvider.getZonedDateTime().plusDays(2).toLocalDate().toString()
+            )
         }
 
         verify("User can whitelist address for issuer") {
@@ -322,6 +325,33 @@ class UserControllerTest : ControllerTestBase() {
     fun mustNotBeAbleToWhitelistAddressForIssuerWithoutKyc() {
         suppose("User exists without KYC") {
             testContext.user = createUser(verified = false)
+        }
+
+        verify("User cannot whitelist address without KYC") {
+            testContext.whitelistRequest = WhitelistRequest(testContext.issuerAddress, Chain.MATIC_TESTNET_MUMBAI.id)
+            val request = objectMapper.writeValueAsString(testContext.whitelistRequest)
+            val result = mockMvc.perform(
+                post(whitelistPath)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(request)
+            )
+                .andExpect(status().isBadRequest)
+                .andReturn()
+            verifyResponseErrorCode(result, ErrorCode.REG_VERIFF)
+        }
+        verify("Whitelisting user address has not been called") {
+            verifyMock(queueService, times(0))
+                .createWhitelistAddressTask(testContext.user.address, testContext.whitelistRequest)
+        }
+    }
+
+    @Test
+    @WithMockCrowdfundUser
+    fun mustNotBeAbleToWhitelistAddressForExpiredDocument() {
+        suppose("User exists without KYC") {
+            testContext.user = createUser(
+                expiryDate = zonedDateTimeProvider.getZonedDateTime().minusDays(2).toString()
+            )
         }
 
         verify("User cannot whitelist address without KYC") {
