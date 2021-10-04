@@ -117,15 +117,13 @@ class UserServiceImpl(
     @Throws(InvalidRequestException::class)
     override fun whitelistAddress(userAddress: String, request: WhitelistRequest) {
         val user = getUser(userAddress)
-        if (user.userInfoUuid != null) {
-            if (isDocumentExpired(user)) {
+        user.userInfoUuid?.let { userInfoUuid ->
+            if (isDocumentExpired(userInfoUuid)) {
                 disconnectUserInfo(user)
                 throw InvalidRequestException(ErrorCode.REG_VERIFF, "Expired KYC data for user: $userAddress")
             }
             blockchainQueueService.createWhitelistAddressTask(userAddress, request)
-        } else {
-            throw InvalidRequestException(ErrorCode.REG_VERIFF, "Missing KYC data for user: $userAddress")
-        }
+        } ?: throw InvalidRequestException(ErrorCode.REG_VERIFF, "Missing KYC data for user: $userAddress")
     }
 
     private fun verifyUser(user: User, userInfo: UserInfo): User {
@@ -157,11 +155,9 @@ class UserServiceImpl(
         }
     }
 
-    private fun isDocumentExpired(user: User): Boolean =
-        user.userInfoUuid?.let {
-            userInfoRepository.findById(it).unwrap()?.document?.validUntil?.let { validUntil ->
-                val expiryDate = LocalDate.parse(validUntil)
-                expiryDate.isBefore(zonedDateTimeProvider.getZonedDateTime().toLocalDate())
-            }
+    private fun isDocumentExpired(userInfoUuid: UUID): Boolean =
+        userInfoRepository.findById(userInfoUuid).unwrap()?.document?.validUntil?.let { validUntil ->
+            val expiryDate = LocalDate.parse(validUntil)
+            expiryDate.isBefore(zonedDateTimeProvider.getZonedDateTime().toLocalDate())
         } ?: false
 }

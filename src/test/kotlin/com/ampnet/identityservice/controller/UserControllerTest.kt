@@ -300,7 +300,7 @@ class UserControllerTest : ControllerTestBase() {
         suppose("User has completed KYC") {
             testContext.user = createUser(
                 verified = true,
-                expiryDate = zonedDateTimeProvider.getZonedDateTime().plusDays(2).toLocalDate().toString()
+                expiryDate = zonedDateTimeProvider.getZonedDateTime().plusDays(2).toLocalDate()
             )
         }
 
@@ -350,7 +350,7 @@ class UserControllerTest : ControllerTestBase() {
     fun mustNotBeAbleToWhitelistAddressForExpiredDocument() {
         suppose("User exists without KYC") {
             testContext.user = createUser(
-                expiryDate = zonedDateTimeProvider.getZonedDateTime().minusDays(2).toString()
+                expiryDate = zonedDateTimeProvider.getZonedDateTime().minusDays(2).toLocalDate()
             )
         }
 
