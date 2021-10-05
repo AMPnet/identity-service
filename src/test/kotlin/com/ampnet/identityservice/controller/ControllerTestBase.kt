@@ -42,6 +42,7 @@ import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.context.WebApplicationContext
+import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -130,13 +131,14 @@ abstract class ControllerTestBase : TestBase() {
     protected fun createUser(
         address: String = ADDRESS.toString(),
         verified: Boolean = false,
-        email: String? = "email@mail.com"
+        email: String? = "email@mail.com",
+        expiryDate: LocalDate? = null
     ): User {
         var userInfo: UUID? = null
         if (verified) {
             val testUserInfo = UserInfo(
                 uuidProvider.getUuid(), uuidProvider.getUuid().toString(), "first", "last",
-                "id-num", "01-01-1001", Document(null, null, null, null, null),
+                "id-num", "01-01-1001", Document(null, null, null, expiryDate?.toString(), null),
                 null, null, zonedDateTimeProvider.getZonedDateTime(), true, false
             )
             userInfo = userInfoRepository.save(testUserInfo).uuid
