@@ -12,6 +12,7 @@ class ApplicationProperties {
     val mail = MailProperties()
     val queue = QueueProperties()
     val chainEthereum = ChainProperties()
+    val chainGoerli = ChainProperties()
     val chainMatic = ChainProperties()
     val chainMumbai = ChainProperties()
     val chainHardhatTestnet = ChainProperties()

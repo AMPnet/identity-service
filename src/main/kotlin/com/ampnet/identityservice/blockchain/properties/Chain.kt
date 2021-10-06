@@ -20,6 +20,12 @@ enum class Chain(val id: Long, val rpcUrl: String, val infura: String?, val pric
         "https://mainnet.infura.io/v3/",
         null
     ),
+    GOERLI_TESTNET(
+        5,
+        "https://goerli.prylabs.net/",
+        "https://goerli.infura.io/v3/",
+        null
+    ),
     HARDHAT_TESTNET(
         31337,
         "http://hardhat:8545",
