@@ -19,11 +19,15 @@ class VerificationServiceImpl : VerificationService {
     companion object : KLogging()
 
     private val userPayload = mutableMapOf<String, String>()
+    private val message = "Welcome!\nClick “Sign” to sign in. No password needed!\nNonce: "
+    @Suppress("MagicNumber") // the number is stored in the variable anyway, but detekt reports it because of `valueOf`
+    private val vOffset = BigInteger.valueOf(27L)
 
     override fun generatePayload(address: String): String {
-        val nonce = SecureRandom().nextLong().toString()
-        userPayload[address.lowercase()] = nonce
-        return nonce
+        val nonce = SecureRandom().nextInt(Integer.MAX_VALUE).toString()
+        val userMessage = message + nonce
+        userPayload[address.lowercase()] = userMessage
+        return userMessage
     }
 
     @Throws(ResourceNotFoundException::class, InvalidRequestException::class)
@@ -72,13 +76,20 @@ class VerificationServiceImpl : VerificationService {
         val s = signedPayload.substring(66, 130)
         val v = signedPayload.substring(130, 132)
         try {
-            return SignatureData(BigInteger(r, 16), BigInteger(s, 16), BigInteger(v, 16))
+            return SignatureData(BigInteger(r, 16), BigInteger(s, 16), BigInteger(v, 16).withVOffset())
         } catch (ex: NumberFormatException) {
             throw InvalidRequestException(
                 ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID, "Signature: $signedPayload is not a valid hex value.", ex
             )
         }
     }
+
+    private fun BigInteger.withVOffset(): BigInteger =
+        if (this == BigInteger.ZERO || this == BigInteger.ONE) {
+            this + vOffset
+        } else {
+            this
+        }
 }
 
 private fun Byte.toByteArray() = ByteArray(1) { this }
