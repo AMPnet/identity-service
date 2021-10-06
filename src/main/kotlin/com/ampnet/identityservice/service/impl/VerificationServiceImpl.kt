@@ -20,6 +20,7 @@ class VerificationServiceImpl : VerificationService {
 
     private val userPayload = mutableMapOf<String, String>()
     private val message = "Welcome!\nClick “Sign” to sign in. No password needed!\nNonce: "
+
     @Suppress("MagicNumber") // the number is stored in the variable anyway, but detekt reports it because of `valueOf`
     private val vOffset = BigInteger.valueOf(27L)
 
@@ -86,11 +87,11 @@ class VerificationServiceImpl : VerificationService {
 
 
     private fun BigInteger.withVOffset(): BigInteger =
-            if (this == BigInteger.ZERO || this == BigInteger.ONE) {
-                this + vOffset
-            } else {
-                this
-            }
+        if (this == BigInteger.ZERO || this == BigInteger.ONE) {
+            this + vOffset
+        } else {
+            this
+        }
 }
 
 private fun Byte.toByteArray() = ByteArray(1) { this }
