@@ -50,7 +50,7 @@ dependencies {
 
     implementation("io.github.microutils:kotlin-logging:2.0.11")
     implementation("com.github.AMPnet:jwt:1.0.1")
-    implementation("com.github.komputing:kethereum:0.84.1")
+    implementation("com.github.komputing:kethereum:0.85.3")
     implementation("org.web3j:core:4.8.7")
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
     implementation("net.devh:grpc-server-spring-boot-starter:2.12.0.RELEASE")

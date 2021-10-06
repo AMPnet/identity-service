@@ -50,6 +50,18 @@ class VerificationServiceTest : JpaServiceTestBase() {
     }
 
     @Test
+    fun mustValidateCustomSignatureWithInternalVValue() {
+        val customSignature = "0x3d93d92c4b7f7c99857a004c7a40f24b19629c8b6904ff4ab855219577ad07951f42813cf161b9aeb77d7e8183bbf565ac065acb7c258db348d08932f8768c5400"
+        val private = PrivateKey(decode("12d7b2a19c6b9ef7d485152e01c0d61551c0bf10bbe520374a2abe3445fcb405")).toECKeyPair()
+        val keyPair = ECKeyPair(private.privateKey, private.publicKey)
+        val address = keyPair.publicKey.toAddress().hex
+        val payload = "4305308538901004665"
+        val mySigned = "0x" + keyPair.signWithEIP191PersonalSign(payload.toByteArray()).toHex()
+        assertThat(mySigned.replace("1b$".toRegex(), "00")).isEqualTo(customSignature)
+        verificationService.verifySignedPayload(address, payload, mySigned)
+    }
+
+    @Test
     fun mustFailOnInvalidSignature() {
         verificationService.generatePayload(ADDRESS.toString())
         val signedPayload = "0xb2c945a6cec73f6fac442eef9a59f9c35af728211b974167f581fc61954749e25259adb2034cdd15241ead0e6e9e7524c2f2126f02c0404a7c9403cec4b99dc01b"
