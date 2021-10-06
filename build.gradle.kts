@@ -1,12 +1,7 @@
-import com.google.protobuf.gradle.generateProtoTasks
-import com.google.protobuf.gradle.id
-import com.google.protobuf.gradle.ofSourceSet
-import com.google.protobuf.gradle.plugins
-import com.google.protobuf.gradle.protobuf
-import com.google.protobuf.gradle.protoc
+import com.google.protobuf.gradle.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.text.SimpleDateFormat
-import java.util.Date
+import java.util.*
 
 plugins {
     val kotlinVersion = "1.5.21"
@@ -50,7 +45,7 @@ dependencies {
 
     implementation("io.github.microutils:kotlin-logging:2.0.11")
     implementation("com.github.AMPnet:jwt:1.0.1")
-    implementation("com.github.komputing:kethereum:0.84.1")
+    implementation("com.github.komputing:kethereum:0.85.3")
     implementation("org.web3j:core:4.8.7")
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
     implementation("net.devh:grpc-server-spring-boot-starter:2.12.0.RELEASE")

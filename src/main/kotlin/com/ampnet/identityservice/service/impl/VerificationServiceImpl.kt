@@ -20,6 +20,7 @@ class VerificationServiceImpl : VerificationService {
 
     private val userPayload = mutableMapOf<String, String>()
     private val message = "Welcome!\nClick “Sign” to sign in. No password needed!\nNonce: "
+    private val vOffset = BigInteger.valueOf(27L)
 
     override fun generatePayload(address: String): String {
         val nonce = SecureRandom().nextInt(Integer.MAX_VALUE).toString()
@@ -74,11 +75,19 @@ class VerificationServiceImpl : VerificationService {
         val s = signedPayload.substring(66, 130)
         val v = signedPayload.substring(130, 132)
         try {
-            return SignatureData(BigInteger(r, 16), BigInteger(s, 16), BigInteger(v, 16))
+            return SignatureData(BigInteger(r, 16), BigInteger(s, 16), BigInteger(v, 16).withVOffset())
         } catch (ex: NumberFormatException) {
             throw InvalidRequestException(
                 ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID, "Signature: $signedPayload is not a valid hex value.", ex
             )
+        }
+    }
+
+    private fun BigInteger.withVOffset(): BigInteger {
+        return if (this == BigInteger.ZERO || this == BigInteger.ONE) {
+            this + vOffset
+        } else {
+            this
         }
     }
 }
