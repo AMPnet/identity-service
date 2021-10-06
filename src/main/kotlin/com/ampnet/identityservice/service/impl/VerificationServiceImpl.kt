@@ -84,13 +84,13 @@ class VerificationServiceImpl : VerificationService {
         }
     }
 
-    private fun BigInteger.withVOffset(): BigInteger {
-        return if (this == BigInteger.ZERO || this == BigInteger.ONE) {
-            this + vOffset
-        } else {
-            this
-        }
-    }
+
+    private fun BigInteger.withVOffset(): BigInteger =
+            if (this == BigInteger.ZERO || this == BigInteger.ONE) {
+                this + vOffset
+            } else {
+                this
+            }
 }
 
 private fun Byte.toByteArray() = ByteArray(1) { this }
