@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.servlet.MockMvc
@@ -35,6 +36,7 @@ import java.lang.Thread.sleep
 @SpringBootTest
 @ExtendWith(value = [SpringExtension::class])
 @ActiveProfiles("secret")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class BlockchainInteractionTest : TestBase() {
 
     @Autowired
