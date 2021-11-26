@@ -44,7 +44,11 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
                 contractAddress = chainProperties.walletApproverServiceAddress
             ),
             faucet = if (chainProperties.faucetServiceEnabled) chainProperties.faucet else null,
-            web3j = Web3j.build(HttpService(rpcUrl)),
+            autoInvest = CredentialsAndContractAddress(
+                credentials = Credentials.create(chainProperties.autoinvestPrivateKey),
+                contractAddress = TODO()
+            ),
+            web3j = Web3j.build(HttpService(rpcUrl))
         )
     }
 
@@ -75,6 +79,13 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
             throw InternalException(
                 ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
                 "Faucet config for chain: ${chain.name} not defined in the application properties"
+            )
+        }
+
+        if (chainProperties.autoinvestPrivateKey.isBlank()) {
+            throw InternalException(
+                ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
+                "Auto-invest wallet private key for chain: ${chain.name} not defined in the application properties"
             )
         }
 

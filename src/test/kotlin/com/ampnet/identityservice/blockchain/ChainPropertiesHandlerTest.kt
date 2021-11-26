@@ -65,4 +65,21 @@ class ChainPropertiesHandlerTest {
         }
         assertThat(exception.errorCode).isEqualTo(ErrorCode.BLOCKCHAIN_CONFIG_MISSING)
     }
+
+    @Test
+    fun mustThrowExceptionForMissingAutoinvestChainConfig() {
+        val exception = assertThrows<InternalException> {
+            val applicationProperties = ApplicationProperties().apply {
+                this.chainEthereum.walletApproverPrivateKey = "test-key"
+                this.chainEthereum.walletApproverServiceAddress = "test-address"
+                this.chainEthereum.faucetServiceEnabled = true
+                this.chainEthereum.faucetCallerPrivateKey = "test-key"
+                this.chainEthereum.faucetServiceAddress = "test-address"
+                this.chainEthereum.autoinvestPrivateKey = ""
+            }
+            val chainPropertiesHandler = ChainPropertiesHandler(applicationProperties)
+            chainPropertiesHandler.getBlockchainProperties(Chain.ETHEREUM_MAIN.id)
+        }
+        assertThat(exception.errorCode).isEqualTo(ErrorCode.BLOCKCHAIN_CONFIG_MISSING)
+    }
 }

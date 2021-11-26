@@ -47,6 +47,7 @@ class TestProperties {
 class ChainProperties {
     var walletApproverPrivateKey: String = ""
     var faucetCallerPrivateKey: String = ""
+    var autoinvestPrivateKey: String = ""
     var walletApproverServiceAddress: String = ""
     var faucetServiceAddress: String = ""
     var faucetServiceEnabled: Boolean = false
