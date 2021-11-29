@@ -21,19 +21,19 @@ import java.util.UUID
 class AutoInvestTaskRepositoryTest : TestBase() {
 
     @Autowired
-    private lateinit var blockchainTaskRepository: AutoInvestTaskRepository
+    private lateinit var autoInvestTaskRepository: AutoInvestTaskRepository
 
     @Test
     fun mustCorrectlyInsertAutoInvestTask() {
         val task = taskWithAmount(BigDecimal("12345.123456789"))
 
         suppose("auto-invest task is inserted into database") {
-            val numModified = blockchainTaskRepository.createOrUpdate(task)
+            val numModified = autoInvestTaskRepository.createOrUpdate(task)
             assertThat(numModified).isOne()
         }
 
         verify("auto-invest task was correctly inserted into database") {
-            val databaseTask = blockchainTaskRepository.findById(task.uuid)
+            val databaseTask = autoInvestTaskRepository.findById(task.uuid)
             assertThat(databaseTask).hasValue(task)
         }
     }
@@ -43,19 +43,19 @@ class AutoInvestTaskRepositoryTest : TestBase() {
         val task = taskWithAmount(BigDecimal(500))
 
         suppose("auto-invest task is inserted into database") {
-            val numModified = blockchainTaskRepository.createOrUpdate(task)
+            val numModified = autoInvestTaskRepository.createOrUpdate(task)
             assertThat(numModified).isOne()
         }
 
         val newTask = taskWithAmount(BigDecimal(1_000))
 
         suppose("another auto-invest task for the same user and campaign is inserted into database") {
-            val numModified = blockchainTaskRepository.createOrUpdate(newTask)
+            val numModified = autoInvestTaskRepository.createOrUpdate(newTask)
             assertThat(numModified).isOne()
         }
 
         verify("auto-invest task is correctly updated") {
-            val databaseTask = blockchainTaskRepository.findById(task.uuid)
+            val databaseTask = autoInvestTaskRepository.findById(task.uuid)
             assertThat(databaseTask).hasValue(
                 task.copy(
                     amount = task.amount + newTask.amount,
@@ -70,19 +70,19 @@ class AutoInvestTaskRepositoryTest : TestBase() {
         val task = taskWithAmount(BigDecimal(500), status = AutoInvestTaskStatus.IN_PROCESS)
 
         suppose("auto-invest task is inserted into database") {
-            val numModified = blockchainTaskRepository.createOrUpdate(task)
+            val numModified = autoInvestTaskRepository.createOrUpdate(task)
             assertThat(numModified).isOne()
         }
 
         val newTask = taskWithAmount(BigDecimal(1_000), status = AutoInvestTaskStatus.PENDING)
 
         suppose("another auto-invest task for the same user and campaign is inserted into database") {
-            val numModified = blockchainTaskRepository.createOrUpdate(newTask)
+            val numModified = autoInvestTaskRepository.createOrUpdate(newTask)
             assertThat(numModified).isZero()
         }
 
         verify("auto-invest task is not updated") {
-            val databaseTask = blockchainTaskRepository.findById(task.uuid)
+            val databaseTask = autoInvestTaskRepository.findById(task.uuid)
             assertThat(databaseTask).hasValue(task)
         }
     }
@@ -105,24 +105,58 @@ class AutoInvestTaskRepositoryTest : TestBase() {
         )
 
         suppose("some auto-invest tasks are in the database") {
-            blockchainTaskRepository.saveAllAndFlush(targetTasks + otherTasks)
+            autoInvestTaskRepository.saveAllAndFlush(targetTasks + otherTasks)
         }
 
         verify("correct auto-invest tasks are returned") {
-            val databaseTasks = blockchainTaskRepository.findByChainIdAndStatus(2L, AutoInvestTaskStatus.IN_PROCESS)
+            val databaseTasks = autoInvestTaskRepository.findByChainIdAndStatus(2L, AutoInvestTaskStatus.IN_PROCESS)
             assertThat(databaseTasks).containsExactlyInAnyOrderElementsOf(targetTasks)
+        }
+    }
+
+    @Test
+    fun mustCorrectlyFetchAutoInvestTasksByUserWalletAddressAndCampaignContractAddressAndChainId() {
+        val task1 = taskForUser("user1", campaign = "campaign1", chainId = 1L)
+        val task2 = taskForUser("user2", campaign = "campaign2", chainId = 2L)
+        val tasks = listOf(
+            task1,
+            task2,
+            taskForUser("user3", campaign = "campaign3", chainId = 3L),
+            taskForUser("user4", campaign = "campaign4", chainId = 4L),
+            taskForUser("user5", campaign = "campaign5", chainId = 5L),
+        )
+
+        suppose("some auto-invest tasks are in the database") {
+            autoInvestTaskRepository.saveAllAndFlush(tasks)
+        }
+
+        verify("correct auto-invest task is returned") {
+            val databaseTask1 = autoInvestTaskRepository.findByUserWalletAddressAndCampaignContractAddressAndChainId(
+                userWalletAddress = "user1WalletAddress",
+                campaignContractAddress = "campaign1ContractAddress",
+                chainId = 1L
+            )
+            assertThat(databaseTask1).isEqualTo(task1)
+
+            val databaseTask2 = autoInvestTaskRepository.findByUserWalletAddressAndCampaignContractAddressAndChainId(
+                userWalletAddress = "user2WalletAddress",
+                campaignContractAddress = "campaign2ContractAddress",
+                chainId = 2L
+            )
+            assertThat(databaseTask2).isEqualTo(task2)
         }
     }
 
     private fun taskForUser(
         user: String,
+        campaign: String = "campaign",
         chainId: Long = 1L,
         status: AutoInvestTaskStatus = AutoInvestTaskStatus.PENDING
     ) = AutoInvestTask(
         UUID.randomUUID(),
         chainId,
         "${user}WalletAddress",
-        "campaignContractAddress",
+        "${campaign}ContractAddress",
         BigDecimal(1L),
         status,
         ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC"))

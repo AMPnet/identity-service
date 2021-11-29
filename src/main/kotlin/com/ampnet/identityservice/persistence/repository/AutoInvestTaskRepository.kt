@@ -24,4 +24,10 @@ interface AutoInvestTaskRepository : JpaRepository<AutoInvestTask, UUID> {
     fun createOrUpdate(task: AutoInvestTask): Int
 
     fun findByChainIdAndStatus(chainId: Long, status: AutoInvestTaskStatus): List<AutoInvestTask>
+
+    fun findByUserWalletAddressAndCampaignContractAddressAndChainId(
+        userWalletAddress: String,
+        campaignContractAddress: String,
+        chainId: Long
+    ): AutoInvestTask
 }
