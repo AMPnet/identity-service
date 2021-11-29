@@ -28,7 +28,8 @@ class AutoInvestTaskRepositoryTest : TestBase() {
         val task = taskWithAmount(BigDecimal("12345.123456789"))
 
         suppose("auto-invest task is inserted into database") {
-            blockchainTaskRepository.createOrUpdate(task)
+            val numModified = blockchainTaskRepository.createOrUpdate(task)
+            assertThat(numModified).isOne()
         }
 
         verify("auto-invest task was correctly inserted into database") {
@@ -42,13 +43,15 @@ class AutoInvestTaskRepositoryTest : TestBase() {
         val task = taskWithAmount(BigDecimal(500))
 
         suppose("auto-invest task is inserted into database") {
-            blockchainTaskRepository.createOrUpdate(task)
+            val numModified = blockchainTaskRepository.createOrUpdate(task)
+            assertThat(numModified).isOne()
         }
 
         val newTask = taskWithAmount(BigDecimal(1_000))
 
         suppose("another auto-invest task for the same user and campaign is inserted into database") {
-            blockchainTaskRepository.createOrUpdate(newTask)
+            val numModified = blockchainTaskRepository.createOrUpdate(newTask)
+            assertThat(numModified).isOne()
         }
 
         verify("auto-invest task is correctly updated") {
@@ -59,6 +62,28 @@ class AutoInvestTaskRepositoryTest : TestBase() {
                     createdAt = newTask.createdAt
                 )
             )
+        }
+    }
+
+    @Test
+    fun mustNotUpdateExistingAutoInvestTaskWhenThereIsAStatusMismatch() {
+        val task = taskWithAmount(BigDecimal(500), status = AutoInvestTaskStatus.IN_PROCESS)
+
+        suppose("auto-invest task is inserted into database") {
+            val numModified = blockchainTaskRepository.createOrUpdate(task)
+            assertThat(numModified).isOne()
+        }
+
+        val newTask = taskWithAmount(BigDecimal(1_000), status = AutoInvestTaskStatus.PENDING)
+
+        suppose("another auto-invest task for the same user and campaign is inserted into database") {
+            val numModified = blockchainTaskRepository.createOrUpdate(newTask)
+            assertThat(numModified).isZero()
+        }
+
+        verify("auto-invest task is not updated") {
+            val databaseTask = blockchainTaskRepository.findById(task.uuid)
+            assertThat(databaseTask).hasValue(task)
         }
     }
 
@@ -103,14 +128,14 @@ class AutoInvestTaskRepositoryTest : TestBase() {
         ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC"))
     )
 
-    private fun taskWithAmount(amount: BigDecimal) =
+    private fun taskWithAmount(amount: BigDecimal, status: AutoInvestTaskStatus = AutoInvestTaskStatus.PENDING) =
         AutoInvestTask(
             UUID.randomUUID(),
             1L,
             "userWalletAddress",
             "campaignContractAddress",
             amount,
-            AutoInvestTaskStatus.PENDING,
+            status,
             ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC"))
         )
 }

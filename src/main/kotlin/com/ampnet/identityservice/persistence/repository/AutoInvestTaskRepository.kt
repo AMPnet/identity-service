@@ -15,12 +15,13 @@ interface AutoInvestTaskRepository : JpaRepository<AutoInvestTask, UUID> {
             " VALUES (:#{#task.uuid}, :#{#task.chainId}, :#{#task.userWalletAddress}," +
             " :#{#task.campaignContractAddress}, :#{#task.amount}, :#{#task.status.name()}, :#{#task.createdAt})" +
             " ON CONFLICT ON CONSTRAINT per_user_campaign DO UPDATE" +
-            " SET (amount, created_at) = (auto_invest_task.amount + :#{#task.amount}, :#{#task.createdAt})",
+            " SET (amount, created_at) = (auto_invest_task.amount + :#{#task.amount}, :#{#task.createdAt})" +
+            " WHERE auto_invest_task.status = EXCLUDED.status",
         nativeQuery = true
     )
     @Modifying
     @Transactional
-    fun createOrUpdate(task: AutoInvestTask)
+    fun createOrUpdate(task: AutoInvestTask): Int
 
     fun findByChainIdAndStatus(chainId: Long, status: AutoInvestTaskStatus): List<AutoInvestTask>
 }
