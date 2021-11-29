@@ -1,8 +1,8 @@
 package com.ampnet.identityservice.persistence.repository
 
 import com.ampnet.identityservice.TestBase
-import com.ampnet.identityservice.persistence.model.AutoinvestTask
-import com.ampnet.identityservice.persistence.model.AutoinvestTaskStatus
+import com.ampnet.identityservice.persistence.model.AutoInvestTask
+import com.ampnet.identityservice.persistence.model.AutoInvestTaskStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -18,13 +18,13 @@ import java.util.UUID
 @DataJpaTest
 @ExtendWith(value = [SpringExtension::class])
 @AutoConfigureTestDatabase
-class AutoinvestTaskRepositoryTest : TestBase() {
+class AutoInvestTaskRepositoryTest : TestBase() {
 
     @Autowired
-    private lateinit var blockchainTaskRepository: AutoinvestTaskRepository
+    private lateinit var blockchainTaskRepository: AutoInvestTaskRepository
 
     @Test
-    fun mustCorrectlyInsertAutoinvestTask() {
+    fun mustCorrectlyInsertAutoInvestTask() {
         val task = taskWithAmount(BigDecimal("12345.123456789"))
 
         suppose("auto-invest task is inserted into database") {
@@ -38,7 +38,7 @@ class AutoinvestTaskRepositoryTest : TestBase() {
     }
 
     @Test
-    fun mustCorrectlyUpdateExistingAutoinvestTask() {
+    fun mustCorrectlyUpdateExistingAutoInvestTask() {
         val task = taskWithAmount(BigDecimal(500))
 
         suppose("auto-invest task is inserted into database") {
@@ -63,18 +63,18 @@ class AutoinvestTaskRepositoryTest : TestBase() {
     }
 
     @Test
-    fun mustCorrectlyFetchAutoinvestTasksByChainIdAndStatus() {
+    fun mustCorrectlyFetchAutoInvestTasksByChainIdAndStatus() {
         val targetTasks = listOf(
-            taskForUser("user1", chainId = 2L, status = AutoinvestTaskStatus.IN_PROCESS),
-            taskForUser("user2", chainId = 2L, status = AutoinvestTaskStatus.IN_PROCESS),
-            taskForUser("user3", chainId = 2L, status = AutoinvestTaskStatus.IN_PROCESS),
-            taskForUser("user4", chainId = 2L, status = AutoinvestTaskStatus.IN_PROCESS),
-            taskForUser("user5", chainId = 2L, status = AutoinvestTaskStatus.IN_PROCESS),
+            taskForUser("user1", chainId = 2L, status = AutoInvestTaskStatus.IN_PROCESS),
+            taskForUser("user2", chainId = 2L, status = AutoInvestTaskStatus.IN_PROCESS),
+            taskForUser("user3", chainId = 2L, status = AutoInvestTaskStatus.IN_PROCESS),
+            taskForUser("user4", chainId = 2L, status = AutoInvestTaskStatus.IN_PROCESS),
+            taskForUser("user5", chainId = 2L, status = AutoInvestTaskStatus.IN_PROCESS),
         )
         val otherTasks = listOf(
             taskForUser("user6"),
             taskForUser("user7", chainId = 2L),
-            taskForUser("user8", status = AutoinvestTaskStatus.IN_PROCESS),
+            taskForUser("user8", status = AutoInvestTaskStatus.IN_PROCESS),
             taskForUser("user9"),
             taskForUser("user10"),
         )
@@ -84,7 +84,7 @@ class AutoinvestTaskRepositoryTest : TestBase() {
         }
 
         verify("correct auto-invest tasks are returned") {
-            val databaseTasks = blockchainTaskRepository.findByChainIdAndStatus(2L, AutoinvestTaskStatus.IN_PROCESS)
+            val databaseTasks = blockchainTaskRepository.findByChainIdAndStatus(2L, AutoInvestTaskStatus.IN_PROCESS)
             assertThat(databaseTasks).containsExactlyInAnyOrderElementsOf(targetTasks)
         }
     }
@@ -92,8 +92,8 @@ class AutoinvestTaskRepositoryTest : TestBase() {
     private fun taskForUser(
         user: String,
         chainId: Long = 1L,
-        status: AutoinvestTaskStatus = AutoinvestTaskStatus.PENDING
-    ) = AutoinvestTask(
+        status: AutoInvestTaskStatus = AutoInvestTaskStatus.PENDING
+    ) = AutoInvestTask(
         UUID.randomUUID(),
         chainId,
         "${user}WalletAddress",
@@ -104,13 +104,13 @@ class AutoinvestTaskRepositoryTest : TestBase() {
     )
 
     private fun taskWithAmount(amount: BigDecimal) =
-        AutoinvestTask(
+        AutoInvestTask(
             UUID.randomUUID(),
             1L,
             "userWalletAddress",
             "campaignContractAddress",
             amount,
-            AutoinvestTaskStatus.PENDING,
+            AutoInvestTaskStatus.PENDING,
             ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC"))
         )
 }

@@ -67,7 +67,7 @@ class ChainPropertiesHandlerTest {
     }
 
     @Test
-    fun mustThrowExceptionForMissingAutoinvestChainConfig() {
+    fun mustThrowExceptionForMissingAutoInvestChainConfig() {
         val exception = assertThrows<InternalException> {
             val applicationProperties = ApplicationProperties().apply {
                 this.chainEthereum.walletApproverPrivateKey = "test-key"
@@ -75,7 +75,7 @@ class ChainPropertiesHandlerTest {
                 this.chainEthereum.faucetServiceEnabled = true
                 this.chainEthereum.faucetCallerPrivateKey = "test-key"
                 this.chainEthereum.faucetServiceAddress = "test-address"
-                this.chainEthereum.autoinvestPrivateKey = ""
+                this.chainEthereum.autoInvestPrivateKey = ""
             }
             val chainPropertiesHandler = ChainPropertiesHandler(applicationProperties)
             chainPropertiesHandler.getBlockchainProperties(Chain.ETHEREUM_MAIN.id)

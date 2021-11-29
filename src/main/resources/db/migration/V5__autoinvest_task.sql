@@ -1,4 +1,4 @@
-CREATE TABLE autoinvest_task (
+CREATE TABLE auto_invest_task (
     uuid                      UUID PRIMARY KEY,
     chain_id                  BIGINT                   NOT NULL,
     user_wallet_address       VARCHAR                  NOT NULL,
@@ -9,6 +9,6 @@ CREATE TABLE autoinvest_task (
     CONSTRAINT per_user_campaign UNIQUE (chain_id, user_wallet_address, campaign_contract_address, status)
 );
 
-CREATE INDEX idx_autoinvest_task_chain_id_status ON autoinvest_task(chain_id, status);
-CREATE UNIQUE INDEX idx_autoinvest_per_user_campaign
-    ON autoinvest_task(chain_id, user_wallet_address, campaign_contract_address, status);
+CREATE INDEX idx_auto_invest_task_chain_id_status ON auto_invest_task(chain_id, status);
+CREATE UNIQUE INDEX idx_auto_invest_per_user_campaign
+    ON auto_invest_task(chain_id, user_wallet_address, campaign_contract_address, status);

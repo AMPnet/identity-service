@@ -13,8 +13,8 @@ import javax.persistence.Id
 import javax.persistence.Table
 
 @Entity
-@Table(name = "autoinvest_task")
-data class AutoinvestTask(
+@Table(name = "auto_invest_task")
+data class AutoInvestTask(
     @Id
     val uuid: UUID,
 
@@ -32,7 +32,7 @@ data class AutoinvestTask(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    val status: AutoinvestTaskStatus,
+    val status: AutoInvestTaskStatus,
 
     @Column(nullable = false)
     val createdAt: ZonedDateTime
@@ -42,7 +42,7 @@ data class AutoinvestTask(
         userWalletAddress: String,
         campaignContractAddress: String,
         amount: BigDecimal,
-        status: AutoinvestTaskStatus,
+        status: AutoInvestTaskStatus,
         uuidProvider: UuidProvider,
         timeProvider: ZonedDateTimeProvider
     ) : this(
@@ -56,7 +56,7 @@ data class AutoinvestTask(
     )
 
     override fun toString(): String =
-        "AutoinvestTask(uuid=$uuid, chainId=$chainId, userWalletAddress='$userWalletAddress'," +
+        "AutoInvestTask(uuid=$uuid, chainId=$chainId, userWalletAddress='$userWalletAddress'," +
             " campaignContractAddress='$campaignContractAddress', amount=$amount, status=$status," +
             " createdAt=$createdAt)"
 
@@ -66,7 +66,7 @@ data class AutoinvestTask(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as AutoinvestTask
+        other as AutoInvestTask
 
         if (uuid != other.uuid) return false
         if (chainId != other.chainId) return false
@@ -91,6 +91,6 @@ data class AutoinvestTask(
     }
 }
 
-enum class AutoinvestTaskStatus {
+enum class AutoInvestTaskStatus {
     PENDING, IN_PROCESS
 }
