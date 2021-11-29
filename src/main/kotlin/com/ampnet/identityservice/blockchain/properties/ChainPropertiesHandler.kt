@@ -46,7 +46,7 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
             faucet = if (chainProperties.faucetServiceEnabled) chainProperties.faucet else null,
             autoInvest = CredentialsAndContractAddress(
                 credentials = Credentials.create(chainProperties.autoInvestPrivateKey),
-                contractAddress = TODO()
+                contractAddress = chainProperties.autoInvestServiceAddress
             ),
             web3j = Web3j.build(HttpService(rpcUrl))
         )
@@ -82,10 +82,10 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
             )
         }
 
-        if (chainProperties.autoInvestPrivateKey.isBlank()) {
+        if (chainProperties.autoInvestPrivateKey.isBlank() || chainProperties.autoInvestServiceAddress.isBlank()) {
             throw InternalException(
                 ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
-                "Auto-invest wallet private key for chain: ${chain.name} not defined in the application properties"
+                "Auto-invest config for chain: ${chain.name} not defined in the application properties"
             )
         }
 

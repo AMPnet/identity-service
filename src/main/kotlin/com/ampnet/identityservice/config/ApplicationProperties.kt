@@ -3,6 +3,7 @@ package com.ampnet.identityservice.config
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import java.math.BigInteger
+import java.time.Duration
 
 @Configuration
 @ConfigurationProperties(prefix = "com.ampnet.identityservice")
@@ -20,6 +21,7 @@ class ApplicationProperties {
     val pinata = PinataProperties()
     val faucet = FaucetProperties()
     val walletApprove = WalletApproveProperties()
+    val autoInvest = AutoInvestProperties()
     lateinit var infuraId: String
 }
 
@@ -51,6 +53,7 @@ class ChainProperties {
     var walletApproverServiceAddress: String = ""
     var faucetServiceAddress: String = ""
     var faucetServiceEnabled: Boolean = false
+    var autoInvestServiceAddress: String = ""
 }
 
 class MailProperties {
@@ -81,4 +84,11 @@ class FaucetProperties {
 @Suppress("MagicNumber")
 class WalletApproveProperties {
     var gasLimit: BigInteger = BigInteger.valueOf(200_000)
+}
+
+@Suppress("MagicNumber")
+class AutoInvestProperties {
+    var processingEnabled: Boolean = false
+    var timeout: Duration = Duration.ofDays(7L)
+    val queue = QueueProperties()
 }
