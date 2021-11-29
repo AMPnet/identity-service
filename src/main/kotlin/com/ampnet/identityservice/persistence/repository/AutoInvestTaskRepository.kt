@@ -23,6 +23,12 @@ interface AutoInvestTaskRepository : JpaRepository<AutoInvestTask, UUID> {
     @Transactional
     fun createOrUpdate(task: AutoInvestTask): Int
 
+    @Query(
+        "SELECT * FROM auto_invest_task" +
+            " WHERE chain_id = :chainId AND status = :#{#status.name()}" +
+            " FOR UPDATE SKIP LOCKED",
+        nativeQuery = true
+    )
     fun findByChainIdAndStatus(chainId: Long, status: AutoInvestTaskStatus): List<AutoInvestTask>
 
     fun findByUserWalletAddressAndCampaignContractAddressAndChainId(
