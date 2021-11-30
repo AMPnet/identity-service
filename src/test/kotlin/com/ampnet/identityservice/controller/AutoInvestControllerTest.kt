@@ -147,7 +147,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
         val request = AutoInvestRequest(campaignAddress = "campaignAddress", amount = BigDecimal(500))
 
         suppose("User submits auto-invest request") {
-            val result = mockMvc.perform(
+            mockMvc.perform(
                 post(autoInvestPath)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))

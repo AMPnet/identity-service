@@ -2,6 +2,7 @@ package com.ampnet.identityservice.persistence.model
 
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
+import org.hibernate.annotations.Immutable
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -13,6 +14,7 @@ import javax.persistence.Id
 import javax.persistence.Table
 
 @Entity
+@Immutable
 @Table(name = "auto_invest_task")
 data class AutoInvestTask(
     @Id

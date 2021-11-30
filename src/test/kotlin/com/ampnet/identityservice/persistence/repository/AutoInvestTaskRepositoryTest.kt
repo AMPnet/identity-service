@@ -88,7 +88,7 @@ class AutoInvestTaskRepositoryTest : TestBase() {
     }
 
     @Test
-    fun mustCorrectlyFetchAutoInvestTasksByChainIdAndStatus() {
+    fun mustCorrectlyFetchAutoInvestTasksByStatus() {
         val targetTasks = listOf(
             taskForUser("user1", chainId = 2L, status = AutoInvestTaskStatus.IN_PROCESS),
             taskForUser("user2", chainId = 2L, status = AutoInvestTaskStatus.IN_PROCESS),
@@ -98,8 +98,8 @@ class AutoInvestTaskRepositoryTest : TestBase() {
         )
         val otherTasks = listOf(
             taskForUser("user6"),
-            taskForUser("user7", chainId = 2L),
-            taskForUser("user8", status = AutoInvestTaskStatus.IN_PROCESS),
+            taskForUser("user7"),
+            taskForUser("user8"),
             taskForUser("user9"),
             taskForUser("user10"),
         )
@@ -109,8 +109,41 @@ class AutoInvestTaskRepositoryTest : TestBase() {
         }
 
         verify("correct auto-invest tasks are returned") {
-            val databaseTasks = autoInvestTaskRepository.findByChainIdAndStatus(2L, AutoInvestTaskStatus.IN_PROCESS)
+            val databaseTasks = autoInvestTaskRepository.findByStatus(AutoInvestTaskStatus.IN_PROCESS)
             assertThat(databaseTasks).containsExactlyInAnyOrderElementsOf(targetTasks)
+        }
+    }
+
+    @Test
+    fun mustCorrectlyUpdateStatusForSpecifiedIds() {
+        val updatedTasks = listOf(
+            taskForUser("user1"),
+            taskForUser("user2"),
+            taskForUser("user3"),
+            taskForUser("user4"),
+            taskForUser("user5"),
+        )
+        val nonUpdatedTasks = listOf(
+            taskForUser("user6"),
+            taskForUser("user7"),
+            taskForUser("user8"),
+            taskForUser("user9"),
+            taskForUser("user10"),
+        )
+
+        suppose("some auto-invest tasks are in the database") {
+            autoInvestTaskRepository.saveAllAndFlush(updatedTasks + nonUpdatedTasks)
+        }
+
+        suppose("status is updated for specified task IDs") {
+            autoInvestTaskRepository.updateStatusForIds(updatedTasks.map { it.uuid }, AutoInvestTaskStatus.IN_PROCESS)
+        }
+
+        verify("correct auto-invest tasks are updated") {
+            val databaseTasks = autoInvestTaskRepository.findByStatus(AutoInvestTaskStatus.IN_PROCESS)
+            assertThat(databaseTasks).containsExactlyInAnyOrderElementsOf(
+                updatedTasks.map { it.copy(status = AutoInvestTaskStatus.IN_PROCESS) }
+            )
         }
     }
 
