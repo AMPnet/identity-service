@@ -138,9 +138,18 @@ include::{snippets}/AutoInvestControllerTest/mustBeAbleToRequestAutoInvest/http-
 .Response
 include::{snippets}/AutoInvestControllerTest/mustBeAbleToRequestAutoInvest/http-response.adoc[]
 
-=== Error response
+==== Error response
 If the requesting user already has auto-invest in progress for the specified campaign address, bad request response
 will be returned.
 
 .Response
 include::{snippets}/AutoInvestControllerTest/mustNotUpdateAutoInvestTaskWhenAlreadyInProcess/http-response.adoc[]
+
+=== Get Auto-invest Task Amount
+Returns pending auto-invest value for the specified campaign for the current user. If the uses has not requested
+auto-invest for the campaign, zero will be returned for the amount.
+
+.Request
+include::{snippets}/AutoInvestControllerTest/mustCorrectlyReturnAutoInvestTask/http-request.adoc[]
+.Response
+include::{snippets}/AutoInvestControllerTest/mustCorrectlyReturnAutoInvestTask/http-response.adoc[]

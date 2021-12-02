@@ -45,5 +45,5 @@ interface AutoInvestTaskRepository : JpaRepository<AutoInvestTask, UUID> {
         userWalletAddress: String,
         campaignContractAddress: String,
         chainId: Long
-    ): AutoInvestTask
+    ): AutoInvestTask?
 }

@@ -1,5 +1,7 @@
 package com.ampnet.identityservice.blockchain
 
+import com.ampnet.identityservice.blockchain.IInvestService.InvestmentRecord
+import com.ampnet.identityservice.blockchain.IInvestService.InvestmentRecordStatus
 import com.ampnet.identityservice.blockchain.properties.ChainPropertiesHandler
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.exception.ErrorCode
@@ -34,6 +36,9 @@ class BlockchainServiceImpl(
 ) : BlockchainService {
 
     private val chainHandler = ChainPropertiesHandler(applicationProperties)
+
+    @Suppress("MagicNumber")
+    private val autoInvestGasLimit = BigInteger.valueOf(200_000)
 
     @Suppress("ReturnCount")
     @Throws(InternalException::class)
@@ -119,6 +124,52 @@ class BlockchainServiceImpl(
             "Successfully send request to fund addresses: $addresses on chain: $chainId"
         }
 
+        return sentTransaction?.transactionHash
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(InternalException::class)
+    override fun getAutoInvestStatus(records: List<InvestmentRecord>, chainId: Long): List<InvestmentRecordStatus> {
+        val chainProperties = chainHandler.getBlockchainProperties(chainId)
+        val web3j = chainProperties.web3j
+        val transactionManager = ReadonlyTransactionManager(web3j, chainProperties.autoInvestCredentials.address)
+        val contract = IInvestService.load(
+            chainProperties.autoInvestorAddress,
+            web3j,
+            transactionManager,
+            DefaultGasProvider()
+        )
+        val result = contract.getStatus(records).sendSafely() as List<InvestmentRecordStatus>?
+        return result ?: emptyList()
+    }
+
+    @Throws(InternalException::class)
+    override fun autoInvestFor(records: List<InvestmentRecord>, chainId: Long): String? {
+        logger.info { "Auto-investing on chainId: $chainId" }
+        val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
+        val nonce = blockchainProperties.web3j
+            .ethGetTransactionCount(
+                blockchainProperties.autoInvestCredentials.address,
+                DefaultBlockParameterName.LATEST
+            )
+            .sendSafely()?.transactionCount ?: return null
+        val gasPrice = getGasPrice(chainId)
+        logger.debug { "Gas price: $gasPrice" }
+
+        val function = Function("investFor", records, emptyList())
+        val rawTransaction = RawTransaction.createTransaction(
+            nonce, gasPrice, autoInvestGasLimit,
+            blockchainProperties.autoInvestorAddress, FunctionEncoder.encode(function)
+        )
+
+        val manager = RawTransactionManager(
+            blockchainProperties.web3j,
+            blockchainProperties.autoInvestCredentials,
+            chainId
+        )
+        val sentTransaction = blockchainProperties.web3j
+            .ethSendRawTransaction(manager.sign(rawTransaction)).sendSafely()
+        logger.info { "Successfully send request to auto-invest on chain: $chainId" }
         return sentTransaction?.transactionHash
     }
 

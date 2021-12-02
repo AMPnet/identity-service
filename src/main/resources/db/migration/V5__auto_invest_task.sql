@@ -11,3 +11,11 @@ CREATE TABLE auto_invest_task (
 );
 
 CREATE INDEX idx_auto_invest_task_chain_id_status ON auto_invest_task(chain_id, status);
+
+CREATE TABLE auto_invest_transaction (
+    uuid       UUID PRIMARY KEY,
+    chain_id   BIGINT                   NOT NULL,
+    hash       VARCHAR                  NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    CONSTRAINT chain_id_and_hash UNIQUE (chain_id, hash)
+);
