@@ -9,14 +9,13 @@ import com.ampnet.identityservice.persistence.repository.AutoInvestTaskRepositor
 import com.ampnet.identityservice.security.WithMockCrowdfundUser
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Percentage
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.math.BigDecimal
+import java.math.BigInteger
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -38,7 +37,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
     @Test
     @WithMockCrowdfundUser
     fun mustBeAbleToRequestAutoInvest() {
-        val request = AutoInvestRequest(campaignAddress = "campaignAddress", amount = BigDecimal(500))
+        val request = AutoInvestRequest(campaignAddress = "campaignAddress", amount = BigInteger.valueOf(500L))
         lateinit var autoInvestResponse: AutoInvestResponse
 
         suppose("User submits auto-invest request") {
@@ -56,7 +55,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
         verify("Correct auto-invest response is returned") {
             assertThat(autoInvestResponse.walletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
             assertThat(autoInvestResponse.campaignAddress).isEqualTo("campaignAddress")
-            assertThat(autoInvestResponse.amount).isCloseTo(BigDecimal(500), Percentage.withPercentage(0.01))
+            assertThat(autoInvestResponse.amount).isEqualTo(BigInteger.valueOf(500L))
         }
 
         verify("Task is correctly stored into the database") {
@@ -69,7 +68,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             assertThat(task.userWalletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
             assertThat(task.campaignContractAddress).isEqualTo("campaignAddress")
             assertThat(task.chainId).isEqualTo(defaultChainId)
-            assertThat(task.amount).isCloseTo(BigDecimal(500), Percentage.withPercentage(0.01))
+            assertThat(task.amount).isEqualTo(BigInteger.valueOf(500L))
             assertThat(task.status).isEqualTo(AutoInvestTaskStatus.PENDING)
         }
     }
@@ -84,14 +83,15 @@ class AutoInvestControllerTest : ControllerTestBase() {
                     defaultChainId,
                     "0xef678007d18427e6022059dbc264f27507cd1ffc",
                     "campaignAddress",
-                    BigDecimal(1000),
+                    BigInteger.valueOf(1000L),
                     AutoInvestTaskStatus.PENDING,
+                    null,
                     ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC"))
                 )
             )
         }
 
-        val request = AutoInvestRequest(campaignAddress = "campaignAddress", amount = BigDecimal(500))
+        val request = AutoInvestRequest(campaignAddress = "campaignAddress", amount = BigInteger.valueOf(500L))
         lateinit var autoInvestResponse: AutoInvestResponse
 
         suppose("User submits auto-invest request") {
@@ -109,7 +109,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
         verify("Correct auto-invest response is returned") {
             assertThat(autoInvestResponse.walletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
             assertThat(autoInvestResponse.campaignAddress).isEqualTo("campaignAddress")
-            assertThat(autoInvestResponse.amount).isCloseTo(BigDecimal(1500), Percentage.withPercentage(0.01))
+            assertThat(autoInvestResponse.amount).isEqualTo(BigInteger.valueOf(1500L))
         }
 
         verify("Task is correctly updated in the database") {
@@ -122,7 +122,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             assertThat(task.userWalletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
             assertThat(task.campaignContractAddress).isEqualTo("campaignAddress")
             assertThat(task.chainId).isEqualTo(defaultChainId)
-            assertThat(task.amount).isCloseTo(BigDecimal(1500), Percentage.withPercentage(0.01))
+            assertThat(task.amount).isEqualTo(BigInteger.valueOf(1500L))
             assertThat(task.status).isEqualTo(AutoInvestTaskStatus.PENDING)
         }
     }
@@ -137,14 +137,15 @@ class AutoInvestControllerTest : ControllerTestBase() {
                     defaultChainId,
                     "0xef678007d18427e6022059dbc264f27507cd1ffc",
                     "campaignAddress",
-                    BigDecimal(1000),
+                    BigInteger.valueOf(1000L),
                     AutoInvestTaskStatus.IN_PROCESS,
+                    null,
                     ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC"))
                 )
             )
         }
 
-        val request = AutoInvestRequest(campaignAddress = "campaignAddress", amount = BigDecimal(500))
+        val request = AutoInvestRequest(campaignAddress = "campaignAddress", amount = BigInteger.valueOf(500L))
 
         suppose("User submits auto-invest request") {
             mockMvc.perform(
@@ -166,7 +167,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             assertThat(task.userWalletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
             assertThat(task.campaignContractAddress).isEqualTo("campaignAddress")
             assertThat(task.chainId).isEqualTo(defaultChainId)
-            assertThat(task.amount).isCloseTo(BigDecimal(1000), Percentage.withPercentage(0.01))
+            assertThat(task.amount).isEqualTo(BigInteger.valueOf(1000L))
             assertThat(task.status).isEqualTo(AutoInvestTaskStatus.IN_PROCESS)
         }
     }

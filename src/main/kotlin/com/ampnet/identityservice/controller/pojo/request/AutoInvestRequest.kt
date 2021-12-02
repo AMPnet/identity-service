@@ -1,8 +1,10 @@
 package com.ampnet.identityservice.controller.pojo.request
 
-import java.math.BigDecimal
+import com.fasterxml.jackson.annotation.JsonFormat
+import java.math.BigInteger
 
 data class AutoInvestRequest(
     val campaignAddress: String,
-    val amount: BigDecimal
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    val amount: BigInteger
 )

@@ -36,6 +36,11 @@ interface AutoInvestTaskRepository : JpaRepository<AutoInvestTask, UUID> {
     @Transactional
     fun updateStatusForIds(ids: List<UUID>, status: AutoInvestTaskStatus)
 
+    @Query("UPDATE AutoInvestTask SET status = :status, hash = :hash WHERE uuid IN :ids")
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Transactional
+    fun updateStatusAndHashForIds(ids: List<UUID>, status: AutoInvestTaskStatus, hash: String)
+
     fun findByUserWalletAddressAndCampaignContractAddressAndChainId(
         userWalletAddress: String,
         campaignContractAddress: String,

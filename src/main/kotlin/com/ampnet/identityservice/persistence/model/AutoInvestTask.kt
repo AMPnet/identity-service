@@ -3,7 +3,7 @@ package com.ampnet.identityservice.persistence.model
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import org.hibernate.annotations.Immutable
-import java.math.BigDecimal
+import java.math.BigInteger
 import java.time.ZonedDateTime
 import java.util.UUID
 import javax.persistence.Column
@@ -30,11 +30,14 @@ data class AutoInvestTask(
     val campaignContractAddress: String,
 
     @Column(nullable = false)
-    val amount: BigDecimal,
+    val amount: BigInteger,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     val status: AutoInvestTaskStatus,
+
+    @Column(nullable = true)
+    val hash: String?,
 
     @Column(nullable = false)
     val createdAt: ZonedDateTime
@@ -43,7 +46,7 @@ data class AutoInvestTask(
         chainId: Long,
         userWalletAddress: String,
         campaignContractAddress: String,
-        amount: BigDecimal,
+        amount: BigInteger,
         status: AutoInvestTaskStatus,
         uuidProvider: UuidProvider,
         timeProvider: ZonedDateTimeProvider
@@ -54,15 +57,16 @@ data class AutoInvestTask(
         campaignContractAddress,
         amount,
         status,
+        null,
         timeProvider.getZonedDateTime()
     )
 
     override fun toString(): String =
         "AutoInvestTask(uuid=$uuid, chainId=$chainId, userWalletAddress='$userWalletAddress'," +
             " campaignContractAddress='$campaignContractAddress', amount=$amount, status=$status," +
-            " createdAt=$createdAt)"
+            " hash=$hash, createdAt=$createdAt)"
 
-    // thanks to the stupid-ass implementation of equals() for ZonedDateTime and BigDecimal, we need to override
+    // thanks to the stupid-ass implementation of equals() for ZonedDateTime, we need to override
     // equals() and hashCode() manually
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -74,8 +78,9 @@ data class AutoInvestTask(
         if (chainId != other.chainId) return false
         if (userWalletAddress != other.userWalletAddress) return false
         if (campaignContractAddress != other.campaignContractAddress) return false
-        if (amount.compareTo(other.amount) != 0) return false
+        if (amount != other.amount) return false
         if (status != other.status) return false
+        if (hash != other.hash) return false
         if (!createdAt.isEqual(other.createdAt)) return false
 
         return true
@@ -86,8 +91,9 @@ data class AutoInvestTask(
         result = 31 * result + chainId.hashCode()
         result = 31 * result + userWalletAddress.hashCode()
         result = 31 * result + campaignContractAddress.hashCode()
-        result = 31 * result + amount.toDouble().hashCode()
+        result = 31 * result + amount.hashCode()
         result = 31 * result + status.hashCode()
+        result = 31 * result + hash.hashCode()
         result = 31 * result + createdAt.toEpochSecond().hashCode()
         return result
     }

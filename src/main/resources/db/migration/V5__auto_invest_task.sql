@@ -3,8 +3,9 @@ CREATE TABLE auto_invest_task (
     chain_id                  BIGINT                   NOT NULL,
     user_wallet_address       VARCHAR                  NOT NULL,
     campaign_contract_address VARCHAR                  NOT NULL,
-    amount                    DECIMAL(35, 18)          NOT NULL,
+    amount                    NUMERIC(78)              NOT NULL,
     status                    VARCHAR(16)              NOT NULL,
+    hash                      VARCHAR,
     created_at                TIMESTAMP WITH TIME ZONE NOT NULL,
     CONSTRAINT per_user_campaign UNIQUE (chain_id, user_wallet_address, campaign_contract_address)
 );

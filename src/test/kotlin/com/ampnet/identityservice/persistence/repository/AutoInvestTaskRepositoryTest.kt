@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.test.context.junit.jupiter.SpringExtension
-import java.math.BigDecimal
+import java.math.BigInteger
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -25,7 +25,7 @@ class AutoInvestTaskRepositoryTest : TestBase() {
 
     @Test
     fun mustCorrectlyInsertAutoInvestTask() {
-        val task = taskWithAmount(BigDecimal("12345.123456789"))
+        val task = taskWithAmount(BigInteger.valueOf(123456789L))
 
         suppose("auto-invest task is inserted into database") {
             val numModified = autoInvestTaskRepository.createOrUpdate(task)
@@ -40,14 +40,14 @@ class AutoInvestTaskRepositoryTest : TestBase() {
 
     @Test
     fun mustCorrectlyUpdateExistingAutoInvestTask() {
-        val task = taskWithAmount(BigDecimal(500))
+        val task = taskWithAmount(BigInteger.valueOf(500L))
 
         suppose("auto-invest task is inserted into database") {
             val numModified = autoInvestTaskRepository.createOrUpdate(task)
             assertThat(numModified).isOne()
         }
 
-        val newTask = taskWithAmount(BigDecimal(1_000))
+        val newTask = taskWithAmount(BigInteger.valueOf(1_000L))
 
         suppose("another auto-invest task for the same user and campaign is inserted into database") {
             val numModified = autoInvestTaskRepository.createOrUpdate(newTask)
@@ -67,14 +67,14 @@ class AutoInvestTaskRepositoryTest : TestBase() {
 
     @Test
     fun mustNotUpdateExistingAutoInvestTaskWhenThereIsAStatusMismatch() {
-        val task = taskWithAmount(BigDecimal(500), status = AutoInvestTaskStatus.IN_PROCESS)
+        val task = taskWithAmount(BigInteger.valueOf(500L), status = AutoInvestTaskStatus.IN_PROCESS)
 
         suppose("auto-invest task is inserted into database") {
             val numModified = autoInvestTaskRepository.createOrUpdate(task)
             assertThat(numModified).isOne()
         }
 
-        val newTask = taskWithAmount(BigDecimal(1_000), status = AutoInvestTaskStatus.PENDING)
+        val newTask = taskWithAmount(BigInteger.valueOf(1_000), status = AutoInvestTaskStatus.PENDING)
 
         suppose("another auto-invest task for the same user and campaign is inserted into database") {
             val numModified = autoInvestTaskRepository.createOrUpdate(newTask)
@@ -148,6 +148,48 @@ class AutoInvestTaskRepositoryTest : TestBase() {
     }
 
     @Test
+    fun mustCorrectlyUpdateStatusAndHashForSpecifiedIds() {
+        val updatedTasks = listOf(
+            taskForUser("user1"),
+            taskForUser("user2"),
+            taskForUser("user3"),
+            taskForUser("user4"),
+            taskForUser("user5"),
+        )
+        val nonUpdatedTasks = listOf(
+            taskForUser("user6"),
+            taskForUser("user7"),
+            taskForUser("user8"),
+            taskForUser("user9"),
+            taskForUser("user10"),
+        )
+
+        suppose("some auto-invest tasks are in the database") {
+            autoInvestTaskRepository.saveAllAndFlush(updatedTasks + nonUpdatedTasks)
+        }
+
+        suppose("status and hash is updated for specified task IDs") {
+            autoInvestTaskRepository.updateStatusAndHashForIds(
+                updatedTasks.map { it.uuid },
+                AutoInvestTaskStatus.IN_PROCESS,
+                "testHash"
+            )
+        }
+
+        verify("correct auto-invest tasks are updated") {
+            val databaseTasks = autoInvestTaskRepository.findByStatus(AutoInvestTaskStatus.IN_PROCESS)
+            assertThat(databaseTasks).containsExactlyInAnyOrderElementsOf(
+                updatedTasks.map {
+                    it.copy(
+                        status = AutoInvestTaskStatus.IN_PROCESS,
+                        hash = "testHash"
+                    )
+                }
+            )
+        }
+    }
+
+    @Test
     fun mustCorrectlyFetchAutoInvestTasksByUserWalletAddressAndCampaignContractAddressAndChainId() {
         val task1 = taskForUser("user1", campaign = "campaign1", chainId = 1L)
         val task2 = taskForUser("user2", campaign = "campaign2", chainId = 2L)
@@ -190,12 +232,13 @@ class AutoInvestTaskRepositoryTest : TestBase() {
         chainId,
         "${user}WalletAddress",
         "${campaign}ContractAddress",
-        BigDecimal(1L),
+        BigInteger.valueOf(1L),
         status,
+        null,
         ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC"))
     )
 
-    private fun taskWithAmount(amount: BigDecimal, status: AutoInvestTaskStatus = AutoInvestTaskStatus.PENDING) =
+    private fun taskWithAmount(amount: BigInteger, status: AutoInvestTaskStatus = AutoInvestTaskStatus.PENDING) =
         AutoInvestTask(
             UUID.randomUUID(),
             1L,
@@ -203,6 +246,7 @@ class AutoInvestTaskRepositoryTest : TestBase() {
             "campaignContractAddress",
             amount,
             status,
+            null,
             ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC"))
         )
 }

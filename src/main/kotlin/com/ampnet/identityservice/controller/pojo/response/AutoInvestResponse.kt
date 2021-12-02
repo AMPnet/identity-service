@@ -1,9 +1,11 @@
 package com.ampnet.identityservice.controller.pojo.response
 
-import java.math.BigDecimal
+import com.fasterxml.jackson.annotation.JsonFormat
+import java.math.BigInteger
 
 data class AutoInvestResponse(
     val walletAddress: String,
     val campaignAddress: String,
-    val amount: BigDecimal
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    val amount: BigInteger
 )
