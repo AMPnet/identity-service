@@ -55,6 +55,7 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
     private fun getChain(chainId: Long) = Chain.fromId(chainId)
         ?: throw InternalException(ErrorCode.BLOCKCHAIN_ID, "Blockchain id: $chainId not supported")
 
+    @Suppress("ThrowsCount")
     private fun getChainProperties(chain: Chain): ChainProperties {
         val chainProperties = when (chain) {
             Chain.MATIC_MAIN -> applicationProperties.chainMatic

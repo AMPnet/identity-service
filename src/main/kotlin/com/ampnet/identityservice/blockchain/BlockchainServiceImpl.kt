@@ -132,9 +132,9 @@ class BlockchainServiceImpl(
     override fun getAutoInvestStatus(records: List<InvestmentRecord>, chainId: Long): List<InvestmentRecordStatus> {
         val chainProperties = chainHandler.getBlockchainProperties(chainId)
         val web3j = chainProperties.web3j
-        val transactionManager = ReadonlyTransactionManager(web3j, chainProperties.autoInvestCredentials.address)
+        val transactionManager = ReadonlyTransactionManager(web3j, chainProperties.autoInvest.credentials.address)
         val contract = IInvestService.load(
-            chainProperties.autoInvestorAddress,
+            chainProperties.autoInvest.contractAddress,
             web3j,
             transactionManager,
             DefaultGasProvider()
@@ -149,7 +149,7 @@ class BlockchainServiceImpl(
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
         val nonce = blockchainProperties.web3j
             .ethGetTransactionCount(
-                blockchainProperties.autoInvestCredentials.address,
+                blockchainProperties.autoInvest.credentials.address,
                 DefaultBlockParameterName.LATEST
             )
             .sendSafely()?.transactionCount ?: return null
@@ -159,12 +159,12 @@ class BlockchainServiceImpl(
         val function = Function("investFor", records, emptyList())
         val rawTransaction = RawTransaction.createTransaction(
             nonce, gasPrice, autoInvestGasLimit,
-            blockchainProperties.autoInvestorAddress, FunctionEncoder.encode(function)
+            blockchainProperties.autoInvest.contractAddress, FunctionEncoder.encode(function)
         )
 
         val manager = RawTransactionManager(
             blockchainProperties.web3j,
-            blockchainProperties.autoInvestCredentials,
+            blockchainProperties.autoInvest.credentials,
             chainId
         )
         val sentTransaction = blockchainProperties.web3j
