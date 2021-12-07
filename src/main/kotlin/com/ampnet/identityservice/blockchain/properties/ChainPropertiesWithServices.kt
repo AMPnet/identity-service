@@ -4,7 +4,12 @@ import org.web3j.crypto.Credentials
 import org.web3j.protocol.Web3j
 
 data class ChainPropertiesWithServices(
+    val walletApprover: CredentialsAndContractAddress,
+    val faucet: CredentialsAndContractAddress?,
+    val web3j: Web3j
+)
+
+data class CredentialsAndContractAddress(
     val credentials: Credentials,
-    val web3j: Web3j,
-    val walletApproverAddress: String
+    val contractAddress: String
 )

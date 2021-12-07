@@ -21,6 +21,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
     id("io.gitlab.arturbosch.detekt").version("1.18.1")
     id("com.google.protobuf") version "0.8.17"
+    id("org.web3j").version("4.8.7")
     idea
     jacoco
 }
@@ -32,6 +33,18 @@ repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
     maven("https://jitpack.io")
+}
+
+solidity {
+    version = "0.8.0"
+}
+
+web3j {
+    generatedPackageName = "com.ampnet.identityservice.blockchain"
+}
+
+sourceSets.main {
+    java.srcDirs("$buildDir/generated/sources/web3j/main/java")
 }
 
 dependencies {
@@ -70,6 +83,7 @@ tasks.withType<KotlinCompile> {
         freeCompilerArgs = listOf("-Xjsr305=strict")
         jvmTarget = "1.8"
     }
+    mustRunAfter("generateContractWrappers")
 }
 
 tasks.withType<Test> {

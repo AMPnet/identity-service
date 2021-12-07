@@ -42,7 +42,10 @@ class BlockchainServiceImpl(
         logger.info { "Whitelisting address: $address on chain: $chainId for issuer: $issuerAddress" }
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
         val nonce = blockchainProperties.web3j
-            .ethGetTransactionCount(blockchainProperties.credentials.address, DefaultBlockParameterName.LATEST)
+            .ethGetTransactionCount(
+                blockchainProperties.walletApprover.credentials.address,
+                DefaultBlockParameterName.LATEST
+            )
             .sendSafely()?.transactionCount ?: return null
         val gasPrice = getGasPrice(chainId)
         logger.debug { "Gas price: $gasPrice" }
@@ -50,10 +53,14 @@ class BlockchainServiceImpl(
         val function = Function("approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList())
         val rawTransaction = RawTransaction.createTransaction(
             nonce, gasPrice, walletApproveGasLimit,
-            blockchainProperties.walletApproverAddress, FunctionEncoder.encode(function)
+            blockchainProperties.walletApprover.contractAddress, FunctionEncoder.encode(function)
         )
 
-        val manager = RawTransactionManager(blockchainProperties.web3j, blockchainProperties.credentials, chainId)
+        val manager = RawTransactionManager(
+            blockchainProperties.web3j,
+            blockchainProperties.walletApprover.credentials,
+            chainId
+        )
         val sentTransaction = blockchainProperties.web3j
             .ethSendRawTransaction(manager.sign(rawTransaction)).sendSafely()
         logger.info {

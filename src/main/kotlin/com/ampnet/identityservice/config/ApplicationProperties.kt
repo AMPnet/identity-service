@@ -42,8 +42,11 @@ class TestProperties {
 }
 
 class ChainProperties {
-    var privateKey: String = ""
+    var walletApproverPrivateKey: String = ""
+    var faucetCallerPrivateKey: String = ""
     var walletApproverServiceAddress: String = ""
+    var faucetServiceAddress: String = ""
+    var faucetServiceEnabled: Boolean = false
 }
 
 class MailProperties {
