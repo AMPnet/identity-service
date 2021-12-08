@@ -67,6 +67,7 @@ dependencies {
     implementation("org.web3j:core:4.8.7")
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
     implementation("net.devh:grpc-server-spring-boot-starter:2.12.0.RELEASE")
+    implementation("com.vladmihalcea:hibernate-types-52:2.14.0")
 
     val sentryVersion = "5.1.2"
     implementation("io.sentry:sentry-spring-boot-starter:$sentryVersion")
