@@ -109,3 +109,18 @@ include::{snippets}/TestKycControllerTest/mustBeAbleToVerifyUserWithTestData/htt
 .Response
 include::{snippets}/TestKycControllerTest/mustBeAbleToVerifyUserWithTestData/http-response.adoc[]
 
+== Faucet API
+
+=== Request Faucet Funds
+Submits a request for faucet funds for the specified chain ID. Request needs header: `Authorization: Bearer JWT`.
+
+.Request
+include::{snippets}/FaucetControllerTest/mustBeAbleToRequestFaucetFunds/http-request.adoc[]
+.Response
+include::{snippets}/FaucetControllerTest/mustBeAbleToRequestFaucetFunds/http-response.adoc[]
+
+==== Error response
+If the requested chain ID does not support faucet funds, bad request response will be returned.
+
+.Response
+include::{snippets}/FaucetControllerTest/mustReturnErrorWhenFaucetIsNotSupportedForChainId/http-response.adoc[]

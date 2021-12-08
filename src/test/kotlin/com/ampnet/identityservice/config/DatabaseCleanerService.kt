@@ -36,4 +36,14 @@ class DatabaseCleanerService(val em: EntityManager) {
     fun deleteAllBlockchainTasks() {
         em.createNativeQuery("DELETE FROM blockchain_task").executeUpdate()
     }
+
+    @Transactional
+    fun deleteAllQueuedFaucetAddresses() {
+        em.createNativeQuery("DELETE FROM pending_faucet_address").executeUpdate()
+    }
+
+    @Transactional
+    fun deleteAllFaucetTasks() {
+        em.createNativeQuery("DELETE FROM faucet_task").executeUpdate()
+    }
 }
