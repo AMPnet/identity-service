@@ -88,4 +88,29 @@ class FaucetTaskRepositoryTest : TestBase() {
             }
         }
     }
+
+    @Test
+    fun mustCorrectlyFetchChainIdsWithPendingAddresses() {
+        verify("there are no chains with pending addresses") {
+            assertThat(faucetTaskRepository.fetchChainIdsWithPendingAddresses()).isEmpty()
+        }
+
+        suppose("some addresses are added to the queue for chain 1") {
+            faucetTaskRepository.addAddressToQueue("addr1", 1L)
+            faucetTaskRepository.addAddressToQueue("addr2", 1L)
+            faucetTaskRepository.addAddressToQueue("addr3", 1L)
+        }
+
+        verify("chain 1 is returned as chain with pending addresses") {
+            assertThat(faucetTaskRepository.fetchChainIdsWithPendingAddresses()).isEqualTo(listOf(1L))
+        }
+
+        suppose("single addresses is added to the queue for chain 2") {
+            faucetTaskRepository.addAddressToQueue("addr1", 2L)
+        }
+
+        verify("chain 1 and chain 2 are returned as chains with pending addresses") {
+            assertThat(faucetTaskRepository.fetchChainIdsWithPendingAddresses()).containsExactlyInAnyOrder(1L, 2L)
+        }
+    }
 }

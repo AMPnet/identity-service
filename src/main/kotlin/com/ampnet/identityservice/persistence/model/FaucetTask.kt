@@ -64,6 +64,10 @@ class FaucetTask(
         timeProvider.getZonedDateTime(),
         null
     )
+
+    override fun toString(): String =
+        "FaucetTask(uuid=$uuid, addresses=${addresses.contentToString()}, chainId=$chainId, status=$status," +
+            " hash=$hash, createdAt=$createdAt, updatedAt=$updatedAt)"
 }
 
 enum class FaucetTaskStatus {

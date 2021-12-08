@@ -29,6 +29,12 @@ interface FaucetTaskRepository : JpaRepository<FaucetTask, UUID> {
     fun flushAddressQueueForChainId(uuid: UUID, chainId: Long, timestamp: ZonedDateTime)
 
     @Query(
+        "SELECT DISTINCT chain_id FROM pending_faucet_address",
+        nativeQuery = true
+    )
+    fun fetchChainIdsWithPendingAddresses(): List<Long>
+
+    @Query(
         "SELECT * FROM faucet_task WHERE status='IN_PROCESS' " +
             "LIMIT 1 FOR UPDATE SKIP LOCKED",
         nativeQuery = true
