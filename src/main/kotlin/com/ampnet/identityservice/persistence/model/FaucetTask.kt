@@ -3,7 +3,6 @@ package com.ampnet.identityservice.persistence.model
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import com.vladmihalcea.hibernate.type.array.StringArrayType
-import org.hibernate.annotations.Immutable
 import org.hibernate.annotations.Type
 import org.hibernate.annotations.TypeDef
 import org.hibernate.annotations.TypeDefs
@@ -21,7 +20,6 @@ import javax.persistence.Table
 )
 @Entity
 @Table(name = "faucet_task")
-@Immutable
 class FaucetTask(
     @Id
     val uuid: UUID,

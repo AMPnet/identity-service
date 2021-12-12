@@ -88,8 +88,8 @@ class BlockchainServiceImpl(
         return contract.isWalletApproved(address).sendSafely() ?: false
     }
 
-    override fun sendFaucetFunds(addresses: Array<String>, chainId: Long): String? {
-        logger.info { "Sending funds to addresses: ${addresses.contentToString()} on chain: $chainId" }
+    override fun sendFaucetFunds(addresses: List<String>, chainId: Long): String? {
+        logger.info { "Sending funds to addresses: $addresses on chain: $chainId" }
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
         val nonce = blockchainProperties.web3j
             .ethGetTransactionCount(
@@ -116,7 +116,7 @@ class BlockchainServiceImpl(
             .ethSendRawTransaction(manager.sign(rawTransaction)).sendSafely()
 
         logger.info {
-            "Successfully send request to fund addresses: ${addresses.contentToString()} on chain: $chainId"
+            "Successfully send request to fund addresses: $addresses on chain: $chainId"
         }
 
         return sentTransaction?.transactionHash
@@ -178,5 +178,5 @@ fun <T> RemoteFunctionCall<T>.sendSafely(): T? {
 @Suppress("MagicNumber")
 fun String.toAddress(): Address = Address(160, this)
 
-fun Array<String>.toAddressArray(): DynamicArray<Address> =
-    DynamicArray(Address::class.java, this.map { it.toAddress() }.toList())
+fun List<String>.toAddressArray(): DynamicArray<Address> =
+    DynamicArray(Address::class.java, this.map { it.toAddress() })

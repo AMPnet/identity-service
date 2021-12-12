@@ -92,7 +92,7 @@ class FaucetQueueService(
 
     private fun handlePendingTask(task: FaucetTask) {
         logger.debug { "Starting to process task: $task" }
-        val hash = blockchainService.sendFaucetFunds(task.addresses, task.chainId)
+        val hash = blockchainService.sendFaucetFunds(task.addresses.toList(), task.chainId)
 
         if (hash.isNullOrEmpty()) {
             logger.warn { "Failed to get hash for faucet task: ${task.uuid}" }
