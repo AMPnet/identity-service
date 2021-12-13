@@ -3,7 +3,6 @@ package com.ampnet.identityservice.controller
 import com.ampnet.identityservice.blockchain.properties.Chain
 import com.ampnet.identityservice.persistence.model.FaucetTaskStatus
 import com.ampnet.identityservice.persistence.repository.FaucetTaskRepository
-import com.ampnet.identityservice.security.WithMockCrowdfundUser
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -16,7 +15,8 @@ import java.util.UUID
 class FaucetControllerTest : ControllerTestBase() {
 
     private val defaultChainId = Chain.MATIC_TESTNET_MUMBAI.id
-    private val faucetPath = "/faucet/$defaultChainId"
+    private val address = "0xef678007d18427e6022059dbc264f27507cd1ffc"
+    private val faucetPath = "/faucet/$defaultChainId/$address"
 
     @Autowired
     private lateinit var faucetTaskRepository: FaucetTaskRepository
@@ -28,7 +28,6 @@ class FaucetControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdfundUser
     fun mustBeAbleToRequestFaucetFunds() {
         suppose("User requests faucet funds") {
             mockMvc.perform(
@@ -47,7 +46,7 @@ class FaucetControllerTest : ControllerTestBase() {
         verify("Task is created for flushed addresses for matic testnet") {
             val task = faucetTaskRepository.findById(taskUuid)
             Assertions.assertThat(task).hasValueSatisfying {
-                Assertions.assertThat(it.addresses).containsExactly("0xef678007d18427e6022059dbc264f27507cd1ffc")
+                Assertions.assertThat(it.addresses).containsExactly(address)
                 Assertions.assertThat(it.chainId).isEqualTo(defaultChainId)
                 Assertions.assertThat(it.status).isEqualTo(FaucetTaskStatus.CREATED)
             }
@@ -55,11 +54,10 @@ class FaucetControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdfundUser
     fun mustReturnErrorWhenFaucetIsNotSupportedForChainId() {
         verify("Faucet request fails for unsupported chain") {
             mockMvc.perform(
-                post("/faucet/${Chain.ETHEREUM_MAIN.id}")
+                post("/faucet/${Chain.ETHEREUM_MAIN.id}/$address")
             )
                 .andExpect(status().isBadRequest)
         }

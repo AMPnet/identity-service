@@ -19,9 +19,11 @@ class FaucetController(
 
     companion object : KLogging()
 
-    @PostMapping("/faucet/{chainId}")
-    fun requestFaucetFunds(@PathVariable chainId: Long): ResponseEntity<Void> {
-        val address = ControllerUtils.getAddressFromSecurityContext()
+    @PostMapping("/faucet/{chainId}/{address}")
+    fun requestFaucetFunds(
+        @PathVariable chainId: Long,
+        @PathVariable address: String
+    ): ResponseEntity<Void> {
         logger.debug { "Received faucet request for address: $address, chainId: $chainId" }
 
         if (chainHandler.getBlockchainProperties(chainId).faucet == null) {

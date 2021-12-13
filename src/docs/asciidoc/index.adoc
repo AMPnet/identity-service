@@ -112,7 +112,7 @@ include::{snippets}/TestKycControllerTest/mustBeAbleToVerifyUserWithTestData/htt
 == Faucet API
 
 === Request Faucet Funds
-Submits a request for faucet funds for the specified chain ID. Request needs header: `Authorization: Bearer JWT`.
+Submits a request for faucet funds for the specified chain ID.
 
 .Request
 include::{snippets}/FaucetControllerTest/mustBeAbleToRequestFaucetFunds/http-request.adoc[]
