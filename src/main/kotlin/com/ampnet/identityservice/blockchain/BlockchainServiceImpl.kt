@@ -2,6 +2,7 @@ package com.ampnet.identityservice.blockchain
 
 import com.ampnet.identityservice.blockchain.properties.ChainPropertiesHandler
 import com.ampnet.identityservice.config.ApplicationProperties
+import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InternalException
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
@@ -10,6 +11,7 @@ import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.getForObject
 import org.web3j.abi.FunctionEncoder
 import org.web3j.abi.datatypes.Address
+import org.web3j.abi.datatypes.DynamicArray
 import org.web3j.abi.datatypes.Function
 import org.web3j.crypto.RawTransaction
 import org.web3j.protocol.core.DefaultBlockParameterName
@@ -36,13 +38,19 @@ class BlockchainServiceImpl(
     @Suppress("MagicNumber")
     private val walletApproveGasLimit = BigInteger.valueOf(200_000)
 
+    @Suppress("MagicNumber")
+    private val faucetGasLimit = BigInteger.valueOf(200_000)
+
     @Suppress("ReturnCount")
     @Throws(InternalException::class)
     override fun whitelistAddress(address: String, issuerAddress: String, chainId: Long): String? {
         logger.info { "Whitelisting address: $address on chain: $chainId for issuer: $issuerAddress" }
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
         val nonce = blockchainProperties.web3j
-            .ethGetTransactionCount(blockchainProperties.credentials.address, DefaultBlockParameterName.LATEST)
+            .ethGetTransactionCount(
+                blockchainProperties.walletApprover.credentials.address,
+                DefaultBlockParameterName.LATEST
+            )
             .sendSafely()?.transactionCount ?: return null
         val gasPrice = getGasPrice(chainId)
         logger.debug { "Gas price: $gasPrice" }
@@ -50,10 +58,14 @@ class BlockchainServiceImpl(
         val function = Function("approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList())
         val rawTransaction = RawTransaction.createTransaction(
             nonce, gasPrice, walletApproveGasLimit,
-            blockchainProperties.walletApproverAddress, FunctionEncoder.encode(function)
+            blockchainProperties.walletApprover.contractAddress, FunctionEncoder.encode(function)
         )
 
-        val manager = RawTransactionManager(blockchainProperties.web3j, blockchainProperties.credentials, chainId)
+        val manager = RawTransactionManager(
+            blockchainProperties.web3j,
+            blockchainProperties.walletApprover.credentials,
+            chainId
+        )
         val sentTransaction = blockchainProperties.web3j
             .ethSendRawTransaction(manager.sign(rawTransaction)).sendSafely()
         logger.info {
@@ -75,6 +87,45 @@ class BlockchainServiceImpl(
         val transactionManager = ReadonlyTransactionManager(web3j, address)
         val contract = IIssuerCommon.load(issuerAddress, web3j, transactionManager, DefaultGasProvider())
         return contract.isWalletApproved(address).sendSafely() ?: false
+    }
+
+    @Throws(InternalException::class)
+    override fun sendFaucetFunds(addresses: List<String>, chainId: Long): String? {
+        logger.info { "Sending funds to addresses: $addresses on chain: $chainId" }
+        val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
+        val faucet = blockchainProperties.faucet ?: throw InternalException(
+            errorCode = ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
+            exceptionMessage = "Missing or disabled faucet configuration for chainId: $chainId"
+        )
+        val nonce = blockchainProperties.web3j
+            .ethGetTransactionCount(
+                faucet.credentials.address,
+                DefaultBlockParameterName.LATEST
+            )
+            .sendSafely()?.transactionCount ?: return null
+
+        val gasPrice = getGasPrice(chainId)
+        logger.debug { "Gas price: $gasPrice" }
+
+        val function = Function("faucet", listOf(addresses.toAddressArray()), emptyList())
+        val rawTransaction = RawTransaction.createTransaction(
+            nonce, gasPrice, faucetGasLimit,
+            blockchainProperties.faucet.contractAddress, FunctionEncoder.encode(function)
+        )
+
+        val manager = RawTransactionManager(
+            blockchainProperties.web3j,
+            blockchainProperties.faucet.credentials,
+            chainId
+        )
+        val sentTransaction = blockchainProperties.web3j
+            .ethSendRawTransaction(manager.sign(rawTransaction)).sendSafely()
+
+        logger.info {
+            "Successfully send request to fund addresses: $addresses on chain: $chainId"
+        }
+
+        return sentTransaction?.transactionHash
     }
 
     internal fun getGasPrice(chainId: Long): BigInteger? {
@@ -132,3 +183,6 @@ fun <T> RemoteFunctionCall<T>.sendSafely(): T? {
 
 @Suppress("MagicNumber")
 fun String.toAddress(): Address = Address(160, this)
+
+fun List<String>.toAddressArray(): DynamicArray<Address> =
+    DynamicArray(Address::class.java, this.map { it.toAddress() })

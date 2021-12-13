@@ -12,6 +12,12 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
 
     private val blockchainPropertiesMap = mutableMapOf<Long, ChainPropertiesWithServices>()
 
+    private val ChainProperties.faucet
+        get() = CredentialsAndContractAddress(
+            credentials = Credentials.create(this.faucetCallerPrivateKey),
+            contractAddress = this.faucetServiceAddress
+        )
+
     fun getBlockchainProperties(chainId: Long): ChainPropertiesWithServices {
         blockchainPropertiesMap[chainId]?.let { return it }
         val chain = getChain(chainId)
@@ -33,9 +39,12 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
         val chainProperties = getChainProperties(chain)
         val rpcUrl = getChainRpcUrl(chain)
         return ChainPropertiesWithServices(
-            Credentials.create(chainProperties.privateKey),
-            Web3j.build(HttpService(rpcUrl)),
-            chainProperties.walletApproverServiceAddress
+            walletApprover = CredentialsAndContractAddress(
+                credentials = Credentials.create(chainProperties.walletApproverPrivateKey),
+                contractAddress = chainProperties.walletApproverServiceAddress
+            ),
+            faucet = if (chainProperties.faucetServiceEnabled) chainProperties.faucet else null,
+            web3j = Web3j.build(HttpService(rpcUrl)),
         )
     }
 
@@ -50,12 +59,25 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
             Chain.GOERLI_TESTNET -> applicationProperties.chainGoerli
             Chain.HARDHAT_TESTNET -> applicationProperties.chainHardhatTestnet
         }
-        if (chainProperties.privateKey.isBlank() || chainProperties.walletApproverServiceAddress.isBlank()) {
+
+        if (chainProperties.walletApproverPrivateKey.isBlank() ||
+            chainProperties.walletApproverServiceAddress.isBlank()
+        ) {
             throw InternalException(
                 ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
                 "Wallet approver config for chain: ${chain.name} not defined in the application properties"
             )
         }
+
+        if (chainProperties.faucetServiceEnabled &&
+            (chainProperties.faucetCallerPrivateKey.isBlank() || chainProperties.faucetServiceAddress.isBlank())
+        ) {
+            throw InternalException(
+                ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
+                "Faucet config for chain: ${chain.name} not defined in the application properties"
+            )
+        }
+
         return chainProperties
     }
 }

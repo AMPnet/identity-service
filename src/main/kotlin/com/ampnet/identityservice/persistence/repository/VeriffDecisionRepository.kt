@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface VeriffDecisionRepository : JpaRepository<VeriffDecision, String> {
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM VeriffDecision decision WHERE decision.id = :id")
     fun deleteByIdIfPresent(id: String)
 }

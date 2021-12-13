@@ -21,17 +21,30 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
     id("io.gitlab.arturbosch.detekt").version("1.18.1")
     id("com.google.protobuf") version "0.8.17"
+    id("org.web3j").version("4.8.7")
     idea
     jacoco
 }
 group = "com.ampnet"
-version = "0.1.5"
+version = "0.2.0"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
     maven("https://jitpack.io")
+}
+
+solidity {
+    version = "0.8.0"
+}
+
+web3j {
+    generatedPackageName = "com.ampnet.identityservice.blockchain"
+}
+
+sourceSets.main {
+    java.srcDirs("$buildDir/generated/sources/web3j/main/java")
 }
 
 dependencies {
@@ -54,6 +67,7 @@ dependencies {
     implementation("org.web3j:core:4.8.7")
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
     implementation("net.devh:grpc-server-spring-boot-starter:2.12.0.RELEASE")
+    implementation("com.vladmihalcea:hibernate-types-52:2.14.0")
 
     val sentryVersion = "5.1.2"
     implementation("io.sentry:sentry-spring-boot-starter:$sentryVersion")
@@ -70,6 +84,7 @@ tasks.withType<KotlinCompile> {
         freeCompilerArgs = listOf("-Xjsr305=strict")
         jvmTarget = "1.8"
     }
+    mustRunAfter("generateContractWrappers")
 }
 
 tasks.withType<Test> {

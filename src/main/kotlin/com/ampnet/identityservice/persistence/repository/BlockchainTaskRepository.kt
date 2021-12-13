@@ -24,7 +24,7 @@ interface BlockchainTaskRepository : JpaRepository<BlockchainTask, UUID> {
     )
     fun getPending(): BlockchainTask?
 
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Transactional
     @Query("UPDATE BlockchainTask SET status = :status, updatedAt = :time, hash = :hash WHERE uuid = :uuid")
     fun setStatus(
