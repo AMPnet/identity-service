@@ -12,6 +12,12 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
 
     private val blockchainPropertiesMap = mutableMapOf<Long, ChainPropertiesWithServices>()
 
+    private val ChainProperties.faucet
+        get() = CredentialsAndContractAddress(
+            credentials = Credentials.create(this.faucetCallerPrivateKey),
+            contractAddress = this.faucetServiceAddress
+        )
+
     fun getBlockchainProperties(chainId: Long): ChainPropertiesWithServices {
         blockchainPropertiesMap[chainId]?.let { return it }
         val chain = getChain(chainId)
@@ -74,10 +80,4 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
 
         return chainProperties
     }
-
-    private val ChainProperties.faucet
-        get() = CredentialsAndContractAddress(
-            credentials = Credentials.create(this.faucetCallerPrivateKey),
-            contractAddress = this.faucetServiceAddress
-        )
 }

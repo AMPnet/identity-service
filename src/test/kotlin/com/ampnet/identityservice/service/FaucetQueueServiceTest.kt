@@ -172,15 +172,16 @@ class FaucetQueueServiceTest : TestBase() {
 
     @Test
     fun mustStartTaskAfterFailedTask() {
+        val failedHash = "failed_hash"
         suppose("Transaction is not mined") {
-            given(blockchainService.isMined("some_hash", chainId)).willReturn(false)
+            given(blockchainService.isMined(failedHash, chainId)).willReturn(false)
         }
 
         suppose("There is a task in process") {
             createFaucetTask(
                 addresses = listOf(address1),
                 status = FaucetTaskStatus.IN_PROCESS,
-                hash = "some_hash",
+                hash = failedHash,
                 updatedAt = zonedDateTimeProvider.getZonedDateTime()
                     .minusMinutes(applicationProperties.queue.miningPeriod * 2)
             )
@@ -206,7 +207,7 @@ class FaucetQueueServiceTest : TestBase() {
                 ?: fail("Missing failed transaction")
 
             assertThat(failedTask.status).isEqualTo(FaucetTaskStatus.FAILED)
-            assertThat(failedTask.hash).isEqualTo("some_hash")
+            assertThat(failedTask.hash).isEqualTo(failedHash)
         }
 
         verify("Second task is completed") {

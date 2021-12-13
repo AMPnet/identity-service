@@ -57,7 +57,7 @@ class FaucetControllerTest : ControllerTestBase() {
     fun mustReturnErrorWhenFaucetIsNotSupportedForChainId() {
         verify("Faucet request fails for unsupported chain") {
             mockMvc.perform(
-                post("/faucet/${Chain.ETHEREUM_MAIN.id}/$address")
+                post("/faucet/0/$address")
             )
                 .andExpect(status().isBadRequest)
         }

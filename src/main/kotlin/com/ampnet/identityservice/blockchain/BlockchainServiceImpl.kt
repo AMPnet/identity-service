@@ -2,6 +2,7 @@ package com.ampnet.identityservice.blockchain
 
 import com.ampnet.identityservice.blockchain.properties.ChainPropertiesHandler
 import com.ampnet.identityservice.config.ApplicationProperties
+import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InternalException
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
@@ -88,12 +89,17 @@ class BlockchainServiceImpl(
         return contract.isWalletApproved(address).sendSafely() ?: false
     }
 
+    @Throws(InternalException::class)
     override fun sendFaucetFunds(addresses: List<String>, chainId: Long): String? {
         logger.info { "Sending funds to addresses: $addresses on chain: $chainId" }
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
+        val faucet = blockchainProperties.faucet ?: throw InternalException(
+            errorCode = ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
+            exceptionMessage = "Missing or disabled faucet configuration for chainId: $chainId"
+        )
         val nonce = blockchainProperties.web3j
             .ethGetTransactionCount(
-                blockchainProperties.faucet!!.credentials.address,
+                faucet.credentials.address,
                 DefaultBlockParameterName.LATEST
             )
             .sendSafely()?.transactionCount ?: return null
