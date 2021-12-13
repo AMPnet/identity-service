@@ -40,7 +40,7 @@ class FaucetControllerTest : ControllerTestBase() {
         val now = ZonedDateTime.now()
 
         suppose("Address queue is flushed for matic testnet") {
-            faucetTaskRepository.flushAddressQueueForChainId(taskUuid, defaultChainId, now)
+            faucetTaskRepository.flushAddressQueueForChainId(taskUuid, defaultChainId, now, 100)
         }
 
         verify("Task is created for flushed addresses for matic testnet") {

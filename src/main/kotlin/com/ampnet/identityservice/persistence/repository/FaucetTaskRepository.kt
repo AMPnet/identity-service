@@ -21,12 +21,20 @@ interface FaucetTaskRepository : JpaRepository<FaucetTask, UUID> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Transactional
     @Query(
-        "WITH deleted_rows AS (DELETE FROM pending_faucet_address WHERE chain_id = :chainId RETURNING address) " +
+        "WITH deleted_rows AS (" +
+            "    DELETE FROM pending_faucet_address" +
+            "    WHERE chain_id = :chainId AND address IN (" +
+            "        SELECT address FROM pending_faucet_address" +
+            "        WHERE chain_id = :chainId" +
+            "        LIMIT :maxAddressesPerTask" +
+            "    )" +
+            "    RETURNING address" +
+            ") " +
             "INSERT INTO faucet_task(uuid, addresses, chain_id, status, created_at) " +
             "VALUES (:uuid, ARRAY(SELECT DISTINCT address FROM deleted_rows), :chainId, 'CREATED', :timestamp)",
         nativeQuery = true
     )
-    fun flushAddressQueueForChainId(uuid: UUID, chainId: Long, timestamp: ZonedDateTime)
+    fun flushAddressQueueForChainId(uuid: UUID, chainId: Long, timestamp: ZonedDateTime, maxAddressesPerTask: Int)
 
     @Query(
         "SELECT DISTINCT chain_id FROM pending_faucet_address",

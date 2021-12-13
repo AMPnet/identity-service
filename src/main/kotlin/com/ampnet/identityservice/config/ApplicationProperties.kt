@@ -17,6 +17,7 @@ class ApplicationProperties {
     val chainMumbai = ChainProperties()
     val chainHardhatTestnet = ChainProperties()
     val pinata = PinataProperties()
+    val faucet = FaucetProperties()
     lateinit var infuraId: String
 }
 
@@ -66,4 +67,9 @@ class QueueProperties {
 class PinataProperties {
     var jwt: String = ""
     var maxUses: Int = 10
+}
+
+@Suppress("MagicNumber")
+class FaucetProperties {
+    var maxAddressesPerTask: Int = 100
 }

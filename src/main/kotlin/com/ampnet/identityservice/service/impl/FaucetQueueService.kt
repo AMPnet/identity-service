@@ -41,7 +41,8 @@ class FaucetQueueService(
             faucetTaskRepository.flushAddressQueueForChainId(
                 uuidProvider.getUuid(),
                 chainId,
-                timeProvider.getZonedDateTime()
+                timeProvider.getZonedDateTime(),
+                applicationProperties.faucet.maxAddressesPerTask
             )
         }
 
