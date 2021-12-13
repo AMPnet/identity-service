@@ -39,7 +39,7 @@ class BlockchainServiceImpl(
     private val walletApproveGasLimit = BigInteger.valueOf(200_000)
 
     @Suppress("MagicNumber")
-    private val faucetGasLimit = BigInteger.valueOf(200_000)
+    private val faucetGasLimit = BigInteger.valueOf(4_000_000) // test run with 100 random addresses used 3,829,595 gas
 
     @Suppress("ReturnCount")
     @Throws(InternalException::class)
