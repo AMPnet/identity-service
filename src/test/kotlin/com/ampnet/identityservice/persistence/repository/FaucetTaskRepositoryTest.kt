@@ -21,6 +21,21 @@ class FaucetTaskRepositoryTest : TestBase() {
     private lateinit var faucetTaskRepository: FaucetTaskRepository
 
     @Test
+    fun mustNotFlushAddressQueueWithEmptyAddressArray() {
+        val taskUuid = UUID.randomUUID()
+        val now = ZonedDateTime.now()
+
+        suppose("address queue is flushed for chain 1") {
+            faucetTaskRepository.flushAddressQueueForChainId(taskUuid, 1L, now, 100)
+        }
+
+        verify("faucet task is not created for empty address queue") {
+            val task = faucetTaskRepository.findById(taskUuid)
+            assertThat(task).isEmpty()
+        }
+    }
+
+    @Test
     fun mustCorrectlyAddAndFlushAddressQueue() {
         val chain1Addresses = listOf("addr1", "addr2", "addr3", "addr1", "addr4", "addr2")
         val chain2Addresses = listOf("addr1", "addr4", "addr5")
@@ -45,6 +60,7 @@ class FaucetTaskRepositoryTest : TestBase() {
                 assertThat(it.addresses).containsExactlyInAnyOrderElementsOf(uniqueChain1Addresses)
                 assertThat(it.chainId).isEqualTo(1L)
                 assertThat(it.status).isEqualTo(FaucetTaskStatus.CREATED)
+                assertThat(it.createdAt).isEqualTo(now)
             }
         }
 

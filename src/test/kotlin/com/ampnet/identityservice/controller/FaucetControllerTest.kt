@@ -4,6 +4,7 @@ import com.ampnet.identityservice.blockchain.properties.Chain
 import com.ampnet.identityservice.persistence.model.FaucetTaskStatus
 import com.ampnet.identityservice.persistence.repository.FaucetTaskRepository
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,9 +23,15 @@ class FaucetControllerTest : ControllerTestBase() {
     private lateinit var faucetTaskRepository: FaucetTaskRepository
 
     @BeforeEach
-    fun init() {
-        databaseCleanerService.deleteAllQueuedFaucetAddresses()
+    fun beforeEach() {
         databaseCleanerService.deleteAllFaucetTasks()
+        databaseCleanerService.deleteAllQueuedFaucetAddresses()
+    }
+
+    @AfterEach
+    fun afterEach() {
+        databaseCleanerService.deleteAllFaucetTasks()
+        databaseCleanerService.deleteAllQueuedFaucetAddresses()
     }
 
     @Test

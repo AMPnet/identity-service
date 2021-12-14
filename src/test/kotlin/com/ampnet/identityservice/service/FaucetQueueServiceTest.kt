@@ -56,13 +56,13 @@ class FaucetQueueServiceTest : TestBase() {
     private lateinit var faucetQueueScheduler: ManualFixedScheduler
 
     @BeforeEach
-    fun init() {
+    fun beforeEach() {
         databaseCleanerService.deleteAllFaucetTasks()
         databaseCleanerService.deleteAllQueuedFaucetAddresses()
     }
 
     @AfterEach
-    fun after() {
+    fun afterEach() {
         databaseCleanerService.deleteAllFaucetTasks()
         databaseCleanerService.deleteAllQueuedFaucetAddresses()
     }
