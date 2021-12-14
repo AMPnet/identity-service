@@ -29,17 +29,11 @@ private val logger = KotlinLogging.logger {}
 
 @Service
 class BlockchainServiceImpl(
-    applicationProperties: ApplicationProperties,
+    private val applicationProperties: ApplicationProperties,
     private val restTemplate: RestTemplate
 ) : BlockchainService {
 
     private val chainHandler = ChainPropertiesHandler(applicationProperties)
-
-    @Suppress("MagicNumber")
-    private val walletApproveGasLimit = BigInteger.valueOf(200_000)
-
-    @Suppress("MagicNumber")
-    private val faucetGasLimit = BigInteger.valueOf(4_000_000) // test run with 100 random addresses used 3,829,595 gas
 
     @Suppress("ReturnCount")
     @Throws(InternalException::class)
@@ -57,7 +51,7 @@ class BlockchainServiceImpl(
 
         val function = Function("approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList())
         val rawTransaction = RawTransaction.createTransaction(
-            nonce, gasPrice, walletApproveGasLimit,
+            nonce, gasPrice, applicationProperties.walletApprove.gasLimit,
             blockchainProperties.walletApprover.contractAddress, FunctionEncoder.encode(function)
         )
 
@@ -109,7 +103,7 @@ class BlockchainServiceImpl(
 
         val function = Function("faucet", listOf(addresses.toAddressArray()), emptyList())
         val rawTransaction = RawTransaction.createTransaction(
-            nonce, gasPrice, faucetGasLimit,
+            nonce, gasPrice, applicationProperties.faucet.gasLimit,
             blockchainProperties.faucet.contractAddress, FunctionEncoder.encode(function)
         )
 
