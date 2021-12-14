@@ -60,7 +60,7 @@ class FaucetQueueService(
                 handleInProcessTask(it)
             } catch (ex: Throwable) {
                 logger.error("Failed to handle in process task: ${ex.message}")
-                faucetTaskRepository.setStatus(it.uuid, FaucetTaskStatus.FAILED, it.hash)
+                markTaskAsFailedAndRetryWithNewTask(it)
             }
 
             return
@@ -71,7 +71,7 @@ class FaucetQueueService(
                 handlePendingTask(it)
             } catch (ex: Throwable) {
                 logger.error("Failed to handle pending task: ${ex.message}")
-                faucetTaskRepository.setStatus(it.uuid, FaucetTaskStatus.FAILED, it.hash)
+                markTaskAsFailedAndRetryWithNewTask(it)
             }
 
             return
@@ -79,7 +79,7 @@ class FaucetQueueService(
     }
 
     private fun handleInProcessTask(task: FaucetTask) {
-        logger.debug { "Task in process: $task " }
+        logger.debug { "Task in process: $task" }
         if (task.hash == null) {
             logger.warn { "Task is process is missing hash: $task" }
         }
@@ -92,7 +92,7 @@ class FaucetQueueService(
                     logger.warn {
                         "Waiting for transaction: $hash exceeded: ${applicationProperties.queue.miningPeriod} minutes"
                     }
-                    faucetTaskRepository.setStatus(task.uuid, FaucetTaskStatus.FAILED, task.hash)
+                    markTaskAsFailedAndRetryWithNewTask(task)
                 } else {
                     logger.info { "Waiting for task to be mined: $hash" }
                 }
@@ -119,6 +119,18 @@ class FaucetQueueService(
         logger.info {
             "Faucet funds sent to addresses: ${task.addresses.contentToString()}. Task is completed: ${task.hash}"
         }
+    }
+
+    private fun markTaskAsFailedAndRetryWithNewTask(task: FaucetTask) {
+        faucetTaskRepository.setStatus(task.uuid, FaucetTaskStatus.FAILED, task.hash)
+        faucetTaskRepository.saveAndFlush(
+            FaucetTask(
+                task.addresses,
+                task.chainId,
+                uuidProvider,
+                timeProvider
+            )
+        )
     }
 
     private fun getMaximumMiningPeriod() = timeProvider.getZonedDateTime()
