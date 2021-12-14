@@ -5,11 +5,12 @@ import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.persistence.model.FaucetTask
 import com.ampnet.identityservice.persistence.model.FaucetTaskStatus
 import com.ampnet.identityservice.persistence.repository.FaucetTaskRepository
+import com.ampnet.identityservice.service.ScheduledExecutorServiceProvider
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import mu.KLogging
+import org.springframework.beans.factory.DisposableBean
 import org.springframework.stereotype.Service
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 @Service
@@ -18,12 +19,15 @@ class FaucetQueueService(
     private val uuidProvider: UuidProvider,
     private val timeProvider: ZonedDateTimeProvider,
     private val blockchainService: BlockchainService,
-    private val applicationProperties: ApplicationProperties
-) {
+    private val applicationProperties: ApplicationProperties,
+    scheduledExecutorServiceProvider: ScheduledExecutorServiceProvider
+) : DisposableBean {
 
-    companion object : KLogging()
+    companion object : KLogging() {
+        const val QUEUE_NAME = "FaucetQueue"
+    }
 
-    private val executorService = Executors.newSingleThreadScheduledExecutor()
+    private val executorService = scheduledExecutorServiceProvider.newSingleThreadScheduledExecutor(QUEUE_NAME)
 
     init {
         executorService.scheduleAtFixedRate(
@@ -32,6 +36,11 @@ class FaucetQueueService(
             applicationProperties.queue.polling,
             TimeUnit.MILLISECONDS
         )
+    }
+
+    override fun destroy() {
+        logger.info { "Shutting down faucet queue executor service..." }
+        executorService.shutdown()
     }
 
     @Suppress("TooGenericExceptionCaught")

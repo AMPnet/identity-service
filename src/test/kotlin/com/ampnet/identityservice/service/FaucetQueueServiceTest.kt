@@ -1,10 +1,12 @@
 package com.ampnet.identityservice.service
 
+import com.ampnet.identityservice.ManualFixedScheduler
 import com.ampnet.identityservice.TestBase
 import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.blockchain.properties.Chain
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.config.DatabaseCleanerService
+import com.ampnet.identityservice.config.TestSchedulerConfiguration
 import com.ampnet.identityservice.persistence.model.FaucetTask
 import com.ampnet.identityservice.persistence.model.FaucetTaskStatus
 import com.ampnet.identityservice.persistence.repository.FaucetTaskRepository
@@ -18,9 +20,11 @@ import org.mockito.kotlin.given
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.context.annotation.Import
 import java.time.ZonedDateTime
 
 @SpringBootTest
+@Import(TestSchedulerConfiguration::class)
 class FaucetQueueServiceTest : TestBase() {
 
     private var address1 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF7"
@@ -47,6 +51,9 @@ class FaucetQueueServiceTest : TestBase() {
 
     @MockBean
     private lateinit var blockchainService: BlockchainService
+
+    @Autowired
+    private lateinit var faucetQueueScheduler: ManualFixedScheduler
 
     @BeforeEach
     fun init() {
@@ -75,7 +82,7 @@ class FaucetQueueServiceTest : TestBase() {
         }
 
         verify("Service will handle the task") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
 
             val tasks = faucetTaskRepository.findAll()
 
@@ -101,7 +108,7 @@ class FaucetQueueServiceTest : TestBase() {
         }
 
         verify("Service will handle the task") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
 
             val tasks = faucetTaskRepository.findAll()
 
@@ -130,7 +137,7 @@ class FaucetQueueServiceTest : TestBase() {
         }
 
         verify("Both tasks are handled in correct order") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
 
             val tasks = faucetTaskRepository.findAll()
 
@@ -160,7 +167,7 @@ class FaucetQueueServiceTest : TestBase() {
         }
 
         verify("Task will fail") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
 
             val tasks = faucetTaskRepository.findAll()
 
@@ -201,7 +208,7 @@ class FaucetQueueServiceTest : TestBase() {
         }
 
         verify("First task failed") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
 
             val failedTask = faucetTaskRepository.findAll().firstOrNull { it.uuid != task!!.uuid }
                 ?: fail("Missing failed transaction")
@@ -211,7 +218,7 @@ class FaucetQueueServiceTest : TestBase() {
         }
 
         verify("Second task is completed") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
 
             val successfulTask = faucetTaskRepository.findById(task!!.uuid).unwrap()
                 ?: fail("Missing transaction")
@@ -238,7 +245,7 @@ class FaucetQueueServiceTest : TestBase() {
         }
 
         verify("Tasks are handled in order") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
 
             val tasks = faucetTaskRepository.findAll()
             tasks.sortBy { it.createdAt }
@@ -253,19 +260,12 @@ class FaucetQueueServiceTest : TestBase() {
         }
     }
 
-    private fun waitUntilTasksAreProcessed(retry: Int = 5) {
-        if (retry > 0) {
-            Thread.sleep(applicationProperties.queue.initialDelay * 2)
+    private tailrec fun processAllTasks(maxAttempts: Int = 100) {
+        faucetQueueScheduler.execute()
 
-            faucetTaskRepository.getPending()?.let {
-                Thread.sleep(applicationProperties.queue.polling * 2)
-                waitUntilTasksAreProcessed(retry - 1)
-            }
-
-            faucetTaskRepository.getInProcess()?.let {
-                Thread.sleep(applicationProperties.queue.polling * 2)
-                waitUntilTasksAreProcessed(retry - 1)
-            }
+        val hasTasksInQueue = faucetTaskRepository.getInProcess() != null || faucetTaskRepository.getPending() != null
+        if (hasTasksInQueue && maxAttempts > 0) {
+            processAllTasks(maxAttempts - 1)
         }
     }
 

@@ -1,10 +1,12 @@
 package com.ampnet.identityservice.service
 
+import com.ampnet.identityservice.ManualFixedScheduler
 import com.ampnet.identityservice.TestBase
 import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.blockchain.properties.Chain
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.config.DatabaseCleanerService
+import com.ampnet.identityservice.config.TestSchedulerConfiguration
 import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
 import com.ampnet.identityservice.persistence.model.BlockchainTask
 import com.ampnet.identityservice.persistence.model.BlockchainTaskStatus
@@ -19,9 +21,11 @@ import org.mockito.kotlin.given
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.context.annotation.Import
 import java.time.ZonedDateTime
 
 @SpringBootTest
+@Import(TestSchedulerConfiguration::class)
 class BlockchainQueueServiceTest : TestBase() {
 
     private val address = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF7"
@@ -51,15 +55,18 @@ class BlockchainQueueServiceTest : TestBase() {
     @MockBean
     private lateinit var blockchainService: BlockchainService
 
+    @Autowired
+    private lateinit var whitelistQueueScheduler: ManualFixedScheduler
+
     @BeforeEach
-    fun init() {
+    fun beforeEach() {
         testContext = TestContext()
         databaseCleanerService.deleteAllBlockchainTasks()
         given(blockchainService.isWhitelisted(any(), any(), any())).willReturn(true)
     }
 
     @AfterEach
-    fun after() {
+    fun afterEach() {
         databaseCleanerService.deleteAllBlockchainTasks()
     }
 
@@ -76,7 +83,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         verify("Service will handle the task") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
             val tasks = blockchainTaskRepository.findAll()
             assertThat(tasks).hasSize(1)
             assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.COMPLETED)
@@ -98,7 +105,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         verify("Service will handle the task") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
             val tasks = blockchainTaskRepository.findAll()
             assertThat(tasks).hasSize(2)
             assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash }
@@ -121,7 +128,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         verify("Both tasks are handled in correct order") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
             val tasks = blockchainTaskRepository.findAll()
             assertThat(tasks).hasSize(2)
             assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash }
@@ -146,7 +153,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         verify("Task will fail") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
             val tasks = blockchainTaskRepository.findAll()
             assertThat(tasks).hasSize(1)
             assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.FAILED)
@@ -179,14 +186,14 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         verify("First task failed") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
             val task = blockchainTaskRepository.findAll().firstOrNull { it.uuid != testContext.task.uuid }
                 ?: fail("Missing failed transaction")
             assertThat(task.status).isEqualTo(BlockchainTaskStatus.FAILED)
             assertThat(task.hash).isEqualTo("some_hash")
         }
         verify("Second task is completed") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
             val task = blockchainTaskRepository.findById(testContext.task.uuid).unwrap()
                 ?: fail("Missing transaction")
             assertThat(task.status).isEqualTo(BlockchainTaskStatus.COMPLETED)
@@ -209,7 +216,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         verify("Tasks are handled in order") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
             val tasks = blockchainTaskRepository.findAll()
             tasks.sortBy { it.createdAt }
             assertThat(tasks).hasSize(10)
@@ -237,7 +244,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         verify("Service will handle the task") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
             val tasks = blockchainTaskRepository.findAll()
             assertThat(tasks).hasSize(1)
             assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.FAILED)
@@ -255,7 +262,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         verify("Service will not create a new task") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
             val tasks = blockchainTaskRepository.findAll()
             assertThat(tasks).hasSize(1)
             assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.COMPLETED)
@@ -279,7 +286,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         verify("Service created new task") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
             val tasks = blockchainTaskRepository.findAll()
             assertThat(tasks).hasSize(2)
             assertThat(tasks).allMatch { it.payload == address }
@@ -305,7 +312,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         verify("New task is handled") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
             val tasks = blockchainTaskRepository.findAll()
             assertThat(tasks).hasSize(2)
             assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.payload == address }
@@ -329,7 +336,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         verify("New task is handled") {
-            waitUntilTasksAreProcessed()
+            processAllTasks()
             val tasks = blockchainTaskRepository.findAll()
             assertThat(tasks).hasSize(2)
             assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.payload == address }
@@ -337,16 +344,13 @@ class BlockchainQueueServiceTest : TestBase() {
         }
     }
 
-    private fun waitUntilTasksAreProcessed(retry: Int = 5) {
-        if (retry == 0) return
-        Thread.sleep(applicationProperties.queue.initialDelay * 2)
-        blockchainTaskRepository.getPending()?.let {
-            Thread.sleep(applicationProperties.queue.polling * 2)
-            waitUntilTasksAreProcessed(retry - 1)
-        }
-        blockchainTaskRepository.getInProcess()?.let {
-            Thread.sleep(applicationProperties.queue.polling * 2)
-            waitUntilTasksAreProcessed(retry - 1)
+    private tailrec fun processAllTasks(maxAttempts: Int = 100) {
+        whitelistQueueScheduler.execute()
+
+        val hasTasksInQueue = blockchainTaskRepository.getInProcess() != null ||
+            blockchainTaskRepository.getPending() != null
+        if (hasTasksInQueue && maxAttempts > 0) {
+            processAllTasks(maxAttempts - 1)
         }
     }
 

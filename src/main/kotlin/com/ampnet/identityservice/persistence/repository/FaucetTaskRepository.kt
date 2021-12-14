@@ -65,7 +65,4 @@ interface FaucetTaskRepository : JpaRepository<FaucetTask, UUID> {
         hash: String? = null,
         time: ZonedDateTime = ZonedDateTime.now()
     )
-
-    @Query
-    fun findByChainIdAndStatus(chainId: Long, status: FaucetTaskStatus): List<FaucetTask>
 }

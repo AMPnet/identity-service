@@ -1,17 +1,20 @@
 package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.blockchain.properties.Chain
+import com.ampnet.identityservice.config.TestSchedulerConfiguration
 import com.ampnet.identityservice.persistence.model.FaucetTaskStatus
 import com.ampnet.identityservice.persistence.repository.FaucetTaskRepository
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.ZonedDateTime
 import java.util.UUID
 
+@Import(TestSchedulerConfiguration::class)
 class FaucetControllerTest : ControllerTestBase() {
 
     private val defaultChainId = Chain.MATIC_TESTNET_MUMBAI.id
@@ -45,10 +48,10 @@ class FaucetControllerTest : ControllerTestBase() {
 
         verify("Task is created for flushed addresses for matic testnet") {
             val task = faucetTaskRepository.findById(taskUuid)
-            Assertions.assertThat(task).hasValueSatisfying {
-                Assertions.assertThat(it.addresses).containsExactly(address)
-                Assertions.assertThat(it.chainId).isEqualTo(defaultChainId)
-                Assertions.assertThat(it.status).isEqualTo(FaucetTaskStatus.CREATED)
+            assertThat(task).hasValueSatisfying {
+                assertThat(it.addresses).containsExactly(address)
+                assertThat(it.chainId).isEqualTo(defaultChainId)
+                assertThat(it.status).isEqualTo(FaucetTaskStatus.CREATED)
             }
         }
     }
