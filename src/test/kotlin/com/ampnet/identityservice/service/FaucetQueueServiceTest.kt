@@ -115,8 +115,8 @@ class FaucetQueueServiceTest : TestBase() {
             val tasks = faucetTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(FaucetTaskStatus.COMPLETED)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(FaucetTaskStatus.COMPLETED)
+            assertThat(tasks[0].hash).isEqualTo(hash)
         }
     }
 
@@ -136,7 +136,7 @@ class FaucetQueueServiceTest : TestBase() {
             val tasks = faucetTaskRepository.findAll()
 
             assertThat(tasks).hasSize(2)
-            assertThat(tasks.first().status).isEqualTo(FaucetTaskStatus.FAILED)
+            assertThat(tasks[0].status).isEqualTo(FaucetTaskStatus.FAILED)
             assertThat(tasks[1].status).isEqualTo(FaucetTaskStatus.CREATED)
         }
     }
@@ -157,8 +157,8 @@ class FaucetQueueServiceTest : TestBase() {
             val tasks = faucetTaskRepository.findAll()
 
             assertThat(tasks).hasSize(2)
-            assertThat(tasks.first().status).isEqualTo(FaucetTaskStatus.FAILED)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(FaucetTaskStatus.FAILED)
+            assertThat(tasks[0].hash).isEqualTo(hash)
             assertThat(tasks[1].status).isEqualTo(FaucetTaskStatus.CREATED)
         }
     }
@@ -179,8 +179,8 @@ class FaucetQueueServiceTest : TestBase() {
             val tasks = faucetTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(FaucetTaskStatus.CREATED)
-            assertThat(tasks.first().hash).isNull()
+            assertThat(tasks[0].status).isEqualTo(FaucetTaskStatus.CREATED)
+            assertThat(tasks[0].hash).isNull()
         }
 
         suppose("Blockchain service will send faucet funds") {
@@ -197,8 +197,8 @@ class FaucetQueueServiceTest : TestBase() {
             val tasks = faucetTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(FaucetTaskStatus.COMPLETED)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(FaucetTaskStatus.COMPLETED)
+            assertThat(tasks[0].hash).isEqualTo(hash)
         }
     }
 
@@ -244,8 +244,8 @@ class FaucetQueueServiceTest : TestBase() {
             val tasks = faucetTaskRepository.findAll()
 
             assertThat(tasks).hasSize(2)
-            assertThat(tasks.first().status).isEqualTo(FaucetTaskStatus.FAILED)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(FaucetTaskStatus.FAILED)
+            assertThat(tasks[0].hash).isEqualTo(hash)
             assertThat(tasks[1].status).isEqualTo(FaucetTaskStatus.CREATED)
         }
     }
@@ -270,8 +270,8 @@ class FaucetQueueServiceTest : TestBase() {
             val tasks = faucetTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(FaucetTaskStatus.IN_PROCESS)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(FaucetTaskStatus.IN_PROCESS)
+            assertThat(tasks[0].hash).isEqualTo(hash)
         }
     }
 
@@ -304,8 +304,8 @@ class FaucetQueueServiceTest : TestBase() {
 
             tasks.sortBy { it.createdAt }
 
-            assertThat(tasks.first().uuid).isEqualTo(task!!.uuid)
-            assertThat(tasks.first().updatedAt).isBefore(tasks[1].updatedAt)
+            assertThat(tasks[0].uuid).isEqualTo(task!!.uuid)
+            assertThat(tasks[0].updatedAt).isBefore(tasks[1].updatedAt)
         }
     }
 
@@ -330,8 +330,8 @@ class FaucetQueueServiceTest : TestBase() {
             val tasks = faucetTaskRepository.findAll()
 
             assertThat(tasks).hasSize(2)
-            assertThat(tasks.first().status).isEqualTo(FaucetTaskStatus.FAILED)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(FaucetTaskStatus.FAILED)
+            assertThat(tasks[0].hash).isEqualTo(hash)
             assertThat(tasks[1].status).isEqualTo(FaucetTaskStatus.CREATED)
         }
     }

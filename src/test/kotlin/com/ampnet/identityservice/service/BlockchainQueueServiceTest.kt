@@ -87,8 +87,8 @@ class BlockchainQueueServiceTest : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.COMPLETED)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.COMPLETED)
+            assertThat(tasks[0].hash).isEqualTo(hash)
         }
     }
 
@@ -133,7 +133,7 @@ class BlockchainQueueServiceTest : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.FAILED)
+            assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
         }
     }
 
@@ -147,14 +147,14 @@ class BlockchainQueueServiceTest : TestBase() {
             createBlockchainTask(status = BlockchainTaskStatus.IN_PROCESS, hash = hash)
         }
 
-        verify("Task will fail and new task will be created") {
+        verify("Task will fail") {
             processAllTasks(maxAttempts = 1)
 
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
+            assertThat(tasks[0].hash).isEqualTo(hash)
         }
     }
 
@@ -174,8 +174,8 @@ class BlockchainQueueServiceTest : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.CREATED)
-            assertThat(tasks.first().hash).isNull()
+            assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.CREATED)
+            assertThat(tasks[0].hash).isNull()
         }
 
         suppose("Blockchain service will whitelist any address") {
@@ -192,8 +192,8 @@ class BlockchainQueueServiceTest : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.COMPLETED)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.COMPLETED)
+            assertThat(tasks[0].hash).isEqualTo(hash)
         }
     }
 
@@ -225,8 +225,8 @@ class BlockchainQueueServiceTest : TestBase() {
 
             tasks.sortBy { it.createdAt }
 
-            assertThat(tasks.first().uuid).isEqualTo(testContext.task.uuid)
-            assertThat(tasks.first().updatedAt).isBefore(tasks[1].updatedAt)
+            assertThat(tasks[0].uuid).isEqualTo(testContext.task.uuid)
+            assertThat(tasks[0].updatedAt).isBefore(tasks[1].updatedAt)
         }
     }
 
@@ -251,8 +251,8 @@ class BlockchainQueueServiceTest : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
+            assertThat(tasks[0].hash).isEqualTo(hash)
         }
     }
 
@@ -273,8 +273,8 @@ class BlockchainQueueServiceTest : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
+            assertThat(tasks[0].hash).isEqualTo(hash)
         }
     }
 
@@ -298,8 +298,8 @@ class BlockchainQueueServiceTest : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.IN_PROCESS)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.IN_PROCESS)
+            assertThat(tasks[0].hash).isEqualTo(hash)
         }
     }
 
@@ -408,8 +408,8 @@ class BlockchainQueueServiceTest : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
+            assertThat(tasks[0].hash).isEqualTo(hash)
         }
     }
 
@@ -429,8 +429,8 @@ class BlockchainQueueServiceTest : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(1)
-            assertThat(tasks.first().status).isEqualTo(BlockchainTaskStatus.COMPLETED)
-            assertThat(tasks.first().hash).isEqualTo(hash)
+            assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.COMPLETED)
+            assertThat(tasks[0].hash).isEqualTo(hash)
         }
     }
 
