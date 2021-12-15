@@ -2,6 +2,7 @@ package com.ampnet.identityservice.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
+import java.math.BigInteger
 
 @Configuration
 @ConfigurationProperties(prefix = "com.ampnet.identityservice")
@@ -17,6 +18,8 @@ class ApplicationProperties {
     val chainMumbai = ChainProperties()
     val chainHardhatTestnet = ChainProperties()
     val pinata = PinataProperties()
+    val faucet = FaucetProperties()
+    val walletApprove = WalletApproveProperties()
     lateinit var infuraId: String
 }
 
@@ -66,4 +69,15 @@ class QueueProperties {
 class PinataProperties {
     var jwt: String = ""
     var maxUses: Int = 10
+}
+
+@Suppress("MagicNumber")
+class FaucetProperties {
+    var maxAddressesPerTask: Int = 100
+    var gasLimit: BigInteger = BigInteger.valueOf(4_000_000) // test run with 100 random addresses used 3,829,595 gas
+}
+
+@Suppress("MagicNumber")
+class WalletApproveProperties {
+    var gasLimit: BigInteger = BigInteger.valueOf(200_000)
 }

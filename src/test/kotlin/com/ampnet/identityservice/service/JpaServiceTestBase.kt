@@ -4,6 +4,7 @@ import com.ampnet.identityservice.TestBase
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.config.DatabaseCleanerService
 import com.ampnet.identityservice.config.JsonConfig
+import com.ampnet.identityservice.config.TestSchedulerConfiguration
 import com.ampnet.identityservice.persistence.model.User
 import com.ampnet.identityservice.persistence.repository.MailTokenRepository
 import com.ampnet.identityservice.persistence.repository.UserInfoRepository
@@ -25,7 +26,13 @@ import java.time.ZonedDateTime
 @ExtendWith(SpringExtension::class)
 @DataJpaTest
 @Transactional
-@Import(DatabaseCleanerService::class, ApplicationProperties::class, RestTemplate::class, JsonConfig::class)
+@Import(
+    DatabaseCleanerService::class,
+    ApplicationProperties::class,
+    RestTemplate::class,
+    JsonConfig::class,
+    TestSchedulerConfiguration::class
+)
 abstract class JpaServiceTestBase : TestBase() {
 
     @Autowired

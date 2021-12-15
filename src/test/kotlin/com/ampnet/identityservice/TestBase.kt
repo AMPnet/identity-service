@@ -1,8 +1,11 @@
 package com.ampnet.identityservice
 
+import com.ampnet.identityservice.config.TestSchedulerConfiguration
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 
 @ActiveProfiles("test")
+@Import(TestSchedulerConfiguration::class)
 abstract class TestBase {
 
     protected fun suppose(@Suppress("UNUSED_PARAMETER") description: String, function: () -> Unit) {

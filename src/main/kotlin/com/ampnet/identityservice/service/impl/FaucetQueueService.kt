@@ -5,11 +5,12 @@ import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.persistence.model.FaucetTask
 import com.ampnet.identityservice.persistence.model.FaucetTaskStatus
 import com.ampnet.identityservice.persistence.repository.FaucetTaskRepository
+import com.ampnet.identityservice.service.ScheduledExecutorServiceProvider
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import mu.KLogging
+import org.springframework.beans.factory.DisposableBean
 import org.springframework.stereotype.Service
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 @Service
@@ -18,12 +19,15 @@ class FaucetQueueService(
     private val uuidProvider: UuidProvider,
     private val timeProvider: ZonedDateTimeProvider,
     private val blockchainService: BlockchainService,
-    private val applicationProperties: ApplicationProperties
-) {
+    private val applicationProperties: ApplicationProperties,
+    scheduledExecutorServiceProvider: ScheduledExecutorServiceProvider
+) : DisposableBean {
 
-    companion object : KLogging()
+    companion object : KLogging() {
+        const val QUEUE_NAME = "FaucetQueue"
+    }
 
-    private val executorService = Executors.newSingleThreadScheduledExecutor()
+    private val executorService = scheduledExecutorServiceProvider.newSingleThreadScheduledExecutor(QUEUE_NAME)
 
     init {
         executorService.scheduleAtFixedRate(
@@ -34,6 +38,11 @@ class FaucetQueueService(
         )
     }
 
+    override fun destroy() {
+        logger.info { "Shutting down faucet queue executor service..." }
+        executorService.shutdown()
+    }
+
     @Suppress("TooGenericExceptionCaught")
     private fun processTasks() {
         // creates pending tasks for all chains which have at least one address in the queue
@@ -41,7 +50,8 @@ class FaucetQueueService(
             faucetTaskRepository.flushAddressQueueForChainId(
                 uuidProvider.getUuid(),
                 chainId,
-                timeProvider.getZonedDateTime()
+                timeProvider.getZonedDateTime(),
+                applicationProperties.faucet.maxAddressesPerTask
             )
         }
 
@@ -50,7 +60,7 @@ class FaucetQueueService(
                 handleInProcessTask(it)
             } catch (ex: Throwable) {
                 logger.error("Failed to handle in process task: ${ex.message}")
-                faucetTaskRepository.setStatus(it.uuid, FaucetTaskStatus.FAILED, it.hash)
+                markTaskAsFailedAndRetryWithNewTask(it)
             }
 
             return
@@ -61,7 +71,7 @@ class FaucetQueueService(
                 handlePendingTask(it)
             } catch (ex: Throwable) {
                 logger.error("Failed to handle pending task: ${ex.message}")
-                faucetTaskRepository.setStatus(it.uuid, FaucetTaskStatus.FAILED, it.hash)
+                markTaskAsFailedAndRetryWithNewTask(it)
             }
 
             return
@@ -69,7 +79,7 @@ class FaucetQueueService(
     }
 
     private fun handleInProcessTask(task: FaucetTask) {
-        logger.debug { "Task in process: $task " }
+        logger.debug { "Task in process: $task" }
         if (task.hash == null) {
             logger.warn { "Task is process is missing hash: $task" }
         }
@@ -82,7 +92,7 @@ class FaucetQueueService(
                     logger.warn {
                         "Waiting for transaction: $hash exceeded: ${applicationProperties.queue.miningPeriod} minutes"
                     }
-                    faucetTaskRepository.setStatus(task.uuid, FaucetTaskStatus.FAILED, task.hash)
+                    markTaskAsFailedAndRetryWithNewTask(task)
                 } else {
                     logger.info { "Waiting for task to be mined: $hash" }
                 }
@@ -109,6 +119,18 @@ class FaucetQueueService(
         logger.info {
             "Faucet funds sent to addresses: ${task.addresses.contentToString()}. Task is completed: ${task.hash}"
         }
+    }
+
+    private fun markTaskAsFailedAndRetryWithNewTask(task: FaucetTask) {
+        faucetTaskRepository.setStatus(task.uuid, FaucetTaskStatus.FAILED, task.hash)
+        faucetTaskRepository.saveAndFlush(
+            FaucetTask(
+                task.addresses,
+                task.chainId,
+                uuidProvider,
+                timeProvider
+            )
+        )
     }
 
     private fun getMaximumMiningPeriod() = timeProvider.getZonedDateTime()

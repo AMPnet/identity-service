@@ -3,7 +3,8 @@ package com.ampnet.identityservice.controller
 import com.ampnet.identityservice.blockchain.properties.Chain
 import com.ampnet.identityservice.persistence.model.FaucetTaskStatus
 import com.ampnet.identityservice.persistence.repository.FaucetTaskRepository
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,9 +23,15 @@ class FaucetControllerTest : ControllerTestBase() {
     private lateinit var faucetTaskRepository: FaucetTaskRepository
 
     @BeforeEach
-    fun init() {
-        databaseCleanerService.deleteAllQueuedFaucetAddresses()
+    fun beforeEach() {
         databaseCleanerService.deleteAllFaucetTasks()
+        databaseCleanerService.deleteAllQueuedFaucetAddresses()
+    }
+
+    @AfterEach
+    fun afterEach() {
+        databaseCleanerService.deleteAllFaucetTasks()
+        databaseCleanerService.deleteAllQueuedFaucetAddresses()
     }
 
     @Test
@@ -40,15 +47,15 @@ class FaucetControllerTest : ControllerTestBase() {
         val now = ZonedDateTime.now()
 
         suppose("Address queue is flushed for matic testnet") {
-            faucetTaskRepository.flushAddressQueueForChainId(taskUuid, defaultChainId, now)
+            faucetTaskRepository.flushAddressQueueForChainId(taskUuid, defaultChainId, now, 100)
         }
 
         verify("Task is created for flushed addresses for matic testnet") {
             val task = faucetTaskRepository.findById(taskUuid)
-            Assertions.assertThat(task).hasValueSatisfying {
-                Assertions.assertThat(it.addresses).containsExactly(address)
-                Assertions.assertThat(it.chainId).isEqualTo(defaultChainId)
-                Assertions.assertThat(it.status).isEqualTo(FaucetTaskStatus.CREATED)
+            assertThat(task).hasValueSatisfying {
+                assertThat(it.addresses).containsExactly(address)
+                assertThat(it.chainId).isEqualTo(defaultChainId)
+                assertThat(it.status).isEqualTo(FaucetTaskStatus.CREATED)
             }
         }
     }
