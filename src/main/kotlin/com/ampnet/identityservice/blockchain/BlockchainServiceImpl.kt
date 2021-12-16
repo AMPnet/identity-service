@@ -37,9 +37,6 @@ class BlockchainServiceImpl(
 
     private val chainHandler = ChainPropertiesHandler(applicationProperties)
 
-    @Suppress("MagicNumber")
-    private val autoInvestGasLimit = BigInteger.valueOf(200_000)
-
     @Suppress("ReturnCount")
     @Throws(InternalException::class)
     override fun whitelistAddress(address: String, issuerAddress: String, chainId: Long): String? {
@@ -158,7 +155,7 @@ class BlockchainServiceImpl(
 
         val function = Function("investFor", records, emptyList())
         val rawTransaction = RawTransaction.createTransaction(
-            nonce, gasPrice, autoInvestGasLimit,
+            nonce, gasPrice, applicationProperties.autoInvest.gasLimit,
             blockchainProperties.autoInvest.contractAddress, FunctionEncoder.encode(function)
         )
 

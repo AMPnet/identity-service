@@ -2,6 +2,7 @@ package com.ampnet.identityservice.config
 
 import com.ampnet.identityservice.ManualFixedScheduler
 import com.ampnet.identityservice.service.ScheduledExecutorServiceProvider
+import com.ampnet.identityservice.service.impl.AutoInvestQueueServiceImpl
 import com.ampnet.identityservice.service.impl.BlockchainQueueServiceImpl
 import com.ampnet.identityservice.service.impl.FaucetQueueService
 import mu.KLogging
@@ -23,10 +24,14 @@ class TestSchedulerConfiguration {
     fun faucetQueueScheduler() = ManualFixedScheduler()
 
     @Bean
+    fun autoInvestQueueScheduler() = ManualFixedScheduler()
+
+    @Bean
     @Primary
     fun scheduledExecutorServiceProvider(
         whitelistQueueScheduler: ManualFixedScheduler,
-        faucetQueueScheduler: ManualFixedScheduler
+        faucetQueueScheduler: ManualFixedScheduler,
+        autoInvestQueueScheduler: ManualFixedScheduler
     ): ScheduledExecutorServiceProvider {
         logger.info { "Using manual schedulers for tests" }
         return mock {
@@ -34,6 +39,8 @@ class TestSchedulerConfiguration {
                 .willReturn(whitelistQueueScheduler)
             given(it.newSingleThreadScheduledExecutor(FaucetQueueService.QUEUE_NAME))
                 .willReturn(faucetQueueScheduler)
+            given(it.newSingleThreadScheduledExecutor(AutoInvestQueueServiceImpl.QUEUE_NAME))
+                .willReturn(autoInvestQueueScheduler)
         }
     }
 }

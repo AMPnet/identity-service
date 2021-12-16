@@ -11,11 +11,12 @@ import com.ampnet.identityservice.persistence.model.AutoInvestTransaction
 import com.ampnet.identityservice.persistence.repository.AutoInvestTaskRepository
 import com.ampnet.identityservice.persistence.repository.AutoInvestTransactionRepository
 import com.ampnet.identityservice.service.AutoInvestQueueService
+import com.ampnet.identityservice.service.ScheduledExecutorServiceProvider
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import mu.KLogging
+import org.springframework.beans.factory.DisposableBean
 import org.springframework.stereotype.Service
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 @Service
@@ -25,12 +26,15 @@ class AutoInvestQueueServiceImpl(
     private val uuidProvider: UuidProvider,
     private val timeProvider: ZonedDateTimeProvider,
     private val blockchainService: BlockchainService,
-    private val applicationProperties: ApplicationProperties
-) : AutoInvestQueueService {
+    private val applicationProperties: ApplicationProperties,
+    scheduledExecutorServiceProvider: ScheduledExecutorServiceProvider
+) : AutoInvestQueueService, DisposableBean {
 
-    companion object : KLogging()
+    companion object : KLogging() {
+        const val QUEUE_NAME = "AutoInvestQueue"
+    }
 
-    private val executorService = Executors.newSingleThreadScheduledExecutor()
+    private val executorService = scheduledExecutorServiceProvider.newSingleThreadScheduledExecutor(QUEUE_NAME)
 
     init {
         if (applicationProperties.autoInvest.processingEnabled) {
@@ -41,6 +45,11 @@ class AutoInvestQueueServiceImpl(
                 TimeUnit.MILLISECONDS
             )
         }
+    }
+
+    override fun destroy() {
+        logger.info { "Shutting down auto-invest queue executor service..." }
+        executorService.shutdown()
     }
 
     override fun createOrUpdateAutoInvestTask(

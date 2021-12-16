@@ -90,5 +90,6 @@ class WalletApproveProperties {
 class AutoInvestProperties {
     var processingEnabled: Boolean = false
     var timeout: Duration = Duration.ofDays(7L)
+    var gasLimit: BigInteger = BigInteger.valueOf(200_000)
     val queue = QueueProperties()
 }
