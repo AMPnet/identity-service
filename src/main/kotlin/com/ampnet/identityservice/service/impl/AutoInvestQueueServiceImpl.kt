@@ -6,6 +6,7 @@ import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.controller.pojo.request.AutoInvestRequest
 import com.ampnet.identityservice.controller.pojo.response.AutoInvestResponse
 import com.ampnet.identityservice.persistence.model.AutoInvestTask
+import com.ampnet.identityservice.persistence.model.AutoInvestTaskHistoryStatus
 import com.ampnet.identityservice.persistence.model.AutoInvestTaskStatus
 import com.ampnet.identityservice.persistence.model.AutoInvestTransaction
 import com.ampnet.identityservice.persistence.repository.AutoInvestTaskRepository
@@ -17,6 +18,7 @@ import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import mu.KLogging
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.stereotype.Service
+import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
 @Service
@@ -122,7 +124,11 @@ class AutoInvestQueueServiceImpl(
     private fun handleInProcessHashForChain(hash: String, chainId: Long, tasks: List<AutoInvestTask>) {
         if (blockchainService.isMined(hash, chainId)) {
             logger.info { "Transaction is mined: $hash, removing associated tasks" }
-            autoInvestTaskRepository.deleteAll(tasks)
+            autoInvestTaskRepository.completeTasks(
+                tasks.map { it.uuid },
+                AutoInvestTaskHistoryStatus.SUCCESS,
+                ZonedDateTime.now()
+            )
         } else {
             val transaction = autoInvestTransactionRepository.findByChainIdAndHash(chainId, hash)
             if (transaction?.createdAt?.isBefore(getMaximumMiningPeriod()) == true) {
@@ -130,7 +136,11 @@ class AutoInvestQueueServiceImpl(
                     "Waiting for transaction: $hash exceeded ${applicationProperties.autoInvest.queue.miningPeriod}" +
                         " minutes"
                 }
-                autoInvestTaskRepository.deleteAll(tasks)
+                autoInvestTaskRepository.completeTasks(
+                    tasks.map { it.uuid },
+                    AutoInvestTaskHistoryStatus.FAILURE,
+                    ZonedDateTime.now()
+                )
             } else {
                 logger.info { "Waiting for transaction to be mined: $hash" }
             }
@@ -142,9 +152,19 @@ class AutoInvestQueueServiceImpl(
         val (expiredTasks, activeTasks) = tasks.partition { it.createdAt.isBefore(getMaximumPendingPeriod()) }
 
         logger.debug { "Deleting ${expiredTasks.size} expired tasks for chainId: $chainId" }
-        autoInvestTaskRepository.deleteAll(expiredTasks)
+        autoInvestTaskRepository.completeTasks(
+            expiredTasks.map { it.uuid },
+            AutoInvestTaskHistoryStatus.EXPIRED,
+            ZonedDateTime.now()
+        )
 
         val records = activeTasks.map { it.toRecord() }
+
+        if (records.isEmpty()) {
+            logger.debug { "No active tasks for chainId: $chainId" }
+            return
+        }
+
         val statuses = blockchainService.getAutoInvestStatus(records, chainId)
         val (readyToInvestTasks, _) = activeTasks.zip(statuses).partition { it.second.readyToInvest }
 

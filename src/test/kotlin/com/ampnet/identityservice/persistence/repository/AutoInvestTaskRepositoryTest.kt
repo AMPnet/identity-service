@@ -2,6 +2,7 @@ package com.ampnet.identityservice.persistence.repository
 
 import com.ampnet.identityservice.TestBase
 import com.ampnet.identityservice.persistence.model.AutoInvestTask
+import com.ampnet.identityservice.persistence.model.AutoInvestTaskHistoryStatus
 import com.ampnet.identityservice.persistence.model.AutoInvestTaskStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -219,6 +220,34 @@ class AutoInvestTaskRepositoryTest : TestBase() {
                 chainId = 2L
             )
             assertThat(databaseTask2).isEqualTo(task2)
+        }
+    }
+
+    @Test
+    fun mustCorrectlyMoveTaskToHistoricalTable() {
+        val task = taskWithAmount(BigInteger.valueOf(1L))
+
+        suppose("auto-invest task is inserted into database") {
+            val numModified = autoInvestTaskRepository.createOrUpdate(task)
+            assertThat(numModified).isOne()
+        }
+
+        suppose("task is marked as successful") {
+            autoInvestTaskRepository.completeTasks(
+                listOf(task.uuid),
+                AutoInvestTaskHistoryStatus.SUCCESS,
+                ZonedDateTime.now()
+            )
+        }
+
+        verify("auto-invest task was correctly moved to historical table") {
+            val databaseTask = autoInvestTaskRepository.findById(task.uuid)
+            assertThat(databaseTask).isEmpty()
+
+            val historicalUuids = autoInvestTaskRepository.getHistoricalUuidsForStatus(
+                AutoInvestTaskHistoryStatus.SUCCESS
+            )
+            assertThat(historicalUuids).containsExactly(task.uuid)
         }
     }
 

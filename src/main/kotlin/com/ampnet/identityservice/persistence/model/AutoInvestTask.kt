@@ -102,3 +102,7 @@ data class AutoInvestTask(
 enum class AutoInvestTaskStatus {
     PENDING, IN_PROCESS
 }
+
+enum class AutoInvestTaskHistoryStatus {
+    SUCCESS, FAILURE, EXPIRED
+}
