@@ -76,6 +76,7 @@ class ChainPropertiesHandlerTest {
                 this.chainEthereum.faucetCallerPrivateKey = "test-key"
                 this.chainEthereum.faucetServiceAddress = "test-address"
                 this.chainEthereum.autoInvestPrivateKey = ""
+                this.autoInvest.processingEnabled = true
             }
             val chainPropertiesHandler = ChainPropertiesHandler(applicationProperties)
             chainPropertiesHandler.getBlockchainProperties(Chain.ETHEREUM_MAIN.id)
