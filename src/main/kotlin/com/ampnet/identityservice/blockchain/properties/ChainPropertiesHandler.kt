@@ -83,7 +83,9 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
             )
         }
 
-        if (chainProperties.autoInvestPrivateKey.isBlank() || chainProperties.autoInvestServiceAddress.isBlank()) {
+        if (applicationProperties.autoInvest.processingEnabled &&
+            (chainProperties.autoInvestPrivateKey.isBlank() || chainProperties.autoInvestServiceAddress.isBlank())
+        ) {
             throw InternalException(
                 ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
                 "Auto-invest config for chain: ${chain.name} not defined in the application properties"

@@ -31,7 +31,6 @@ import java.time.ZonedDateTime
 
 @SpringBootTest
 @Import(TestSchedulerConfiguration::class)
-
 class AutoInvestQueueServiceTest : TestBase() {
 
     private var address1 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF7"

@@ -166,7 +166,7 @@ class AutoInvestQueueServiceImpl(
         }
 
         val statuses = blockchainService.getAutoInvestStatus(records, chainId)
-        val (readyToInvestTasks, _) = activeTasks.zip(statuses).partition { it.second.readyToInvest }
+        val readyToInvestTasks = activeTasks.zip(statuses).filter { it.second.readyToInvest }
 
         val hash = blockchainService.autoInvestFor(readyToInvestTasks.map { it.first.toRecord() }, chainId)
 
