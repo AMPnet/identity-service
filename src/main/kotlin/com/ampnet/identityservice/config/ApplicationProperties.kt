@@ -90,6 +90,6 @@ class WalletApproveProperties {
 class AutoInvestProperties {
     var processingEnabled: Boolean = false
     var timeout: Duration = Duration.ofDays(7L)
-    var gasLimit: BigInteger = BigInteger.valueOf(200_000)
+    var gasLimit: BigInteger = BigInteger.valueOf(20_000_000L) // estimated gas usage for 100 auto-invests at once
     val queue = QueueProperties()
 }

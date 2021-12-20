@@ -153,7 +153,7 @@ class BlockchainServiceImpl(
         val gasPrice = getGasPrice(chainId)
         logger.debug { "Gas price: $gasPrice" }
 
-        val function = Function("investFor", records, emptyList())
+        val function = Function("investFor", listOf(records.toRecordArray()), emptyList())
         val rawTransaction = RawTransaction.createTransaction(
             nonce, gasPrice, applicationProperties.autoInvest.gasLimit,
             blockchainProperties.autoInvest.contractAddress, FunctionEncoder.encode(function)
@@ -228,3 +228,6 @@ fun String.toAddress(): Address = Address(160, this)
 
 fun List<String>.toAddressArray(): DynamicArray<Address> =
     DynamicArray(Address::class.java, this.map { it.toAddress() })
+
+fun List<InvestmentRecord>.toRecordArray(): DynamicArray<InvestmentRecord> =
+    DynamicArray(InvestmentRecord::class.java, this)
