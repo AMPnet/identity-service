@@ -46,4 +46,15 @@ class DatabaseCleanerService(val em: EntityManager) {
     fun deleteAllFaucetTasks() {
         em.createNativeQuery("DELETE FROM faucet_task").executeUpdate()
     }
+
+    @Transactional
+    fun deleteAllAutoInvestTasks() {
+        em.createNativeQuery("DELETE FROM auto_invest_task").executeUpdate()
+        em.createNativeQuery("DELETE FROM auto_invest_task_history").executeUpdate()
+    }
+
+    @Transactional
+    fun deleteAllAutoInvestTransactions() {
+        em.createNativeQuery("DELETE FROM auto_invest_transaction").executeUpdate()
+    }
 }

@@ -124,3 +124,32 @@ If the requested chain ID does not support faucet funds, bad request response wi
 
 .Response
 include::{snippets}/FaucetControllerTest/mustReturnErrorWhenFaucetIsNotSupportedForChainId/http-response.adoc[]
+
+== Auto-invest API
+
+=== Submit Auto-invest Task Request
+Submits auto-invest task request which whitelists user wallet and campaign for auto-invest process. All auto-invest
+requests which share the same user wallet address, campaign contract address and chain ID will be merged into a single
+request, effectively updating the auto-invest value. This is allowed only if auto-invest is not already in process for
+the specified (wallet, campaign, chainId) triple. Request needs header: `Authorization: Bearer JWT`.
+
+.Request
+include::{snippets}/AutoInvestControllerTest/mustBeAbleToRequestAutoInvest/http-request.adoc[]
+.Response
+include::{snippets}/AutoInvestControllerTest/mustBeAbleToRequestAutoInvest/http-response.adoc[]
+
+==== Error response
+If the requesting user already has auto-invest in progress for the specified campaign address, bad request response
+will be returned.
+
+.Response
+include::{snippets}/AutoInvestControllerTest/mustNotUpdateAutoInvestTaskWhenAlreadyInProcess/http-response.adoc[]
+
+=== Get Auto-invest Task Amount
+Returns pending auto-invest value for the specified campaign for the current user. If the uses has not requested
+auto-invest for the campaign, zero will be returned for the amount.
+
+.Request
+include::{snippets}/AutoInvestControllerTest/mustCorrectlyReturnAutoInvestTask/http-request.adoc[]
+.Response
+include::{snippets}/AutoInvestControllerTest/mustCorrectlyReturnAutoInvestTask/http-response.adoc[]

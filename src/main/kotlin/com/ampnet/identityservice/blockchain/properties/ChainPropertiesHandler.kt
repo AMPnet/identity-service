@@ -44,13 +44,18 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
                 contractAddress = chainProperties.walletApproverServiceAddress
             ),
             faucet = if (chainProperties.faucetServiceEnabled) chainProperties.faucet else null,
-            web3j = Web3j.build(HttpService(rpcUrl)),
+            autoInvest = CredentialsAndContractAddress(
+                credentials = Credentials.create(chainProperties.autoInvestPrivateKey),
+                contractAddress = chainProperties.autoInvestServiceAddress
+            ),
+            web3j = Web3j.build(HttpService(rpcUrl))
         )
     }
 
     private fun getChain(chainId: Long) = Chain.fromId(chainId)
         ?: throw InternalException(ErrorCode.BLOCKCHAIN_ID, "Blockchain id: $chainId not supported")
 
+    @Suppress("ThrowsCount")
     private fun getChainProperties(chain: Chain): ChainProperties {
         val chainProperties = when (chain) {
             Chain.MATIC_MAIN -> applicationProperties.chainMatic
@@ -75,6 +80,15 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
             throw InternalException(
                 ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
                 "Faucet config for chain: ${chain.name} not defined in the application properties"
+            )
+        }
+
+        if (applicationProperties.autoInvest.processingEnabled &&
+            (chainProperties.autoInvestPrivateKey.isBlank() || chainProperties.autoInvestServiceAddress.isBlank())
+        ) {
+            throw InternalException(
+                ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
+                "Auto-invest config for chain: ${chain.name} not defined in the application properties"
             )
         }
 
