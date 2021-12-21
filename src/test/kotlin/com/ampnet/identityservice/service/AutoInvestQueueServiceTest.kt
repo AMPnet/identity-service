@@ -146,7 +146,7 @@ class AutoInvestQueueServiceTest : TestBase() {
                 AutoInvestResponse(
                     walletAddress = address1,
                     campaignAddress = campaign1,
-                    amount = BigInteger.valueOf(1_000L)
+                    amount = BigInteger.valueOf(600L)
                 )
             )
 
@@ -155,7 +155,7 @@ class AutoInvestQueueServiceTest : TestBase() {
                 assertThat(it.userWalletAddress).isEqualTo(address1)
                 assertThat(it.campaignContractAddress).isEqualTo(campaign1)
                 assertThat(it.chainId).isEqualTo(chainId)
-                assertThat(it.amount).isEqualTo(BigInteger.valueOf(1_000L))
+                assertThat(it.amount).isEqualTo(BigInteger.valueOf(600L))
                 assertThat(it.status).isEqualTo(AutoInvestTaskStatus.PENDING)
             }
         }

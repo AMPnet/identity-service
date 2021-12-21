@@ -12,13 +12,13 @@ import java.util.UUID
 
 interface AutoInvestTaskRepository : JpaRepository<AutoInvestTask, UUID> {
     @Query(
-        "INSERT INTO auto_invest_task(uuid, chain_id, user_wallet_address, campaign_contract_address, amount," +
-            " status, created_at)" +
-            " VALUES (:#{#task.uuid}, :#{#task.chainId}, :#{#task.userWalletAddress}," +
-            " :#{#task.campaignContractAddress}, :#{#task.amount}, :#{#task.status.name()}, :#{#task.createdAt})" +
-            " ON CONFLICT ON CONSTRAINT per_user_campaign DO UPDATE" +
-            " SET (amount, created_at) = (auto_invest_task.amount + :#{#task.amount}, :#{#task.createdAt})" +
-            " WHERE auto_invest_task.status = EXCLUDED.status",
+        """INSERT INTO auto_invest_task(uuid, chain_id, user_wallet_address, campaign_contract_address, amount,
+                                        status, created_at)
+           VALUES (:#{#task.uuid}, :#{#task.chainId}, :#{#task.userWalletAddress},
+                   :#{#task.campaignContractAddress}, :#{#task.amount}, :#{#task.status.name()}, :#{#task.createdAt})
+           ON CONFLICT ON CONSTRAINT per_user_campaign DO UPDATE
+           SET (amount, created_at) = (:#{#task.amount}, :#{#task.createdAt})
+           WHERE auto_invest_task.status = EXCLUDED.status""",
         nativeQuery = true
     )
     @Modifying(flushAutomatically = true, clearAutomatically = true)
@@ -26,9 +26,9 @@ interface AutoInvestTaskRepository : JpaRepository<AutoInvestTask, UUID> {
     fun createOrUpdate(task: AutoInvestTask): Int
 
     @Query(
-        "SELECT * FROM auto_invest_task" +
-            " WHERE status = :#{#status.name()}" +
-            " FOR UPDATE SKIP LOCKED",
+        """SELECT * FROM auto_invest_task
+           WHERE status = :#{#status.name()}
+           FOR UPDATE SKIP LOCKED""",
         nativeQuery = true
     )
     fun findByStatus(status: AutoInvestTaskStatus): List<AutoInvestTask>
@@ -52,16 +52,15 @@ interface AutoInvestTaskRepository : JpaRepository<AutoInvestTask, UUID> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Transactional
     @Query(
-        "WITH deleted_rows AS (" +
-            "    DELETE FROM auto_invest_task WHERE uuid IN :uuids" +
-            "    RETURNING uuid, chain_id, user_wallet_address, campaign_contract_address, amount," +
-            "              hash, created_at" +
-            ")" +
-            "INSERT INTO auto_invest_task_history(uuid, chain_id, user_wallet_address, campaign_contract_address," +
-            "            amount, status, hash, created_at, completed_at)" +
-            "SELECT uuid, chain_id, user_wallet_address, campaign_contract_address, amount, :#{#status.name()}, hash," +
-            "       created_at, :completedAt " +
-            "FROM deleted_rows",
+        """WITH deleted_rows AS (
+               DELETE FROM auto_invest_task WHERE uuid IN :uuids
+               RETURNING uuid, chain_id, user_wallet_address, campaign_contract_address, amount, hash, created_at
+           )
+           INSERT INTO auto_invest_task_history(uuid, chain_id, user_wallet_address, campaign_contract_address,
+                       amount, status, hash, created_at, completed_at)
+           SELECT uuid, chain_id, user_wallet_address, campaign_contract_address, amount, :#{#status.name()}, hash,
+                  created_at, :completedAt
+           FROM deleted_rows""",
         nativeQuery = true
     )
     fun completeTasks(uuids: List<UUID>, status: AutoInvestTaskHistoryStatus, completedAt: ZonedDateTime)

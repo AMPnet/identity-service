@@ -110,7 +110,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
         verify("Correct auto-invest response is returned") {
             assertThat(autoInvestResponse.walletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
             assertThat(autoInvestResponse.campaignAddress).isEqualTo("campaignAddress")
-            assertThat(autoInvestResponse.amount).isEqualTo(BigInteger.valueOf(1500L))
+            assertThat(autoInvestResponse.amount).isEqualTo(BigInteger.valueOf(500L))
         }
 
         verify("Task is correctly updated in the database") {
@@ -123,7 +123,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             assertThat(task.userWalletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
             assertThat(task.campaignContractAddress).isEqualTo("campaignAddress")
             assertThat(task.chainId).isEqualTo(defaultChainId)
-            assertThat(task.amount).isEqualTo(BigInteger.valueOf(1500L))
+            assertThat(task.amount).isEqualTo(BigInteger.valueOf(500L))
             assertThat(task.status).isEqualTo(AutoInvestTaskStatus.PENDING)
         }
     }

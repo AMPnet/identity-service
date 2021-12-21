@@ -21,23 +21,23 @@ interface FaucetTaskRepository : JpaRepository<FaucetTask, UUID> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Transactional
     @Query(
-        "WITH deleted_rows AS (" +
-            "    DELETE FROM pending_faucet_address" +
-            "    WHERE chain_id = :chainId AND address IN (" +
-            "        SELECT address FROM pending_faucet_address" +
-            "        WHERE chain_id = :chainId" +
-            "        LIMIT :maxAddressesPerTask" +
-            "    )" +
-            "    RETURNING address" +
-            "), selected_rows AS (" +
-            "    SELECT * FROM(" +
-            "        SELECT :uuid AS uuid, ARRAY(SELECT DISTINCT address FROM deleted_rows) AS addresses," +
-            "            :chainId AS chain_id, 'CREATED' AS status, CAST(:timestamp AS TIMESTAMPTZ) AS created_at" +
-            "    ) AS potential_task" +
-            "    WHERE ARRAY_LENGTH(potential_task.addresses, 1) > 0" +
-            ")" +
-            "INSERT INTO faucet_task(uuid, addresses, chain_id, status, created_at) " +
-            "SELECT * FROM selected_rows",
+        """WITH deleted_rows AS (
+               DELETE FROM pending_faucet_address
+               WHERE chain_id = :chainId AND address IN (
+                   SELECT address FROM pending_faucet_address
+                   WHERE chain_id = :chainId
+                   LIMIT :maxAddressesPerTask
+               )
+               RETURNING address
+           ), selected_rows AS (
+               SELECT * FROM(
+                   SELECT :uuid AS uuid, ARRAY(SELECT DISTINCT address FROM deleted_rows) AS addresses,
+                       :chainId AS chain_id, 'CREATED' AS status, CAST(:timestamp AS TIMESTAMPTZ) AS created_at
+               ) AS potential_task
+               WHERE ARRAY_LENGTH(potential_task.addresses, 1) > 0
+           )
+           INSERT INTO faucet_task(uuid, addresses, chain_id, status, created_at)
+           SELECT * FROM selected_rows""",
         nativeQuery = true
     )
     fun flushAddressQueueForChainId(uuid: UUID, chainId: Long, timestamp: ZonedDateTime, maxAddressesPerTask: Int)
@@ -49,15 +49,15 @@ interface FaucetTaskRepository : JpaRepository<FaucetTask, UUID> {
     fun fetchChainIdsWithPendingAddresses(): List<Long>
 
     @Query(
-        "SELECT * FROM faucet_task WHERE status='IN_PROCESS' " +
-            "LIMIT 1 FOR UPDATE SKIP LOCKED",
+        """SELECT * FROM faucet_task WHERE status='IN_PROCESS'
+           LIMIT 1 FOR UPDATE SKIP LOCKED""",
         nativeQuery = true
     )
     fun getInProcess(): FaucetTask?
 
     @Query(
-        "SELECT * FROM faucet_task WHERE status='CREATED' " +
-            "LIMIT 1 FOR UPDATE SKIP LOCKED",
+        """SELECT * FROM faucet_task WHERE status='CREATED'
+           LIMIT 1 FOR UPDATE SKIP LOCKED""",
         nativeQuery = true
     )
     fun getPending(): FaucetTask?

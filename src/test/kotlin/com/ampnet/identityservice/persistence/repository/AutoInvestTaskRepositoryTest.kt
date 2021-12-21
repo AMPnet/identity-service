@@ -59,7 +59,7 @@ class AutoInvestTaskRepositoryTest : TestBase() {
             val databaseTask = autoInvestTaskRepository.findById(task.uuid)
             assertThat(databaseTask).hasValue(
                 task.copy(
-                    amount = task.amount + newTask.amount,
+                    amount = newTask.amount,
                     createdAt = newTask.createdAt
                 )
             )
