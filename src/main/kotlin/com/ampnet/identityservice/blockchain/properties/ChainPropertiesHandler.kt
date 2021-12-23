@@ -18,6 +18,12 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
             contractAddress = this.faucetServiceAddress
         )
 
+    private val ChainProperties.autoInvest
+        get() = CredentialsAndContractAddress(
+            credentials = Credentials.create(this.autoInvestPrivateKey),
+            contractAddress = this.autoInvestServiceAddress
+        )
+
     fun getBlockchainProperties(chainId: Long): ChainPropertiesWithServices {
         blockchainPropertiesMap[chainId]?.let { return it }
         val chain = getChain(chainId)
@@ -44,10 +50,7 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
                 contractAddress = chainProperties.walletApproverServiceAddress
             ),
             faucet = if (chainProperties.faucetServiceEnabled) chainProperties.faucet else null,
-            autoInvest = CredentialsAndContractAddress(
-                credentials = Credentials.create(chainProperties.autoInvestPrivateKey),
-                contractAddress = chainProperties.autoInvestServiceAddress
-            ),
+            autoInvest = if (applicationProperties.autoInvest.processingEnabled) chainProperties.autoInvest else null,
             web3j = Web3j.build(HttpService(rpcUrl))
         )
     }

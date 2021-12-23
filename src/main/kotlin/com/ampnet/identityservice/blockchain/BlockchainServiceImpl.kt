@@ -129,9 +129,13 @@ class BlockchainServiceImpl(
     override fun getAutoInvestStatus(records: List<InvestmentRecord>, chainId: Long): List<InvestmentRecordStatus> {
         val chainProperties = chainHandler.getBlockchainProperties(chainId)
         val web3j = chainProperties.web3j
-        val transactionManager = ReadonlyTransactionManager(web3j, chainProperties.autoInvest.credentials.address)
+        val autoInvest = chainProperties.autoInvest ?: throw InternalException(
+            errorCode = ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
+            exceptionMessage = "Missing or disabled auto-invest configuration for chainId: $chainId"
+        )
+        val transactionManager = ReadonlyTransactionManager(web3j, autoInvest.credentials.address)
         val contract = IInvestService.load(
-            chainProperties.autoInvest.contractAddress,
+            autoInvest.contractAddress,
             web3j,
             transactionManager,
             DefaultGasProvider()
@@ -144,6 +148,10 @@ class BlockchainServiceImpl(
     override fun autoInvestFor(records: List<InvestmentRecord>, chainId: Long): String? {
         logger.info { "Auto-investing on chainId: $chainId" }
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
+        val autoInvest = blockchainProperties.autoInvest ?: throw InternalException(
+            errorCode = ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
+            exceptionMessage = "Missing or disabled auto-invest configuration for chainId: $chainId"
+        )
         val nonce = blockchainProperties.web3j
             .ethGetTransactionCount(
                 blockchainProperties.autoInvest.credentials.address,
@@ -156,12 +164,12 @@ class BlockchainServiceImpl(
         val function = Function("investFor", listOf(records.toRecordArray()), emptyList())
         val rawTransaction = RawTransaction.createTransaction(
             nonce, gasPrice, applicationProperties.autoInvest.gasLimit,
-            blockchainProperties.autoInvest.contractAddress, FunctionEncoder.encode(function)
+            autoInvest.contractAddress, FunctionEncoder.encode(function)
         )
 
         val manager = RawTransactionManager(
             blockchainProperties.web3j,
-            blockchainProperties.autoInvest.credentials,
+            autoInvest.credentials,
             chainId
         )
         val sentTransaction = blockchainProperties.web3j
