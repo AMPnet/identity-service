@@ -8,3 +8,8 @@ class ResourceNotFoundException(val errorCode: ErrorCode, exceptionMessage: Stri
 class InternalException(val errorCode: ErrorCode, exceptionMessage: String) : Exception(exceptionMessage)
 
 class VeriffException(exceptionMessage: String, throwable: Throwable? = null) : Exception(exceptionMessage, throwable)
+
+class ReCaptchaException(
+    exceptionMessage: String,
+    throwable: Throwable? = null
+) : Exception(exceptionMessage, throwable)
