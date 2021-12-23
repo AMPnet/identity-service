@@ -80,7 +80,7 @@ class FaucetControllerTest : ControllerTestBase() {
     @Test
     fun mustFailForInvalidReCaptchaTokenRequestFaucetFunds() {
         val reCaptchaToken = "token"
-        suppose("ReCAPTCHA verification is successful") {
+        suppose("ReCAPTCHA verification has failed") {
             given(reCaptchaService.validateResponseToken(reCaptchaToken))
                 .willAnswer { throw ReCaptchaException("ReCAPTCHA verification failed") }
         }
