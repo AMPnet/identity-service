@@ -102,7 +102,7 @@ class AutoInvestQueueServiceImpl(
             try {
                 handleInProcessTasksForChain(it.key, it.value)
             } catch (ex: Throwable) {
-                logger.error("Failed to handle in process tasks (chainId: ${it.value}): ${ex.message}")
+                logger.error("Failed to handle in process tasks (chainId: ${it.key}): ${ex.message}")
             }
         }
 
@@ -110,7 +110,7 @@ class AutoInvestQueueServiceImpl(
             try {
                 handlePendingTasksForChain(it.key, it.value)
             } catch (ex: Throwable) {
-                logger.error("Failed to handle pending task (chainId: ${it.value}): ${ex.message}")
+                logger.error("Failed to handle pending task (chainId: ${it.key}): ${ex.message}")
             }
         }
     }
@@ -147,6 +147,7 @@ class AutoInvestQueueServiceImpl(
         }
     }
 
+    @Suppress("ReturnCount")
     private fun handlePendingTasksForChain(chainId: Long, tasks: List<AutoInvestTask>) {
         logger.debug { "Processing pending auto-investments for chainId: $chainId" }
         val (expiredTasks, activeTasks) = tasks.partition { it.createdAt.isBefore(getMaximumPendingPeriod()) }
@@ -167,6 +168,11 @@ class AutoInvestQueueServiceImpl(
 
         val statuses = blockchainService.getAutoInvestStatus(records, chainId)
         val readyToInvestTasks = activeTasks.zip(statuses).filter { it.second.readyToInvest }
+
+        if (readyToInvestTasks.isEmpty()) {
+            logger.debug { "No ready to invest tasks for chainId: $chainId" }
+            return
+        }
 
         val hash = blockchainService.autoInvestFor(readyToInvestTasks.map { it.first.toRecord() }, chainId)
 
