@@ -29,11 +29,9 @@ class ReCaptchaServiceImpl(
         try {
             val responseEntity = restTemplate.postForEntity<String>(generateGoogleUri(reCaptchaToken))
             val googleResponse = readGoogleResponse(responseEntity)
-            if (responseEntity.statusCode.is2xxSuccessful) {
-                if (googleResponse.success) {
-                    validateScore(googleResponse)
-                    return
-                }
+            if (responseEntity.statusCode.is2xxSuccessful && googleResponse.success) {
+                validateScore(googleResponse)
+                return
             }
             val joinedErrors = googleResponse.errorCodes.joinToString()
             throw ReCaptchaException("errors: $joinedErrors")
