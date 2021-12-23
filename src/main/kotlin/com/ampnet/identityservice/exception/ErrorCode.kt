@@ -4,6 +4,7 @@ enum class ErrorCode(val categoryCode: String, var specificCode: String, var mes
     // Registration: 01
     REG_INCOMPLETE("01", "01", "Invalid signup data"),
     REG_EMAIL_EXPIRED_TOKEN("01", "05", "Failed Email confirmation, token expired"),
+    REG_RECAPTCHA("01", "10", "reCAPTCHA verification failed"),
     REG_VERIFF("01", "11", "Missing Veriff session"),
 
     // Authentication: 02

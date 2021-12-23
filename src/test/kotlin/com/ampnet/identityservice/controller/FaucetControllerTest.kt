@@ -1,13 +1,20 @@
 package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.blockchain.properties.Chain
+import com.ampnet.identityservice.controller.pojo.request.ReCaptchaRequest
+import com.ampnet.identityservice.exception.ErrorCode
+import com.ampnet.identityservice.exception.ReCaptchaException
 import com.ampnet.identityservice.persistence.model.FaucetTaskStatus
 import com.ampnet.identityservice.persistence.repository.FaucetTaskRepository
+import com.ampnet.identityservice.service.ReCaptchaService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.given
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.ZonedDateTime
@@ -21,6 +28,9 @@ class FaucetControllerTest : ControllerTestBase() {
 
     @Autowired
     private lateinit var faucetTaskRepository: FaucetTaskRepository
+
+    @MockBean
+    private lateinit var reCaptchaService: ReCaptchaService
 
     @BeforeEach
     fun beforeEach() {
@@ -36,9 +46,16 @@ class FaucetControllerTest : ControllerTestBase() {
 
     @Test
     fun mustBeAbleToRequestFaucetFunds() {
+        val reCaptchaToken = "token"
+        suppose("ReCAPTCHA verification is successful") {
+            given(reCaptchaService.validateResponseToken(reCaptchaToken)).willAnswer { }
+        }
         suppose("User requests faucet funds") {
+            val request = objectMapper.writeValueAsString(ReCaptchaRequest(reCaptchaToken))
             mockMvc.perform(
                 post(faucetPath)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(request)
             )
                 .andExpect(status().isOk)
         }
@@ -57,6 +74,27 @@ class FaucetControllerTest : ControllerTestBase() {
                 assertThat(it.chainId).isEqualTo(defaultChainId)
                 assertThat(it.status).isEqualTo(FaucetTaskStatus.CREATED)
             }
+        }
+    }
+
+    @Test
+    fun mustFailForInvalidReCaptchaTokenRequestFaucetFunds() {
+        val reCaptchaToken = "token"
+        suppose("ReCAPTCHA verification has failed") {
+            given(reCaptchaService.validateResponseToken(reCaptchaToken))
+                .willAnswer { throw ReCaptchaException("ReCAPTCHA verification failed") }
+        }
+
+        verify("Controller will reject invalid ReCaptcha token") {
+            val request = objectMapper.writeValueAsString(ReCaptchaRequest(reCaptchaToken))
+            val response = mockMvc.perform(
+                post(faucetPath)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(request)
+            )
+                .andExpect(status().isBadRequest)
+                .andReturn()
+            verifyResponseErrorCode(response, ErrorCode.REG_RECAPTCHA)
         }
     }
 

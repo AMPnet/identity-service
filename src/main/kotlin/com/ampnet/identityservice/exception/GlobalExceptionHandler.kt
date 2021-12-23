@@ -32,6 +32,13 @@ class GlobalExceptionHandler {
         return generateErrorResponse(exception.errorCode, exception.message)
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ReCaptchaException::class)
+    fun handleReCaptchaException(exception: ReCaptchaException): ErrorResponse {
+        logger.warn("ReCaptchaException", exception)
+        return generateErrorResponse(ErrorCode.REG_RECAPTCHA, exception.message)
+    }
+
     private fun generateErrorResponse(
         errorCode: ErrorCode,
         systemMessage: String?,

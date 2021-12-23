@@ -22,6 +22,7 @@ class ApplicationProperties {
     val faucet = FaucetProperties()
     val walletApprove = WalletApproveProperties()
     val autoInvest = AutoInvestProperties()
+    val reCaptcha: ReCaptchaProperties = ReCaptchaProperties()
     lateinit var infuraId: String
 }
 
@@ -92,4 +93,12 @@ class AutoInvestProperties {
     var timeout: Duration = Duration.ofDays(7L)
     var gasLimit: BigInteger = BigInteger.valueOf(20_000_000L) // estimated gas usage for 100 auto-invests at once
     val queue = QueueProperties()
+}
+
+@Suppress("MagicNumber")
+class ReCaptchaProperties {
+    var enabled: Boolean = false
+    lateinit var secret: String
+    var score: Float = 0.5F
+    var url = "https://www.google.com/recaptcha/api/siteverify"
 }
