@@ -39,8 +39,8 @@ class BlockchainServiceImpl(
 
     @Suppress("ReturnCount")
     @Throws(InternalException::class)
-    override fun whitelistAddress(address: String, issuerAddress: String, chainId: Long): String? {
-        logger.info { "Whitelisting address: $address on chain: $chainId for issuer: $issuerAddress" }
+    override fun whitelistAddress(addresses: List<String>, issuerAddress: String, chainId: Long): String? {
+        logger.info { "Whitelisting addresses: $addresses on chain: $chainId for issuer: $issuerAddress" }
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
         val nonce = blockchainProperties.web3j
             .ethGetTransactionCount(
@@ -51,7 +51,11 @@ class BlockchainServiceImpl(
         val gasPrice = getGasPrice(chainId)
         logger.debug { "Gas price: $gasPrice" }
 
-        val function = Function("approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList())
+        val function = Function(
+            "approveWallets",
+            listOf(issuerAddress.toAddress(), addresses.toAddressArray()),
+            emptyList()
+        )
         val rawTransaction = RawTransaction.createTransaction(
             nonce, gasPrice, applicationProperties.walletApprove.gasLimit,
             blockchainProperties.walletApprover.contractAddress, FunctionEncoder.encode(function)
@@ -65,7 +69,7 @@ class BlockchainServiceImpl(
         val sentTransaction = blockchainProperties.web3j
             .ethSendRawTransaction(manager.sign(rawTransaction)).sendSafely()
         logger.info {
-            "Successfully send request to whitelist address: $address on chain: $chainId for issuer: $issuerAddress"
+            "Successfully send request to whitelist addresses: $addresses on chain: $chainId for issuer: $issuerAddress"
         }
         return sentTransaction?.transactionHash
     }

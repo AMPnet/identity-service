@@ -101,12 +101,13 @@ class BlockchainQueueServiceImpl(
 
     private fun handlePendingTask(task: BlockchainTask) {
         logger.debug { "Starting to process task: $task" }
-        val hash = blockchainService.whitelistAddress(task.payload, task.contractAddress, task.chainId)
+        val addresses = listOf(task.payload)
+        val hash = blockchainService.whitelistAddress(addresses, task.contractAddress, task.chainId)
         if (hash.isNullOrEmpty()) {
-            logger.warn { "Failed to get hash for whitelisting address: ${task.payload}" }
+            logger.warn { "Failed to get hash for whitelisting addresses: $addresses" }
             return
         }
-        logger.info { "Whitelisting address: ${task.payload} with hash: $hash" }
+        logger.info { "Whitelisting addresses: $addresses with hash: $hash" }
         blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.IN_PROCESS, hash)
     }
 

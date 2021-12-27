@@ -25,7 +25,7 @@ import java.time.ZonedDateTime
 @SpringBootTest
 class BlockchainQueueServiceTest : TestBase() {
 
-    private val address = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF7"
+    private val addresses = listOf("0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF7")
     private val hash = "0x6f7dea8d5d98d119de31204dfbdc69bb1944db04891ad0c45ab577da8e6de04a"
     private val issuerAddress = "0xb070a65b1dd7f49c90a59000bd8cca3259064d81"
     private val chainId = Chain.MATIC_TESTNET_MUMBAI.id
@@ -70,7 +70,7 @@ class BlockchainQueueServiceTest : TestBase() {
     @Test
     fun mustHandleSingleTaskInQueue() {
         suppose("Blockchain service will whitelist address") {
-            given(blockchainService.whitelistAddress(address, issuerAddress, chainId)).willReturn(hash)
+            given(blockchainService.whitelistAddress(addresses, issuerAddress, chainId)).willReturn(hash)
         }
 
         suppose("Transaction is mined") {
@@ -311,7 +311,7 @@ class BlockchainQueueServiceTest : TestBase() {
 
         suppose("There is task in process") {
             createBlockchainTask(
-                payload = "some_address",
+                payload = listOf("some_address"),
                 status = BlockchainTaskStatus.IN_PROCESS,
                 hash = "some_hash",
                 updatedAt = zonedDateTimeProvider.getZonedDateTime()
@@ -320,7 +320,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         suppose("Blockchain service will mine transaction") {
-            given(blockchainService.whitelistAddress(address, issuerAddress, chainId)).willReturn(hash)
+            given(blockchainService.whitelistAddress(addresses, issuerAddress, chainId)).willReturn(hash)
         }
 
         suppose("New transaction will be mined") {
@@ -387,7 +387,7 @@ class BlockchainQueueServiceTest : TestBase() {
     @Test
     fun mustHandleMinedButNotWhitelistedAddress() {
         suppose("Blockchain service will whitelist address") {
-            given(blockchainService.whitelistAddress(address, issuerAddress, chainId)).willReturn(hash)
+            given(blockchainService.whitelistAddress(addresses, issuerAddress, chainId)).willReturn(hash)
         }
 
         suppose("Transaction is mined") {
@@ -395,7 +395,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         suppose("Blockchain service did not managed to whitelist address") {
-            given(blockchainService.isWhitelisted(address, issuerAddress, chainId)).willReturn(false)
+            given(blockchainService.isWhitelisted(addresses.first(), issuerAddress, chainId)).willReturn(false)
         }
 
         suppose("There is a task in queue") {
@@ -420,7 +420,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         suppose("Whitelisting request is received") {
-            queueService.createWhitelistAddressTask(address, WhitelistRequest(issuerAddress, chainId))
+            queueService.createWhitelistAddressTask(addresses.first(), WhitelistRequest(issuerAddress, chainId))
         }
 
         verify("Service will not create a new task") {
@@ -441,7 +441,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         suppose("Blockchain service will mine transaction") {
-            given(blockchainService.whitelistAddress(address, issuerAddress, chainId)).willReturn(hash)
+            given(blockchainService.whitelistAddress(addresses, issuerAddress, chainId)).willReturn(hash)
         }
 
         suppose("New transaction will be mined") {
@@ -449,7 +449,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         suppose("Whitelisting request is received") {
-            queueService.createWhitelistAddressTask(address, WhitelistRequest(issuerAddress, chainId))
+            queueService.createWhitelistAddressTask(addresses.first(), WhitelistRequest(issuerAddress, chainId))
         }
 
         verify("Service created new task") {
@@ -458,7 +458,7 @@ class BlockchainQueueServiceTest : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(2)
-            assertThat(tasks).allMatch { it.payload == address }
+            assertThat(tasks).allMatch { it.payload == addresses.first() }
             assertThat(tasks.map { it.status })
                 .containsAll(listOf(BlockchainTaskStatus.FAILED, BlockchainTaskStatus.COMPLETED))
         }
@@ -475,7 +475,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         suppose("Blockchain service will mine transaction") {
-            given(blockchainService.whitelistAddress(address, "new_issuer_address", chainId))
+            given(blockchainService.whitelistAddress(addresses, "new_issuer_address", chainId))
                 .willReturn(hash)
         }
 
@@ -489,7 +489,7 @@ class BlockchainQueueServiceTest : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(2)
-            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.payload == address }
+            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.payload == addresses.first() }
             assertThat(tasks.map { it.contractAddress }).containsAll(listOf(issuerAddress, "new_issuer_address"))
         }
     }
@@ -505,7 +505,7 @@ class BlockchainQueueServiceTest : TestBase() {
         }
 
         suppose("Blockchain service will mine transaction") {
-            given(blockchainService.whitelistAddress(address, issuerAddress, Chain.MATIC_MAIN.id)).willReturn(hash)
+            given(blockchainService.whitelistAddress(addresses, issuerAddress, Chain.MATIC_MAIN.id)).willReturn(hash)
         }
 
         suppose("New transaction will be mined") {
@@ -518,7 +518,7 @@ class BlockchainQueueServiceTest : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(2)
-            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.payload == address }
+            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.payload == addresses.first() }
             assertThat(tasks.map { it.chainId }).containsAll(listOf(chainId, Chain.MATIC_MAIN.id))
         }
     }
@@ -535,7 +535,7 @@ class BlockchainQueueServiceTest : TestBase() {
 
     private fun createBlockchainTask(
         status: BlockchainTaskStatus = BlockchainTaskStatus.CREATED,
-        payload: String = address,
+        payload: List<String> = addresses,
         contractAddress: String = issuerAddress,
         chain: Long = chainId,
         hash: String? = null,
@@ -543,7 +543,7 @@ class BlockchainQueueServiceTest : TestBase() {
     ): BlockchainTask {
         val task = BlockchainTask(
             uuidProvider.getUuid(),
-            payload,
+            payload.first(),
             chain,
             contractAddress,
             status,
