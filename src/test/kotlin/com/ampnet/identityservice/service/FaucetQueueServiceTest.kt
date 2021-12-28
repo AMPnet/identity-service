@@ -440,6 +440,7 @@ class FaucetQueueServiceTest : TestBase() {
             addresses.toTypedArray(),
             chain,
             status,
+            null,
             hash,
             zonedDateTimeProvider.getZonedDateTime(),
             updatedAt

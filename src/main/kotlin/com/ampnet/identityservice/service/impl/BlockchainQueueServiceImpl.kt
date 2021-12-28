@@ -3,9 +3,9 @@ package com.ampnet.identityservice.service.impl
 import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
-import com.ampnet.identityservice.persistence.model.BlockchainTask
-import com.ampnet.identityservice.persistence.model.BlockchainTaskStatus
-import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
+import com.ampnet.identityservice.persistence.model.FaucetTask
+import com.ampnet.identityservice.persistence.model.FaucetTaskStatus
+import com.ampnet.identityservice.persistence.repository.FaucetTaskRepository
 import com.ampnet.identityservice.service.BlockchainQueueService
 import com.ampnet.identityservice.service.ScheduledExecutorServiceProvider
 import com.ampnet.identityservice.service.UuidProvider
@@ -17,11 +17,12 @@ import java.util.concurrent.TimeUnit
 
 @Service
 class BlockchainQueueServiceImpl(
-    private val blockchainTaskRepository: BlockchainTaskRepository,
     private val uuidProvider: UuidProvider,
     private val timeProvider: ZonedDateTimeProvider,
     private val blockchainService: BlockchainService,
     private val applicationProperties: ApplicationProperties,
+    private val faucetTaskRepository: FaucetTaskRepository,
+    private val pendingFaucetTaskRepository: FaucetTaskRepository,
     scheduledExecutorServiceProvider: ScheduledExecutorServiceProvider
 ) : BlockchainQueueService, DisposableBean {
 
@@ -34,7 +35,7 @@ class BlockchainQueueServiceImpl(
     init {
         executorService.scheduleAtFixedRate(
             { processTasks() },
-            applicationProperties.queue.initialDelay,
+            applicationProperties.queue.initialDelay - applicationProperties.queue.polling.div(2),
             applicationProperties.queue.polling,
             TimeUnit.MILLISECONDS
         )
@@ -46,43 +47,61 @@ class BlockchainQueueServiceImpl(
     }
 
     override fun createWhitelistAddressTask(address: String, request: WhitelistRequest) {
-        if (isWhitelistedOrInProcess(address, request)) {
+        if (blockchainService.isWhitelisted(address, request.issuerAddress, request.chainId)) {
             logger.info { "Address: $address for request: $request already whitelisted or in process" }
             return
         }
         logger.info { "Received task for address: $address" }
-        val blockchainTask = BlockchainTask(address, request.issuerAddress, request.chainId, uuidProvider, timeProvider)
-        blockchainTaskRepository.save(blockchainTask)
-        logger.info { "Created BlockchainTask: $blockchainTask" }
+        pendingFaucetTaskRepository.addAddressToQueue(address, request.chainId, request.issuerAddress)
+//        val blockchainTask = BlockchainTask(address, request.issuerAddress, request.chainId, uuidProvider, timeProvider)
+//        blockchainTaskRepository.save(blockchainTask)
+        logger.info { "Created BlockchainTask" }
     }
 
     @Suppress("TooGenericExceptionCaught")
     private fun processTasks() {
-        blockchainTaskRepository.getInProcess()?.let {
+        // creates pending tasks for all chains which have at least one address in the queue
+        faucetTaskRepository.fetchChainIdsWithPendingAddresses().forEach { chainId ->
+            faucetTaskRepository.fetchPayloadsWithPendingAddresses().forEach { issuerAddress ->
+                faucetTaskRepository.flushAddressQueueForChainId(
+                    uuidProvider.getUuid(),
+                    chainId,
+                    timeProvider.getZonedDateTime(),
+                    applicationProperties.faucet.maxAddressesPerTask,
+                    issuerAddress
+                )
+            }
+        }
+
+        faucetTaskRepository.getInProcess()?.let {
             try {
                 handleInProcessTask(it)
             } catch (ex: Throwable) {
                 logger.error("Failed to handle in process task: ${ex.message}")
-                blockchainTaskRepository.setStatus(it.uuid, BlockchainTaskStatus.FAILED, it.hash)
+                markTaskAsFailedAndRetryWithNewTask(it)
             }
+
             return
         }
-        blockchainTaskRepository.getPending()?.let {
+
+        faucetTaskRepository.getPending()?.let {
             try {
                 handlePendingTask(it)
             } catch (ex: Throwable) {
                 logger.error("Failed to handle pending task: ${ex.message}")
-                blockchainTaskRepository.setStatus(it.uuid, BlockchainTaskStatus.FAILED, it.hash)
+                markTaskAsFailedAndRetryWithNewTask(it)
             }
+
             return
         }
     }
 
-    private fun handleInProcessTask(task: BlockchainTask) {
-        logger.debug { "Task in process: $task " }
+    private fun handleInProcessTask(task: FaucetTask) {
+        logger.debug { "Task in process: $task" }
         if (task.hash == null) {
             logger.warn { "Task is process is missing hash: $task" }
         }
+
         task.hash?.let { hash ->
             if (blockchainService.isMined(hash, task.chainId)) {
                 handleMinedTransaction(task)
@@ -91,7 +110,7 @@ class BlockchainQueueServiceImpl(
                     logger.warn {
                         "Waiting for transaction: $hash exceeded: ${applicationProperties.queue.miningPeriod} minutes"
                     }
-                    blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.FAILED, task.hash)
+                    markTaskAsFailedAndRetryWithNewTask(task)
                 } else {
                     logger.info { "Waiting for task to be mined: $hash" }
                 }
@@ -99,34 +118,44 @@ class BlockchainQueueServiceImpl(
         }
     }
 
-    private fun handlePendingTask(task: BlockchainTask) {
+    private fun handlePendingTask(task: FaucetTask) {
         logger.debug { "Starting to process task: $task" }
-        val addresses = listOf(task.payload)
-        val hash = blockchainService.whitelistAddress(addresses, task.contractAddress, task.chainId)
+        val issuerAddress = task.payload ?: return
+        val hash = blockchainService.whitelistAddress(task.addresses.toList(), issuerAddress, task.chainId)
+
         if (hash.isNullOrEmpty()) {
-            logger.warn { "Failed to get hash for whitelisting addresses: $addresses" }
+            logger.warn { "Failed to get hash for faucet task: ${task.uuid}" }
             return
         }
-        logger.info { "Whitelisting addresses: $addresses with hash: $hash" }
-        blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.IN_PROCESS, hash)
+
+        logger.info {
+            "Whitelisting for issuer: $issuerAddress for wallets: " +
+                "${task.addresses.contentToString()} with hash: $hash"
+        }
+        faucetTaskRepository.setStatus(task.uuid, FaucetTaskStatus.IN_PROCESS, hash, issuerAddress)
     }
 
-    private fun handleMinedTransaction(task: BlockchainTask) {
+    private fun handleMinedTransaction(task: FaucetTask) {
         logger.info { "Transaction is mined: ${task.hash}" }
-        if (blockchainService.isWhitelisted(task.payload, task.contractAddress, task.chainId)) {
-            blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.COMPLETED, task.hash)
-            logger.info { "Address ${task.payload} is whitelisted. Task is completed: ${task.hash}" }
-        } else {
-            blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.FAILED, task.hash)
-            logger.error { "Address: ${task.payload} is not whitelisted. Transaction is failed: ${task.hash}" }
+        faucetTaskRepository.setStatus(task.uuid, FaucetTaskStatus.COMPLETED, task.hash, task.payload)
+        logger.info {
+            "Faucet funds sent to addresses: ${task.addresses.contentToString()}. Task is completed: ${task.hash}"
         }
+    }
+
+    private fun markTaskAsFailedAndRetryWithNewTask(task: FaucetTask) {
+        faucetTaskRepository.setStatus(task.uuid, FaucetTaskStatus.FAILED, task.hash, task.payload)
+        faucetTaskRepository.saveAndFlush(
+            FaucetTask(
+                task.addresses,
+                task.chainId,
+                uuidProvider,
+                timeProvider,
+                task.payload
+            )
+        )
     }
 
     private fun getMaximumMiningPeriod() = timeProvider.getZonedDateTime()
         .minusSeconds(applicationProperties.queue.miningPeriod)
-
-    private fun isWhitelistedOrInProcess(address: String, request: WhitelistRequest): Boolean =
-        blockchainTaskRepository.findByPayloadAndChainIdAndContractAddress(
-            address, request.chainId, request.issuerAddress
-        ).any { it.status != BlockchainTaskStatus.FAILED }
 }

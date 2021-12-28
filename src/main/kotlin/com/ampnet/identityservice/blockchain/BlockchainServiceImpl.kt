@@ -82,7 +82,9 @@ class BlockchainServiceImpl(
     }
 
     @Throws(InternalException::class)
-    override fun isWhitelisted(address: String, issuerAddress: String, chainId: Long): Boolean {
+    override fun isWhitelisted(address: String, issuerAddress: String?, chainId: Long): Boolean {
+        if (issuerAddress == null)
+            return false
         val web3j = chainHandler.getBlockchainProperties(chainId).web3j
         val transactionManager = ReadonlyTransactionManager(web3j, address)
         val contract = IIssuerCommon.load(issuerAddress, web3j, transactionManager, DefaultGasProvider())

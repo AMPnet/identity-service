@@ -7,7 +7,7 @@ import com.ampnet.identityservice.config.DatabaseCleanerService
 import com.ampnet.identityservice.controller.pojo.request.KycTestRequest
 import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
 import com.ampnet.identityservice.persistence.model.User
-import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
+import com.ampnet.identityservice.persistence.repository.FaucetTaskRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
 import com.ampnet.identityservice.security.WithMockCrowdfundUser
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
@@ -49,7 +49,7 @@ class BlockchainInteractionTest : TestBase() {
     private lateinit var userRepository: UserRepository
 
     @Autowired
-    private lateinit var blockchainTaskRepository: BlockchainTaskRepository
+    private lateinit var blockchainTaskRepository: FaucetTaskRepository
 
     @Autowired
     private lateinit var zonedDateTimeProvider: ZonedDateTimeProvider

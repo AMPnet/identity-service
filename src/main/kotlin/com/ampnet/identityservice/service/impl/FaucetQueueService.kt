@@ -102,6 +102,7 @@ class FaucetQueueService(
 
     private fun handlePendingTask(task: FaucetTask) {
         logger.debug { "Starting to process task: $task" }
+        if (task.payload != null) return
         val hash = blockchainService.sendFaucetFunds(task.addresses.toList(), task.chainId)
 
         if (hash.isNullOrEmpty()) {
@@ -110,19 +111,19 @@ class FaucetQueueService(
         }
 
         logger.info { "Sending faucet funds to addresses: ${task.addresses.contentToString()} with hash: $hash" }
-        faucetTaskRepository.setStatus(task.uuid, FaucetTaskStatus.IN_PROCESS, hash)
+        faucetTaskRepository.setStatus(task.uuid, FaucetTaskStatus.IN_PROCESS, hash, task.payload)
     }
 
     private fun handleMinedTransaction(task: FaucetTask) {
         logger.info { "Transaction is mined: ${task.hash}" }
-        faucetTaskRepository.setStatus(task.uuid, FaucetTaskStatus.COMPLETED, task.hash)
+        faucetTaskRepository.setStatus(task.uuid, FaucetTaskStatus.COMPLETED, task.hash, task.payload)
         logger.info {
             "Faucet funds sent to addresses: ${task.addresses.contentToString()}. Task is completed: ${task.hash}"
         }
     }
 
     private fun markTaskAsFailedAndRetryWithNewTask(task: FaucetTask) {
-        faucetTaskRepository.setStatus(task.uuid, FaucetTaskStatus.FAILED, task.hash)
+        faucetTaskRepository.setStatus(task.uuid, FaucetTaskStatus.FAILED, task.hash, task.payload)
         faucetTaskRepository.saveAndFlush(
             FaucetTask(
                 task.addresses,
