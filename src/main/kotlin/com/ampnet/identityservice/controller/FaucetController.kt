@@ -4,7 +4,7 @@ import com.ampnet.identityservice.blockchain.properties.ChainPropertiesHandler
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.controller.pojo.request.ReCaptchaRequest
 import com.ampnet.identityservice.exception.InternalException
-import com.ampnet.identityservice.persistence.repository.FaucetTaskRepository
+import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
 import com.ampnet.identityservice.service.ReCaptchaService
 import mu.KLogging
 import org.springframework.http.ResponseEntity
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class FaucetController(
     applicationProperties: ApplicationProperties,
-    private val faucetTaskRepository: FaucetTaskRepository,
+    private val blockchainTaskRepository: BlockchainTaskRepository,
     private val reCaptchaService: ReCaptchaService
 ) {
 
@@ -45,7 +45,7 @@ class FaucetController(
             return ResponseEntity.badRequest().build()
         }
 
-        faucetTaskRepository.addAddressToQueue(address, chainId)
+        blockchainTaskRepository.addAddressToQueue(address, chainId)
 
         return ResponseEntity.ok(null)
     }

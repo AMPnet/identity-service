@@ -19,8 +19,8 @@ import javax.persistence.Table
     TypeDef(name = "string-array", typeClass = StringArrayType::class)
 )
 @Entity
-@Table(name = "faucet_task")
-class FaucetTask(
+@Table(name = "blockchain_task")
+class BlockchainTask(
     @Id
     val uuid: UUID,
 
@@ -37,8 +37,9 @@ class FaucetTask(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    var status: FaucetTaskStatus,
+    var status: BlockchainTaskStatus,
 
+    // If the taks has payload value then it is Wallet
     @Column
     var payload: String?,
 
@@ -61,7 +62,7 @@ class FaucetTask(
         uuidProvider.getUuid(),
         addresses,
         chainId,
-        FaucetTaskStatus.CREATED,
+        BlockchainTaskStatus.CREATED,
         payload,
         null,
         timeProvider.getZonedDateTime(),
@@ -69,40 +70,10 @@ class FaucetTask(
     )
 
     override fun toString(): String =
-        "FaucetTask(uuid=$uuid, addresses=${addresses.contentToString()}, chainId=$chainId, status=$status," +
-            " hash=$hash, createdAt=$createdAt, updatedAt=$updatedAt)"
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as FaucetTask
-
-        if (uuid != other.uuid) return false
-        if (!addresses.contentEquals(other.addresses)) return false
-        if (chainId != other.chainId) return false
-        if (status != other.status) return false
-        if (payload != other.payload) return false
-        if (hash != other.hash) return false
-        if (!createdAt.isEqual(other.createdAt)) return false
-        if (updatedAt?.isEqual(other.updatedAt)?.not() == true) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = uuid.hashCode()
-        result = 31 * result + addresses.contentHashCode()
-        result = 31 * result + chainId.hashCode()
-        result = 31 * result + status.hashCode()
-        result = 31 * result + (payload?.hashCode() ?: 0)
-        result = 31 * result + (hash?.hashCode() ?: 0)
-        result = 31 * result + createdAt.toEpochSecond().hashCode()
-        result = 31 * result + (updatedAt?.toEpochSecond()?.hashCode() ?: 0)
-        return result
-    }
+        "BlockchainTask(uuid=$uuid, addresses=${addresses.contentToString()}, chainId=$chainId, status=$status," +
+            "payload=$payload, hash=$hash, createdAt=$createdAt, updatedAt=$updatedAt)"
 }
 
-enum class FaucetTaskStatus {
+enum class BlockchainTaskStatus {
     CREATED, IN_PROCESS, COMPLETED, FAILED
 }

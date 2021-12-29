@@ -39,7 +39,7 @@ class BlockchainServiceImpl(
 
     @Suppress("ReturnCount")
     @Throws(InternalException::class)
-    override fun whitelistAddress(addresses: List<String>, issuerAddress: String, chainId: Long): String? {
+    override fun whitelistAddresses(addresses: List<String>, issuerAddress: String, chainId: Long): String? {
         logger.info { "Whitelisting addresses: $addresses on chain: $chainId for issuer: $issuerAddress" }
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
         val nonce = blockchainProperties.web3j

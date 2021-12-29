@@ -4,7 +4,7 @@ import com.ampnet.identityservice.blockchain.IInvestService.InvestmentRecord
 import com.ampnet.identityservice.blockchain.IInvestService.InvestmentRecordStatus
 
 interface BlockchainService {
-    fun whitelistAddress(addresses: List<String>, issuerAddress: String, chainId: Long): String?
+    fun whitelistAddresses(addresses: List<String>, issuerAddress: String, chainId: Long): String?
     fun isMined(hash: String, chainId: Long): Boolean
     fun isWhitelisted(address: String, issuerAddress: String?, chainId: Long): Boolean
     fun sendFaucetFunds(addresses: List<String>, chainId: Long): String?

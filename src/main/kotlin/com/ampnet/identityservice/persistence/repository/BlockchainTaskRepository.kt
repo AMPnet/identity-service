@@ -1,7 +1,7 @@
 package com.ampnet.identityservice.persistence.repository
 
-import com.ampnet.identityservice.persistence.model.FaucetTask
-import com.ampnet.identityservice.persistence.model.FaucetTaskStatus
+import com.ampnet.identityservice.persistence.model.BlockchainTask
+import com.ampnet.identityservice.persistence.model.BlockchainTaskStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -9,11 +9,11 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.ZonedDateTime
 import java.util.UUID
 
-interface FaucetTaskRepository : JpaRepository<FaucetTask, UUID> {
+interface BlockchainTaskRepository : JpaRepository<BlockchainTask, UUID> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Transactional
     @Query(
-        "INSERT INTO pending_faucet_address(address, chain_id, payload) VALUES (:address, :chainId, :payload)",
+        "INSERT INTO pending_blockchain_address(address, chain_id, payload) VALUES (:address, :chainId, :payload)",
         nativeQuery = true
     )
     fun addAddressToQueue(address: String, chainId: Long, payload: String? = null)
@@ -22,11 +22,11 @@ interface FaucetTaskRepository : JpaRepository<FaucetTask, UUID> {
     @Transactional
     @Query(
         """WITH deleted_rows AS (
-               DELETE FROM pending_faucet_address
+               DELETE FROM pending_blockchain_address
                WHERE chain_id = :chainId 
                AND (:payload IS NULL OR payload = CAST(:payload AS TEXT)) 
                AND address IN (
-                   SELECT address FROM pending_faucet_address
+                   SELECT address FROM pending_blockchain_address
                    WHERE chain_id = :chainId
                    LIMIT :maxAddressesPerTask
                )
@@ -39,47 +39,53 @@ interface FaucetTaskRepository : JpaRepository<FaucetTask, UUID> {
                ) AS potential_task
                WHERE ARRAY_LENGTH(potential_task.addresses, 1) > 0
            )
-           INSERT INTO faucet_task(uuid, addresses, chain_id, status, created_at, payload)
+           INSERT INTO blockchain_task(uuid, addresses, chain_id, status, created_at, payload)
            SELECT * FROM selected_rows""",
         nativeQuery = true
     )
-    fun flushAddressQueueForChainId(uuid: UUID, chainId: Long, timestamp: ZonedDateTime, maxAddressesPerTask: Int, payload: String? = null)
+    fun flushAddressQueueForChainId(
+        uuid: UUID,
+        chainId: Long,
+        timestamp: ZonedDateTime,
+        maxAddressesPerTask: Int,
+        payload: String? = null
+    )
 
     @Query(
-        "SELECT DISTINCT chain_id FROM pending_faucet_address",
+        "SELECT DISTINCT chain_id FROM pending_blockchain_address",
         nativeQuery = true
     )
     fun fetchChainIdsWithPendingAddresses(): List<Long>
 
     @Query(
-        "SELECT DISTINCT payload FROM pending_faucet_address",
+        "SELECT DISTINCT payload FROM pending_blockchain_address",
         nativeQuery = true
     )
     fun fetchPayloadsWithPendingAddresses(): List<String>
 
     @Query(
-        """SELECT * FROM faucet_task WHERE status='IN_PROCESS'
+        """SELECT * FROM blockchain_task WHERE status='IN_PROCESS'
            LIMIT 1 FOR UPDATE SKIP LOCKED""",
         nativeQuery = true
     )
-    fun getInProcess(): FaucetTask?
+    fun getInProcess(): BlockchainTask?
 
     @Query(
-        """SELECT * FROM faucet_task WHERE status='CREATED'
+        """SELECT * FROM blockchain_task WHERE status='CREATED'
            LIMIT 1 FOR UPDATE SKIP LOCKED""",
         nativeQuery = true
     )
-    fun getPending(): FaucetTask?
+    fun getPending(): BlockchainTask?
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Transactional
     @Query(
-        """UPDATE FaucetTask SET status = :status, updatedAt = :time, payload = :payload, hash = :hash 
-            WHERE uuid = :uuid"""
+        """UPDATE BlockchainTask SET status = :status, updatedAt = :time, payload = :payload, hash = :hash 
+           WHERE uuid = :uuid"""
     )
     fun setStatus(
         uuid: UUID,
-        status: FaucetTaskStatus,
+        status: BlockchainTaskStatus,
         hash: String? = null,
         payload: String? = null,
         time: ZonedDateTime = ZonedDateTime.now()

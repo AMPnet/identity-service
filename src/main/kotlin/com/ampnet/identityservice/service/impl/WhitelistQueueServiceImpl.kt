@@ -2,14 +2,16 @@ package com.ampnet.identityservice.service.impl
 
 import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.config.ApplicationProperties
+import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
 import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
+import com.ampnet.identityservice.service.BlockchainQueueService
 import com.ampnet.identityservice.service.ScheduledExecutorServiceProvider
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import org.springframework.stereotype.Service
 
 @Service
-class FaucetQueueService(
+class WhitelistQueueServiceImpl(
     uuidProvider: UuidProvider,
     timeProvider: ZonedDateTimeProvider,
     blockchainService: BlockchainService,
@@ -17,7 +19,7 @@ class FaucetQueueService(
     blockchainTaskRepository: BlockchainTaskRepository,
     pendingBlockchainTaskRepository: BlockchainTaskRepository,
     scheduledExecutorServiceProvider: ScheduledExecutorServiceProvider
-) : AbstractBlockchainQueue(
+) : BlockchainQueueService, AbstractBlockchainQueue(
     uuidProvider,
     timeProvider,
     blockchainService,
@@ -28,7 +30,7 @@ class FaucetQueueService(
 ) {
 
     companion object {
-        const val QUEUE_NAME = "FaucetQueue"
+        const val QUEUE_NAME = "WhitelistQueue"
     }
 
     override val queueName: String
@@ -36,12 +38,25 @@ class FaucetQueueService(
 
     override fun createBlockchainTaskFromPendingTask() {
         blockchainTaskRepository.fetchChainIdsWithPendingAddresses().forEach { chainId ->
-            blockchainTaskRepository.flushAddressQueueForChainId(
-                uuidProvider.getUuid(),
-                chainId,
-                timeProvider.getZonedDateTime(),
-                applicationProperties.faucet.maxAddressesPerTask
-            )
+            blockchainTaskRepository.fetchPayloadsWithPendingAddresses().forEach { issuerAddress ->
+                blockchainTaskRepository.flushAddressQueueForChainId(
+                    uuidProvider.getUuid(),
+                    chainId,
+                    timeProvider.getZonedDateTime(),
+                    applicationProperties.faucet.maxAddressesPerTask,
+                    issuerAddress
+                )
+            }
         }
+    }
+
+    override fun createWhitelistAddressTask(address: String, request: WhitelistRequest) {
+        if (blockchainService.isWhitelisted(address, request.issuerAddress, request.chainId)) {
+            logger.info { "Address: $address for request: $request already whitelisted or in process" }
+            return
+        }
+        logger.info { "Received task for address: $address" }
+        pendingBlockchainTaskRepository.addAddressToQueue(address, request.chainId, request.issuerAddress)
+        logger.info { "Created BlockchainTask" }
     }
 }
