@@ -13,10 +13,10 @@ import com.ampnet.identityservice.persistence.model.UserInfo
 import com.ampnet.identityservice.persistence.repository.MailTokenRepository
 import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
-import com.ampnet.identityservice.service.BlockchainQueueService
 import com.ampnet.identityservice.service.MailService
 import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.UuidProvider
+import com.ampnet.identityservice.service.WhitelistQueueService
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import com.ampnet.identityservice.service.pojo.UserResponse
 import com.ampnet.identityservice.service.unwrap
@@ -27,6 +27,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 @Service
+@Suppress("TooManyFunctions")
 class UserServiceImpl(
     private val uuidProvider: UuidProvider,
     private val zonedDateTimeProvider: ZonedDateTimeProvider,
@@ -35,7 +36,7 @@ class UserServiceImpl(
     private val mailTokenRepository: MailTokenRepository,
     private val mailService: MailService,
     private val applicationProperties: ApplicationProperties,
-    private val blockchainQueueService: BlockchainQueueService
+    private val whitelistQueueService: WhitelistQueueService
 ) : UserService {
 
     companion object : KLogging()
@@ -122,7 +123,7 @@ class UserServiceImpl(
                 disconnectUserInfo(user)
                 throw InvalidRequestException(ErrorCode.REG_VERIFF, "Expired KYC data for user: $userAddress")
             }
-            blockchainQueueService.createWhitelistAddressTask(userAddress, request)
+            whitelistQueueService.addAddressToQueue(userAddress, request)
         } ?: throw InvalidRequestException(ErrorCode.REG_VERIFF, "Missing KYC data for user: $userAddress")
     }
 

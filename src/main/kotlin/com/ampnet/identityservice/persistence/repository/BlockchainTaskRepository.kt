@@ -24,10 +24,11 @@ interface BlockchainTaskRepository : JpaRepository<BlockchainTask, UUID> {
         """WITH deleted_rows AS (
                DELETE FROM pending_blockchain_address
                WHERE chain_id = :chainId 
-               AND (:payload IS NULL OR payload = CAST(:payload AS TEXT)) 
+               AND ((:payload IS NULL AND payload IS NULL) OR payload = CAST(:payload AS TEXT)) 
                AND address IN (
                    SELECT address FROM pending_blockchain_address
-                   WHERE chain_id = :chainId
+                   WHERE chain_id = :chainId 
+                   AND ((:payload IS NULL AND payload IS NULL) OR payload = CAST(:payload AS TEXT)) 
                    LIMIT :maxAddressesPerTask
                )
                RETURNING address
@@ -58,7 +59,7 @@ interface BlockchainTaskRepository : JpaRepository<BlockchainTask, UUID> {
     fun fetchChainIdsWithPendingAddresses(): List<Long>
 
     @Query(
-        "SELECT DISTINCT payload FROM pending_blockchain_address",
+        "SELECT DISTINCT payload FROM pending_blockchain_address WHERE payload IS NOT NULL",
         nativeQuery = true
     )
     fun fetchPayloadsWithPendingAddresses(): List<String>

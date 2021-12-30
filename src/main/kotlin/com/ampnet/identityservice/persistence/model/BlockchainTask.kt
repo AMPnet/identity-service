@@ -39,7 +39,7 @@ class BlockchainTask(
     @Column(nullable = false)
     var status: BlockchainTaskStatus,
 
-    // If the taks has payload value then it is Wallet
+    // If the task has payload value then it is Wallet
     @Column
     var payload: String?,
 
@@ -70,7 +70,7 @@ class BlockchainTask(
     )
 
     override fun toString(): String =
-        "BlockchainTask(uuid=$uuid, addresses=${addresses.contentToString()}, chainId=$chainId, status=$status," +
+        "BlockchainTask(uuid=$uuid, addresses=${addresses.contentToString()}, chainId=$chainId, status=$status, " +
             "payload=$payload, hash=$hash, createdAt=$createdAt, updatedAt=$updatedAt)"
 }
 

@@ -106,6 +106,128 @@ class BlockchainTaskRepositoryTest : TestBase() {
     }
 
     @Test
+    fun mustCorrectlyAddAndFlushAddressQueueWithDifferentPayload() {
+        val chain1Addresses = listOf("addr1", "addr2", "addr3", "addr1", "addr4", "addr2")
+        val payload1 = "payload1"
+        val payload2 = "payload2"
+
+        suppose("some addresses are added to the queue") {
+            chain1Addresses.forEach { blockchainTaskRepository.addAddressToQueue(it, 1L, payload1) }
+            chain1Addresses.forEach { blockchainTaskRepository.addAddressToQueue(it, 1L, payload2) }
+            chain1Addresses.forEach { blockchainTaskRepository.addAddressToQueue(it, 2L, payload2) }
+            chain1Addresses.forEach { blockchainTaskRepository.addAddressToQueue(it, 2L) }
+        }
+
+        val uniqueChain1Addresses = chain1Addresses.toSet()
+
+        val task1Uuid = UUID.randomUUID()
+        val now = ZonedDateTime.now()
+
+        suppose("address queue is flushed for chain 1") {
+            blockchainTaskRepository.flushAddressQueueForChainId(task1Uuid, 1L, now, 100, payload1)
+        }
+
+        verify("task is created for flushed addresses for chain 1") {
+            val task = blockchainTaskRepository.findById(task1Uuid)
+            assertThat(task).hasValueSatisfying {
+                assertThat(it.addresses).containsExactlyInAnyOrderElementsOf(uniqueChain1Addresses)
+                assertThat(it.chainId).isEqualTo(1L)
+                assertThat(it.status).isEqualTo(BlockchainTaskStatus.CREATED)
+                assertThat(it.payload).isEqualTo(payload1)
+                assertThat(it.createdAt).isEqualTo(now)
+            }
+        }
+
+        val task2Uuid = UUID.randomUUID()
+
+        suppose("address queue is flushed for chain 1 with payload 2") {
+            blockchainTaskRepository.flushAddressQueueForChainId(task2Uuid, 1L, now, 100, payload2)
+        }
+
+        verify("task is created for flushed addresses for chain 1 with payload 2") {
+            val task = blockchainTaskRepository.findById(task2Uuid)
+            assertThat(task).hasValueSatisfying {
+                assertThat(it.addresses).containsExactlyInAnyOrderElementsOf(uniqueChain1Addresses)
+                assertThat(it.chainId).isEqualTo(1L)
+                assertThat(it.status).isEqualTo(BlockchainTaskStatus.CREATED)
+                assertThat(it.payload).isEqualTo(payload2)
+            }
+        }
+
+        val task3Uuid = UUID.randomUUID()
+
+        suppose("address queue is flushed for chain 2 with payload 2") {
+            blockchainTaskRepository.flushAddressQueueForChainId(task3Uuid, 2L, now, 100, payload2)
+        }
+
+        verify("task is created for flushed addresses for chain 2 with payload 2") {
+            val task = blockchainTaskRepository.findById(task3Uuid)
+            assertThat(task).hasValueSatisfying {
+                assertThat(it.addresses).containsExactlyInAnyOrderElementsOf(uniqueChain1Addresses)
+                assertThat(it.chainId).isEqualTo(2L)
+                assertThat(it.status).isEqualTo(BlockchainTaskStatus.CREATED)
+                assertThat(it.payload).isEqualTo(payload2)
+            }
+        }
+
+        val task4Uuid = UUID.randomUUID()
+
+        suppose("address queue is flushed for chain 2 without payload") {
+            blockchainTaskRepository.flushAddressQueueForChainId(task4Uuid, 2L, now, 100)
+        }
+
+        verify("task is created for flushed addresses for chain 2 without payload") {
+            val task = blockchainTaskRepository.findById(task4Uuid)
+            assertThat(task).hasValueSatisfying {
+                assertThat(it.addresses).containsExactlyInAnyOrderElementsOf(uniqueChain1Addresses)
+                assertThat(it.chainId).isEqualTo(2L)
+                assertThat(it.status).isEqualTo(BlockchainTaskStatus.CREATED)
+                assertThat(it.payload).isNull()
+            }
+        }
+    }
+
+    @Test
+    fun mustNotFlushAddressesWithoutPayload() {
+        val chain1Addresses = listOf("addr1", "addr2", "addr3", "addr1", "addr4", "addr2")
+        val payload1 = "payload1"
+
+        suppose("some addresses are added to the queue") {
+            chain1Addresses.forEach { blockchainTaskRepository.addAddressToQueue(it, 1L, payload1) }
+        }
+
+        val uniqueChain1Addresses = chain1Addresses.toSet()
+
+        val task1Uuid = UUID.randomUUID()
+        val now = ZonedDateTime.now()
+
+        suppose("address queue is flushed for chain 1 without payload") {
+            blockchainTaskRepository.flushAddressQueueForChainId(task1Uuid, 1L, now, 100)
+        }
+
+        verify("task is not created for flushed addresses for chain 1 without payload") {
+            val task = blockchainTaskRepository.findById(task1Uuid)
+            assertThat(task).isEmpty
+        }
+
+        val task2Uuid = UUID.randomUUID()
+
+        suppose("address queue is flushed for chain 1 with payload") {
+            blockchainTaskRepository.flushAddressQueueForChainId(task2Uuid, 1L, now, 100, payload1)
+        }
+
+        verify("task is created for flushed addresses for chain 1 with payload") {
+            val task = blockchainTaskRepository.findById(task2Uuid)
+            assertThat(task).hasValueSatisfying {
+                assertThat(it.addresses).containsExactlyInAnyOrderElementsOf(uniqueChain1Addresses)
+                assertThat(it.chainId).isEqualTo(1L)
+                assertThat(it.status).isEqualTo(BlockchainTaskStatus.CREATED)
+                assertThat(it.payload).isEqualTo(payload1)
+            }
+        }
+    }
+
+    @Test
     fun mustCorrectlyAddAndFlushAddressQueueForLimitedNumberOfAddressesPerTask() {
         val chain1Addresses = listOf("addr1", "addr2", "addr3", "addr4", "addr5", "addr6")
         val chain2Addresses = listOf("addr1", "addr4", "addr5")
@@ -236,6 +358,25 @@ class BlockchainTaskRepositoryTest : TestBase() {
 
         verify("chain 1 and chain 2 are returned as chains with pending addresses") {
             assertThat(blockchainTaskRepository.fetchChainIdsWithPendingAddresses()).containsExactlyInAnyOrder(1L, 2L)
+        }
+    }
+
+    @Test
+    fun mustCorrectlyFetchPayloadWithPendingAddresses() {
+        verify("there are no chains with pending addresses") {
+            assertThat(blockchainTaskRepository.fetchChainIdsWithPendingAddresses()).isEmpty()
+        }
+
+        suppose("some addresses are added to the queue for chain 1") {
+            blockchainTaskRepository.addAddressToQueue("addr1", 1L, "payload")
+            blockchainTaskRepository.addAddressToQueue("addr2", 1L, "payload2")
+            blockchainTaskRepository.addAddressToQueue("addr3", 1L, "payload")
+            blockchainTaskRepository.addAddressToQueue("addr4", 1L)
+        }
+
+        verify("chain 1 is returned as chain with pending addresses") {
+            assertThat(blockchainTaskRepository.fetchPayloadsWithPendingAddresses())
+                .containsExactlyInAnyOrderElementsOf(listOf("payload", "payload2"))
         }
     }
 }

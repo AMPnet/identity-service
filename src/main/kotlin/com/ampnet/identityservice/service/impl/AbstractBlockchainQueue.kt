@@ -93,7 +93,8 @@ abstract class AbstractBlockchainQueue(
 
     private fun handlePendingTask(task: BlockchainTask) {
         logger.debug { "Starting to process task: $task" }
-        val hash = if (task.payload != null) {
+
+        val hash = if (task.payload?.isEmpty()?.not() == true) {
             blockchainService.whitelistAddresses(task.addresses.toList(), task.payload!!, task.chainId)
         } else {
             blockchainService.sendFaucetFunds(task.addresses.toList(), task.chainId)
@@ -104,7 +105,9 @@ abstract class AbstractBlockchainQueue(
             return
         }
 
-        logger.info { "[$queueName] Handling process for addresses: ${task.addresses.contentToString()} with hash: $hash" }
+        logger.info {
+            "[$queueName] Handling process for addresses: ${task.addresses.contentToString()} with hash: $hash"
+        }
         blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.IN_PROCESS, hash, task.payload)
     }
 

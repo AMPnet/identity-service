@@ -27,12 +27,8 @@ class FaucetQueueService(
     scheduledExecutorServiceProvider
 ) {
 
-    companion object {
-        const val QUEUE_NAME = "FaucetQueue"
-    }
-
     override val queueName: String
-        get() = QUEUE_NAME
+        get() = "FaucetQueue"
 
     override fun createBlockchainTaskFromPendingTask() {
         blockchainTaskRepository.fetchChainIdsWithPendingAddresses().forEach { chainId ->
