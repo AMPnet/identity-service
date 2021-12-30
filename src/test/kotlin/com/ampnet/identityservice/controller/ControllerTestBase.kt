@@ -16,11 +16,11 @@ import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
 import com.ampnet.identityservice.persistence.repository.VeriffDecisionRepository
 import com.ampnet.identityservice.persistence.repository.VeriffSessionRepository
-import com.ampnet.identityservice.service.BlockchainQueueService
 import com.ampnet.identityservice.service.MailService
 import com.ampnet.identityservice.service.PinataService
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.VerificationService
+import com.ampnet.identityservice.service.WhitelistQueueService
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -96,7 +96,7 @@ abstract class ControllerTestBase : TestBase() {
     protected lateinit var blockchainService: BlockchainService
 
     @MockBean
-    protected lateinit var queueService: BlockchainQueueService
+    protected lateinit var queueService: WhitelistQueueService
 
     @MockBean
     protected lateinit var pinataService: PinataService

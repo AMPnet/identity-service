@@ -39,8 +39,8 @@ class BlockchainServiceImpl(
 
     @Suppress("ReturnCount")
     @Throws(InternalException::class)
-    override fun whitelistAddress(address: String, issuerAddress: String, chainId: Long): String? {
-        logger.info { "Whitelisting address: $address on chain: $chainId for issuer: $issuerAddress" }
+    override fun whitelistAddresses(addresses: List<String>, issuerAddress: String, chainId: Long): String? {
+        logger.info { "Whitelisting addresses: $addresses on chain: $chainId for issuer: $issuerAddress" }
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
         val nonce = blockchainProperties.web3j
             .ethGetTransactionCount(
@@ -51,7 +51,11 @@ class BlockchainServiceImpl(
         val gasPrice = getGasPrice(chainId)
         logger.debug { "Gas price: $gasPrice" }
 
-        val function = Function("approveWallet", listOf(issuerAddress.toAddress(), address.toAddress()), emptyList())
+        val function = Function(
+            "approveWallets",
+            listOf(issuerAddress.toAddress(), addresses.toAddressArray()),
+            emptyList()
+        )
         val rawTransaction = RawTransaction.createTransaction(
             nonce, gasPrice, applicationProperties.walletApprove.gasLimit,
             blockchainProperties.walletApprover.contractAddress, FunctionEncoder.encode(function)
@@ -65,7 +69,7 @@ class BlockchainServiceImpl(
         val sentTransaction = blockchainProperties.web3j
             .ethSendRawTransaction(manager.sign(rawTransaction)).sendSafely()
         logger.info {
-            "Successfully send request to whitelist address: $address on chain: $chainId for issuer: $issuerAddress"
+            "Successfully send request to whitelist addresses: $addresses on chain: $chainId for issuer: $issuerAddress"
         }
         return sentTransaction?.transactionHash
     }
@@ -78,7 +82,9 @@ class BlockchainServiceImpl(
     }
 
     @Throws(InternalException::class)
-    override fun isWhitelisted(address: String, issuerAddress: String, chainId: Long): Boolean {
+    override fun isWhitelisted(address: String, issuerAddress: String?, chainId: Long): Boolean {
+        if (issuerAddress == null)
+            return false
         val web3j = chainHandler.getBlockchainProperties(chainId).web3j
         val transactionManager = ReadonlyTransactionManager(web3j, address)
         val contract = IIssuerCommon.load(issuerAddress, web3j, transactionManager, DefaultGasProvider())

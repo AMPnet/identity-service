@@ -4,8 +4,8 @@ import com.ampnet.identityservice.blockchain.properties.Chain
 import com.ampnet.identityservice.controller.pojo.request.ReCaptchaRequest
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.ReCaptchaException
-import com.ampnet.identityservice.persistence.model.FaucetTaskStatus
-import com.ampnet.identityservice.persistence.repository.FaucetTaskRepository
+import com.ampnet.identityservice.persistence.model.BlockchainTaskStatus
+import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
 import com.ampnet.identityservice.service.ReCaptchaService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -27,21 +27,21 @@ class FaucetControllerTest : ControllerTestBase() {
     private val faucetPath = "/faucet/$defaultChainId/$address"
 
     @Autowired
-    private lateinit var faucetTaskRepository: FaucetTaskRepository
+    private lateinit var blockchainTaskRepository: BlockchainTaskRepository
 
     @MockBean
     private lateinit var reCaptchaService: ReCaptchaService
 
     @BeforeEach
     fun beforeEach() {
-        databaseCleanerService.deleteAllFaucetTasks()
-        databaseCleanerService.deleteAllQueuedFaucetAddresses()
+        databaseCleanerService.deleteAllBlockchainTasks()
+        databaseCleanerService.deleteAllQueuedBlockchainAddresses()
     }
 
     @AfterEach
     fun afterEach() {
-        databaseCleanerService.deleteAllFaucetTasks()
-        databaseCleanerService.deleteAllQueuedFaucetAddresses()
+        databaseCleanerService.deleteAllBlockchainTasks()
+        databaseCleanerService.deleteAllQueuedBlockchainAddresses()
     }
 
     @Test
@@ -64,15 +64,15 @@ class FaucetControllerTest : ControllerTestBase() {
         val now = ZonedDateTime.now()
 
         suppose("Address queue is flushed for matic testnet") {
-            faucetTaskRepository.flushAddressQueueForChainId(taskUuid, defaultChainId, now, 100)
+            blockchainTaskRepository.flushAddressQueueForChainId(taskUuid, defaultChainId, now, 100)
         }
 
         verify("Task is created for flushed addresses for matic testnet") {
-            val task = faucetTaskRepository.findById(taskUuid)
+            val task = blockchainTaskRepository.findById(taskUuid)
             assertThat(task).hasValueSatisfying {
                 assertThat(it.addresses).containsExactly(address)
                 assertThat(it.chainId).isEqualTo(defaultChainId)
-                assertThat(it.status).isEqualTo(FaucetTaskStatus.CREATED)
+                assertThat(it.status).isEqualTo(BlockchainTaskStatus.CREATED)
             }
         }
     }

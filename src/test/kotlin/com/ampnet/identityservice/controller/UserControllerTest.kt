@@ -316,7 +316,7 @@ class UserControllerTest : ControllerTestBase() {
         }
         verify("Whitelisting user address has been called") {
             verifyMock(queueService)
-                .createWhitelistAddressTask(testContext.user.address, testContext.whitelistRequest)
+                .addAddressToQueue(testContext.user.address, testContext.whitelistRequest)
         }
     }
 
@@ -341,7 +341,7 @@ class UserControllerTest : ControllerTestBase() {
         }
         verify("Whitelisting user address has not been called") {
             verifyMock(queueService, times(0))
-                .createWhitelistAddressTask(testContext.user.address, testContext.whitelistRequest)
+                .addAddressToQueue(testContext.user.address, testContext.whitelistRequest)
         }
     }
 
@@ -368,7 +368,7 @@ class UserControllerTest : ControllerTestBase() {
         }
         verify("Whitelisting user address has not been called") {
             verifyMock(queueService, times(0))
-                .createWhitelistAddressTask(testContext.user.address, testContext.whitelistRequest)
+                .addAddressToQueue(testContext.user.address, testContext.whitelistRequest)
         }
     }
 
@@ -393,7 +393,7 @@ class UserControllerTest : ControllerTestBase() {
         }
         verify("Whitelisting user address has not been called") {
             verifyMock(queueService, times(0))
-                .createWhitelistAddressTask(testContext.user.address, testContext.whitelistRequest)
+                .addAddressToQueue(testContext.user.address, testContext.whitelistRequest)
         }
     }
 

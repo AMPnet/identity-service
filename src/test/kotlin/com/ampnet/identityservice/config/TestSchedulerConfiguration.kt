@@ -3,8 +3,6 @@ package com.ampnet.identityservice.config
 import com.ampnet.identityservice.ManualFixedScheduler
 import com.ampnet.identityservice.service.ScheduledExecutorServiceProvider
 import com.ampnet.identityservice.service.impl.AutoInvestQueueServiceImpl
-import com.ampnet.identityservice.service.impl.BlockchainQueueServiceImpl
-import com.ampnet.identityservice.service.impl.FaucetQueueService
 import mu.KLogging
 import org.mockito.kotlin.given
 import org.mockito.kotlin.mock
@@ -35,9 +33,9 @@ class TestSchedulerConfiguration {
     ): ScheduledExecutorServiceProvider {
         logger.info { "Using manual schedulers for tests" }
         return mock {
-            given(it.newSingleThreadScheduledExecutor(BlockchainQueueServiceImpl.QUEUE_NAME))
+            given(it.newSingleThreadScheduledExecutor("WhitelistQueue"))
                 .willReturn(whitelistQueueScheduler)
-            given(it.newSingleThreadScheduledExecutor(FaucetQueueService.QUEUE_NAME))
+            given(it.newSingleThreadScheduledExecutor("FaucetQueue"))
                 .willReturn(faucetQueueScheduler)
             given(it.newSingleThreadScheduledExecutor(AutoInvestQueueServiceImpl.QUEUE_NAME))
                 .willReturn(autoInvestQueueScheduler)

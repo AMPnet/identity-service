@@ -2,6 +2,10 @@ package com.ampnet.identityservice.persistence.model
 
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
+import com.vladmihalcea.hibernate.type.array.StringArrayType
+import org.hibernate.annotations.Type
+import org.hibernate.annotations.TypeDef
+import org.hibernate.annotations.TypeDefs
 import java.time.ZonedDateTime
 import java.util.UUID
 import javax.persistence.Column
@@ -11,24 +15,33 @@ import javax.persistence.Enumerated
 import javax.persistence.Id
 import javax.persistence.Table
 
+@TypeDefs(
+    TypeDef(name = "string-array", typeClass = StringArrayType::class)
+)
 @Entity
 @Table(name = "blockchain_task")
 class BlockchainTask(
     @Id
     val uuid: UUID,
 
-    @Column(nullable = false)
-    val payload: String,
+    @Type(type = "string-array")
+    @Column(
+        name = "addresses",
+        columnDefinition = "varchar[]",
+        nullable = false
+    )
+    val addresses: Array<String>,
 
     @Column(nullable = false)
     val chainId: Long,
 
-    @Column(nullable = false)
-    val contractAddress: String,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     var status: BlockchainTaskStatus,
+
+    // If the task has payload value then it is Wallet
+    @Column
+    var payload: String?,
 
     @Column
     var hash: String?,
@@ -40,25 +53,25 @@ class BlockchainTask(
     var updatedAt: ZonedDateTime?
 ) {
     constructor(
-        payload: String,
-        contractAddress: String,
+        addresses: Array<String>,
         chainId: Long,
         uuidProvider: UuidProvider,
-        timeProvider: ZonedDateTimeProvider
+        timeProvider: ZonedDateTimeProvider,
+        payload: String? = null
     ) : this(
         uuidProvider.getUuid(),
-        payload,
+        addresses,
         chainId,
-        contractAddress,
         BlockchainTaskStatus.CREATED,
+        payload,
         null,
         timeProvider.getZonedDateTime(),
         null
     )
 
     override fun toString(): String =
-        "BlockchainTask(uuid=$uuid, payload='$payload', chainId='$chainId' contractAddress='$contractAddress', " +
-            "status=$status, hash=$hash, createdAt=$createdAt, updatedAt=$updatedAt)"
+        "BlockchainTask(uuid=$uuid, addresses=${addresses.contentToString()}, chainId=$chainId, status=$status, " +
+            "payload=$payload, hash=$hash, createdAt=$createdAt, updatedAt=$updatedAt)"
 }
 
 enum class BlockchainTaskStatus {
