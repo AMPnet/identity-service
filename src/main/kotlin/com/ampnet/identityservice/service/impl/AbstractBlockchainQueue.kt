@@ -19,10 +19,10 @@ abstract class AbstractBlockchainQueue(
     protected val applicationProperties: ApplicationProperties,
     protected val blockchainTaskRepository: BlockchainTaskRepository,
     protected val pendingBlockchainTaskRepository: BlockchainTaskRepository,
+    private val queueName: String,
     scheduledExecutorServiceProvider: ScheduledExecutorServiceProvider
 ) : DisposableBean, KLogging() {
 
-    abstract val queueName: String
     private val executorService = scheduledExecutorServiceProvider.newSingleThreadScheduledExecutor(queueName)
 
     init {
@@ -50,7 +50,7 @@ abstract class AbstractBlockchainQueue(
             try {
                 handleInProcessTask(it)
             } catch (ex: Throwable) {
-                logger.error("[$queueName]Failed to handle in process task: ${ex.message}")
+                logger.error("Failed to handle in process task: ${ex.message}")
                 markTaskAsFailedAndRetryWithNewTask(it)
             }
 
@@ -106,7 +106,7 @@ abstract class AbstractBlockchainQueue(
         }
 
         logger.info {
-            "[$queueName] Handling process for addresses: ${task.addresses.contentToString()} with hash: $hash"
+            "Handling process for addresses: ${task.addresses.contentToString()} with hash: $hash"
         }
         blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.IN_PROCESS, hash, task.payload)
     }

@@ -84,7 +84,7 @@ class FaucetProperties {
 
 @Suppress("MagicNumber")
 class WalletApproveProperties {
-    var gasLimit: BigInteger = BigInteger.valueOf(200_000)
+    var gasLimit: BigInteger = BigInteger.valueOf(20_000_000L)
 }
 
 @Suppress("MagicNumber")

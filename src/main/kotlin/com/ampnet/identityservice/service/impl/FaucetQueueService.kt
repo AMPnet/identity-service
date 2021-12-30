@@ -24,11 +24,9 @@ class FaucetQueueService(
     applicationProperties,
     blockchainTaskRepository,
     pendingBlockchainTaskRepository,
+    "FaucetQueue",
     scheduledExecutorServiceProvider
 ) {
-
-    override val queueName: String
-        get() = "FaucetQueue"
 
     override fun createBlockchainTaskFromPendingTask() {
         blockchainTaskRepository.fetchChainIdsWithPendingAddresses().forEach { chainId ->

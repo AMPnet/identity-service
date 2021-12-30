@@ -26,11 +26,9 @@ class WhitelistQueueServiceImpl(
     applicationProperties,
     blockchainTaskRepository,
     pendingBlockchainTaskRepository,
+    "WhitelistQueue",
     scheduledExecutorServiceProvider
 ) {
-
-    override val queueName: String
-        get() = "WhitelistQueue"
 
     override fun createBlockchainTaskFromPendingTask() {
         blockchainTaskRepository.fetchChainIdsWithPendingAddresses().forEach { chainId ->
