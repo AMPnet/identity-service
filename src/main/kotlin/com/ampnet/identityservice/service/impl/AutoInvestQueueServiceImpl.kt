@@ -39,7 +39,7 @@ class AutoInvestQueueServiceImpl(
     private val executorService = scheduledExecutorServiceProvider.newSingleThreadScheduledExecutor(QUEUE_NAME)
 
     init {
-        if (applicationProperties.autoInvest.processingEnabled) {
+        if (applicationProperties.autoInvest.enabled) {
             executorService.scheduleAtFixedRate(
                 { processTasks() },
                 applicationProperties.autoInvest.queue.initialDelay,

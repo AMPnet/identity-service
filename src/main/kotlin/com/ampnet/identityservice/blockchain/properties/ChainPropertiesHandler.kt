@@ -49,8 +49,8 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
                 credentials = Credentials.create(chainProperties.walletApproverPrivateKey),
                 contractAddress = chainProperties.walletApproverServiceAddress
             ),
-            faucet = if (chainProperties.faucetServiceEnabled) chainProperties.faucet else null,
-            autoInvest = if (applicationProperties.autoInvest.processingEnabled) chainProperties.autoInvest else null,
+            faucet = if (isFaucetAvailable(chainProperties)) chainProperties.faucet else null,
+            autoInvest = if (isAutoInvestAvailable(chainProperties)) chainProperties.autoInvest else null,
             web3j = Web3j.build(HttpService(rpcUrl))
         )
     }
@@ -77,18 +77,14 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
             )
         }
 
-        if (chainProperties.faucetServiceEnabled &&
-            (chainProperties.faucetCallerPrivateKey.isBlank() || chainProperties.faucetServiceAddress.isBlank())
-        ) {
+        if (!isFaucetAvailable(chainProperties)) {
             throw InternalException(
                 ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
                 "Faucet config for chain: ${chain.name} not defined in the application properties"
             )
         }
 
-        if (applicationProperties.autoInvest.processingEnabled &&
-            (chainProperties.autoInvestPrivateKey.isBlank() || chainProperties.autoInvestServiceAddress.isBlank())
-        ) {
+        if (!isAutoInvestAvailable(chainProperties)) {
             throw InternalException(
                 ErrorCode.BLOCKCHAIN_CONFIG_MISSING,
                 "Auto-invest config for chain: ${chain.name} not defined in the application properties"
@@ -97,4 +93,14 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
 
         return chainProperties
     }
+
+    private fun isAutoInvestAvailable(chainProperties: ChainProperties): Boolean =
+        applicationProperties.autoInvest.enabled &&
+            chainProperties.autoInvestPrivateKey.isNotBlank() &&
+            chainProperties.autoInvestServiceAddress.isNotBlank()
+
+    private fun isFaucetAvailable(chainProperties: ChainProperties): Boolean =
+        applicationProperties.faucet.enabled &&
+            chainProperties.faucetCallerPrivateKey.isNotBlank() &&
+            chainProperties.faucetServiceAddress.isNotBlank()
 }
