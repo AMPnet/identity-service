@@ -53,7 +53,6 @@ class ChainProperties {
     var autoInvestPrivateKey: String = ""
     var walletApproverServiceAddress: String = ""
     var faucetServiceAddress: String = ""
-    var faucetServiceEnabled: Boolean = false
     var autoInvestServiceAddress: String = ""
 }
 
@@ -78,6 +77,7 @@ class PinataProperties {
 
 @Suppress("MagicNumber")
 class FaucetProperties {
+    var enabled: Boolean = false
     var maxAddressesPerTask: Int = 100
     var gasLimit: BigInteger = BigInteger.valueOf(4_000_000) // test run with 100 random addresses used 3,829,595 gas
 }
@@ -89,7 +89,7 @@ class WalletApproveProperties {
 
 @Suppress("MagicNumber")
 class AutoInvestProperties {
-    var processingEnabled: Boolean = false
+    var enabled: Boolean = false
     var timeout: Duration = Duration.ofDays(7L)
     var gasLimit: BigInteger = BigInteger.valueOf(20_000_000L) // estimated gas usage for 100 auto-invests at once
     val queue = QueueProperties()

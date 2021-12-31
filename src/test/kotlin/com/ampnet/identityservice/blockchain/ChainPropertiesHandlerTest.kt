@@ -57,7 +57,6 @@ class ChainPropertiesHandlerTest {
             val applicationProperties = ApplicationProperties().apply {
                 this.chainEthereum.walletApproverPrivateKey = "test-key"
                 this.chainEthereum.walletApproverServiceAddress = "test-address"
-                this.chainEthereum.faucetServiceEnabled = true
                 this.chainEthereum.faucetCallerPrivateKey = ""
             }
             val chainPropertiesHandler = ChainPropertiesHandler(applicationProperties)
@@ -72,11 +71,10 @@ class ChainPropertiesHandlerTest {
             val applicationProperties = ApplicationProperties().apply {
                 this.chainEthereum.walletApproverPrivateKey = "test-key"
                 this.chainEthereum.walletApproverServiceAddress = "test-address"
-                this.chainEthereum.faucetServiceEnabled = true
                 this.chainEthereum.faucetCallerPrivateKey = "test-key"
                 this.chainEthereum.faucetServiceAddress = "test-address"
                 this.chainEthereum.autoInvestPrivateKey = ""
-                this.autoInvest.processingEnabled = true
+                this.autoInvest.enabled = true
             }
             val chainPropertiesHandler = ChainPropertiesHandler(applicationProperties)
             chainPropertiesHandler.getBlockchainProperties(Chain.ETHEREUM_MAIN.id)
