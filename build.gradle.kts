@@ -9,23 +9,23 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 plugins {
-    val kotlinVersion = "1.5.21"
+    val kotlinVersion = "1.6.10"
     kotlin("plugin.jpa") version kotlinVersion
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.spring") version kotlinVersion
 
-    id("org.springframework.boot") version "2.5.4"
+    id("org.springframework.boot") version "2.6.2"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
     id("com.google.cloud.tools.jib") version "3.1.4"
     id("org.asciidoctor.jvm.convert") version "3.3.2"
-    id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
-    id("io.gitlab.arturbosch.detekt").version("1.18.1")
-    id("com.google.protobuf") version "0.8.17"
+    id("org.jlleitschuh.gradle.ktlint") version "10.2.1"
+    id("io.gitlab.arturbosch.detekt").version("1.19.0")
+    id("com.google.protobuf") version "0.8.18"
     idea
     jacoco
 }
 group = "com.ampnet"
-version = "0.2.3"
+version = "0.2.4"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
@@ -48,22 +48,23 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     implementation("io.micrometer:micrometer-registry-prometheus")
 
-    implementation("io.github.microutils:kotlin-logging:2.0.11")
+    implementation("io.github.microutils:kotlin-logging:2.1.21")
     implementation("com.github.AMPnet:jwt:1.0.1")
     implementation("com.github.komputing:kethereum:0.85.3")
     implementation("org.web3j:core:4.8.7")
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
-    implementation("net.devh:grpc-server-spring-boot-starter:2.12.0.RELEASE")
+    implementation("net.devh:grpc-server-spring-boot-starter:2.13.0.RELEASE")
     implementation("com.vladmihalcea:hibernate-types-52:2.14.0")
+    implementation("com.google.protobuf:protobuf-java:3.19.1")
 
-    val sentryVersion = "5.1.2"
+    val sentryVersion = "5.5.0"
     implementation("io.sentry:sentry-spring-boot-starter:$sentryVersion")
     implementation("io.sentry:sentry-logback:$sentryVersion")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:3.2.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
 }
 
 tasks.withType<KotlinCompile> {
@@ -149,11 +150,11 @@ tasks.register<Copy>("copyDocs") {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.15.8"
+        artifact = "com.google.protobuf:protoc:3.19.1"
     }
     plugins {
         id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.37.0"
+            artifact = "io.grpc:protoc-gen-grpc-java:1.42.1"
         }
     }
     generateProtoTasks {

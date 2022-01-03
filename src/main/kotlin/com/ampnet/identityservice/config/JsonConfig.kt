@@ -22,7 +22,7 @@ class JsonConfig {
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         mapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false)
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        return mapper.registerModule(KotlinModule())
+        return mapper.registerModule(KotlinModule.Builder().build())
     }
 
     @Bean
@@ -33,6 +33,6 @@ class JsonConfig {
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         mapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false)
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        return mapper.registerModule(KotlinModule())
+        return mapper.registerModule(KotlinModule.Builder().build())
     }
 }
