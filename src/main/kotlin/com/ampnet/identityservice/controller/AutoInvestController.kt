@@ -1,6 +1,7 @@
 package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.controller.pojo.request.AutoInvestRequest
+import com.ampnet.identityservice.controller.pojo.response.AutoInvestListResponse
 import com.ampnet.identityservice.controller.pojo.response.AutoInvestResponse
 import com.ampnet.identityservice.persistence.repository.AutoInvestTaskRepository
 import com.ampnet.identityservice.service.AutoInvestQueueService
@@ -11,7 +12,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
-import java.math.BigInteger
 
 @RestController
 class AutoInvestController(
@@ -35,24 +35,20 @@ class AutoInvestController(
         return response?.let { ResponseEntity.ok(it) } ?: ResponseEntity.badRequest().build()
     }
 
-    @GetMapping("/auto_invest/{chainId}/{campaign}")
+    @GetMapping("/auto_invest/{chainId}/{address}")
     fun getAutoInvestTask(
         @PathVariable chainId: Long,
-        @PathVariable campaign: String
-    ): ResponseEntity<AutoInvestResponse> {
-        val address = ControllerUtils.getAddressFromSecurityContext()
-        logger.debug { "Get auto-invest for address: $address, campaign: $campaign and chainId: $chainId" }
-        val task = autoInvestTaskRepository.findByUserWalletAddressAndCampaignContractAddressAndChainId(
-            userWalletAddress = address,
-            campaignContractAddress = campaign,
-            chainId = chainId
+        @PathVariable address: String
+    ): ResponseEntity<AutoInvestListResponse> {
+        logger.debug { "Get auto-invest for address: $address and chainId: $chainId" }
+        val tasks = autoInvestTaskRepository.findByChainIdAndUserWalletAddress(
+            chainId = chainId,
+            userWalletAddress = address
         )
 
         return ResponseEntity.ok(
-            AutoInvestResponse(
-                walletAddress = address,
-                campaignAddress = campaign,
-                amount = task?.amount ?: BigInteger.ZERO
+            AutoInvestListResponse(
+                tasks.map { AutoInvestResponse(it) }
             )
         )
     }

@@ -2,6 +2,7 @@ package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.blockchain.properties.Chain
 import com.ampnet.identityservice.controller.pojo.request.AutoInvestRequest
+import com.ampnet.identityservice.controller.pojo.response.AutoInvestListResponse
 import com.ampnet.identityservice.controller.pojo.response.AutoInvestResponse
 import com.ampnet.identityservice.persistence.model.AutoInvestTask
 import com.ampnet.identityservice.persistence.model.AutoInvestTaskStatus
@@ -24,7 +25,9 @@ import java.util.UUID
 class AutoInvestControllerTest : ControllerTestBase() {
 
     private val defaultChainId = Chain.MATIC_TESTNET_MUMBAI.id
-    private val autoInvestPath = "/auto_invest/$defaultChainId/campaignAddress"
+    private val address = "0xef678007d18427e6022059dbc264f27507cd1ffc"
+    private val campaignAddress = "campaignAddress"
+    private val autoInvestPath = "/auto_invest/$defaultChainId/"
 
     @Autowired
     private lateinit var autoInvestTaskRepository: AutoInvestTaskRepository
@@ -43,7 +46,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
 
         suppose("User submits auto-invest request") {
             val result = mockMvc.perform(
-                post(autoInvestPath)
+                post(autoInvestPath + campaignAddress)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))
             )
@@ -97,7 +100,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
 
         suppose("User submits auto-invest request") {
             val result = mockMvc.perform(
-                post(autoInvestPath)
+                post(autoInvestPath + campaignAddress)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))
             )
@@ -114,11 +117,10 @@ class AutoInvestControllerTest : ControllerTestBase() {
         }
 
         verify("Task is correctly updated in the database") {
-            val task = autoInvestTaskRepository.findByUserWalletAddressAndCampaignContractAddressAndChainId(
+            val task = autoInvestTaskRepository.findByChainIdAndUserWalletAddress(
                 userWalletAddress = "0xef678007d18427e6022059dbc264f27507cd1ffc",
-                campaignContractAddress = "campaignAddress",
                 chainId = defaultChainId
-            )!!
+            ).first()
 
             assertThat(task.userWalletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
             assertThat(task.campaignContractAddress).isEqualTo("campaignAddress")
@@ -150,7 +152,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
 
         suppose("User submits auto-invest request") {
             mockMvc.perform(
-                post(autoInvestPath)
+                post(autoInvestPath + campaignAddress)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))
             )
@@ -159,11 +161,10 @@ class AutoInvestControllerTest : ControllerTestBase() {
         }
 
         verify("Task is not updated in the database") {
-            val task = autoInvestTaskRepository.findByUserWalletAddressAndCampaignContractAddressAndChainId(
+            val task = autoInvestTaskRepository.findByChainIdAndUserWalletAddress(
                 userWalletAddress = "0xef678007d18427e6022059dbc264f27507cd1ffc",
-                campaignContractAddress = "campaignAddress",
                 chainId = defaultChainId
-            )!!
+            ).first()
 
             assertThat(task.userWalletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
             assertThat(task.campaignContractAddress).isEqualTo("campaignAddress")
@@ -174,7 +175,6 @@ class AutoInvestControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdfundUser
     fun mustCorrectlyReturnAutoInvestTask() {
         suppose("Auto-invest task exists for user") {
             autoInvestTaskRepository.createOrUpdate(
@@ -191,17 +191,20 @@ class AutoInvestControllerTest : ControllerTestBase() {
             )
         }
 
-        lateinit var autoInvestResponse: AutoInvestResponse
+        lateinit var autoInvestListResponse: AutoInvestListResponse
 
         suppose("User requests auto-invest task") {
-            val result = mockMvc.perform(get(autoInvestPath))
+            val result = mockMvc.perform(get(autoInvestPath + address))
                 .andExpect(status().isOk)
                 .andReturn()
 
-            autoInvestResponse = objectMapper.readValue(result.response.contentAsString)
+            autoInvestListResponse = objectMapper.readValue(result.response.contentAsString)
         }
 
         verify("Correct auto-invest response is returned") {
+            assertThat(autoInvestListResponse.autoInvests).hasSize(1)
+
+            val autoInvestResponse = autoInvestListResponse.autoInvests.first()
             assertThat(autoInvestResponse.walletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
             assertThat(autoInvestResponse.campaignAddress).isEqualTo("campaignAddress")
             assertThat(autoInvestResponse.amount).isEqualTo(BigInteger.valueOf(1000L))
@@ -209,22 +212,51 @@ class AutoInvestControllerTest : ControllerTestBase() {
     }
 
     @Test
-    @WithMockCrowdfundUser
-    fun mustReturnZeroAmountForNonExistentAutoInvestTask() {
-        lateinit var autoInvestResponse: AutoInvestResponse
+    fun mustReturnMultipleTasksForDifferentCampaigns() {
+        lateinit var autoInvestListResponse: AutoInvestListResponse
+        suppose("Auto-invest tasks exist for user") {
+            autoInvestTaskRepository.createOrUpdate(
+                AutoInvestTask(
+                    UUID.randomUUID(),
+                    defaultChainId,
+                    "0xef678007d18427e6022059dbc264f27507cd1ffc",
+                    "campaignAddress",
+                    BigInteger.valueOf(1000L),
+                    AutoInvestTaskStatus.PENDING,
+                    null,
+                    ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC"))
+                )
+            )
+            autoInvestTaskRepository.createOrUpdate(
+                AutoInvestTask(
+                    UUID.randomUUID(),
+                    defaultChainId,
+                    "0xef678007d18427e6022059dbc264f27507cd1ffc",
+                    "campaignAddress-2",
+                    BigInteger.valueOf(1000L),
+                    AutoInvestTaskStatus.PENDING,
+                    null,
+                    ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC"))
+                )
+            )
+        }
 
         suppose("User requests auto-invest task") {
-            val result = mockMvc.perform(get(autoInvestPath))
+            val result = mockMvc.perform(get(autoInvestPath + address))
                 .andExpect(status().isOk)
                 .andReturn()
 
-            autoInvestResponse = objectMapper.readValue(result.response.contentAsString)
+            autoInvestListResponse = objectMapper.readValue(result.response.contentAsString)
         }
 
         verify("Correct auto-invest response is returned") {
-            assertThat(autoInvestResponse.walletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
-            assertThat(autoInvestResponse.campaignAddress).isEqualTo("campaignAddress")
-            assertThat(autoInvestResponse.amount).isEqualTo(BigInteger.valueOf(0L))
+            assertThat(autoInvestListResponse.autoInvests).hasSize(2)
+            assertThat(autoInvestListResponse.autoInvests.map { it.walletAddress })
+                .containsOnly("0xef678007d18427e6022059dbc264f27507cd1ffc")
+            assertThat(autoInvestListResponse.autoInvests.map { it.campaignAddress })
+                .containsExactlyInAnyOrderElementsOf(listOf("campaignAddress", "campaignAddress-2"))
+            assertThat(autoInvestListResponse.autoInvests.map { it.amount })
+                .containsOnly(BigInteger.valueOf(1000L))
         }
     }
 }

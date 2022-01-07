@@ -76,6 +76,7 @@ class WebSecurityConfig(private val objectMapper: ObjectMapper) : WebSecurityCon
             .antMatchers(HttpMethod.GET, "/docs/index.html").permitAll()
             .antMatchers("/authorize/**").permitAll()
             .antMatchers(HttpMethod.POST, "/veriff/webhook/*").permitAll()
+            .antMatchers(HttpMethod.GET, "/auto_invest/*/*").permitAll()
             .anyRequest().authenticated()
             .and()
             .exceptionHandling().authenticationEntryPoint(authenticationHandler)

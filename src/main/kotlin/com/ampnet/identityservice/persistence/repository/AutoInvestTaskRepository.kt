@@ -43,6 +43,8 @@ interface AutoInvestTaskRepository : JpaRepository<AutoInvestTask, UUID> {
     @Transactional
     fun updateStatusAndHashForIds(ids: List<UUID>, status: AutoInvestTaskStatus, hash: String)
 
+    fun findByChainIdAndUserWalletAddress(chainId: Long, userWalletAddress: String): List<AutoInvestTask>
+
     fun findByUserWalletAddressAndCampaignContractAddressAndChainId(
         userWalletAddress: String,
         campaignContractAddress: String,
