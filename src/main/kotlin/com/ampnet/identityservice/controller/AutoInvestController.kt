@@ -31,7 +31,9 @@ class AutoInvestController(
         logger.debug {
             "Received auto-invest request: $request for address: $address, campaign: $campaign and chainId: $chainId"
         }
-        val response = autoInvestQueueService.createOrUpdateAutoInvestTask(address, campaign, chainId, request)
+        val response = autoInvestQueueService.createOrUpdateAutoInvestTask(
+            address, campaign.lowercase(), chainId, request
+        )
         return response?.let { ResponseEntity.ok(it) } ?: ResponseEntity.badRequest().build()
     }
 
@@ -43,7 +45,7 @@ class AutoInvestController(
         logger.debug { "Get auto-invest for address: $address and chainId: $chainId" }
         val tasks = autoInvestTaskRepository.findByChainIdAndUserWalletAddress(
             chainId = chainId,
-            userWalletAddress = address
+            userWalletAddress = address.lowercase()
         )
 
         return ResponseEntity.ok(
