@@ -26,7 +26,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
 
     private val defaultChainId = Chain.MATIC_TESTNET_MUMBAI.id
     private val address = "0xef678007d18427e6022059dbc264f27507cd1ffc"
-    private val campaignAddress = "campaignAddress"
+    private val campaignAddress = "campaignAddress".lowercase()
     private val autoInvestPath = "/auto_invest/$defaultChainId/"
 
     @Autowired
@@ -57,20 +57,20 @@ class AutoInvestControllerTest : ControllerTestBase() {
         }
 
         verify("Correct auto-invest response is returned") {
-            assertThat(autoInvestResponse.walletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
-            assertThat(autoInvestResponse.campaignAddress).isEqualTo("campaignAddress")
+            assertThat(autoInvestResponse.walletAddress).isEqualTo(address)
+            assertThat(autoInvestResponse.campaignAddress).isEqualTo(campaignAddress)
             assertThat(autoInvestResponse.amount).isEqualTo(BigInteger.valueOf(500L))
         }
 
         verify("Task is correctly stored into the database") {
             val task = autoInvestTaskRepository.findByUserWalletAddressAndCampaignContractAddressAndChainId(
-                userWalletAddress = "0xef678007d18427e6022059dbc264f27507cd1ffc",
-                campaignContractAddress = "campaignAddress",
+                userWalletAddress = address,
+                campaignContractAddress = campaignAddress,
                 chainId = defaultChainId
             )!!
 
-            assertThat(task.userWalletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
-            assertThat(task.campaignContractAddress).isEqualTo("campaignAddress")
+            assertThat(task.userWalletAddress).isEqualTo(address)
+            assertThat(task.campaignContractAddress).isEqualTo(campaignAddress)
             assertThat(task.chainId).isEqualTo(defaultChainId)
             assertThat(task.amount).isEqualTo(BigInteger.valueOf(500L))
             assertThat(task.status).isEqualTo(AutoInvestTaskStatus.PENDING)
@@ -85,8 +85,8 @@ class AutoInvestControllerTest : ControllerTestBase() {
                 AutoInvestTask(
                     UUID.randomUUID(),
                     defaultChainId,
-                    "0xef678007d18427e6022059dbc264f27507cd1ffc",
-                    "campaignAddress",
+                    address,
+                    campaignAddress,
                     BigInteger.valueOf(1000L),
                     AutoInvestTaskStatus.PENDING,
                     null,
@@ -111,19 +111,19 @@ class AutoInvestControllerTest : ControllerTestBase() {
         }
 
         verify("Correct auto-invest response is returned") {
-            assertThat(autoInvestResponse.walletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
-            assertThat(autoInvestResponse.campaignAddress).isEqualTo("campaignAddress")
+            assertThat(autoInvestResponse.walletAddress).isEqualTo(address)
+            assertThat(autoInvestResponse.campaignAddress).isEqualTo(campaignAddress)
             assertThat(autoInvestResponse.amount).isEqualTo(BigInteger.valueOf(500L))
         }
 
         verify("Task is correctly updated in the database") {
             val task = autoInvestTaskRepository.findByChainIdAndUserWalletAddress(
-                userWalletAddress = "0xef678007d18427e6022059dbc264f27507cd1ffc",
+                userWalletAddress = address,
                 chainId = defaultChainId
             ).first()
 
-            assertThat(task.userWalletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
-            assertThat(task.campaignContractAddress).isEqualTo("campaignAddress")
+            assertThat(task.userWalletAddress).isEqualTo(address)
+            assertThat(task.campaignContractAddress).isEqualTo(campaignAddress)
             assertThat(task.chainId).isEqualTo(defaultChainId)
             assertThat(task.amount).isEqualTo(BigInteger.valueOf(500L))
             assertThat(task.status).isEqualTo(AutoInvestTaskStatus.PENDING)
@@ -138,8 +138,8 @@ class AutoInvestControllerTest : ControllerTestBase() {
                 AutoInvestTask(
                     UUID.randomUUID(),
                     defaultChainId,
-                    "0xef678007d18427e6022059dbc264f27507cd1ffc",
-                    "campaignAddress",
+                    address,
+                    campaignAddress,
                     BigInteger.valueOf(1000L),
                     AutoInvestTaskStatus.IN_PROCESS,
                     null,
@@ -162,12 +162,12 @@ class AutoInvestControllerTest : ControllerTestBase() {
 
         verify("Task is not updated in the database") {
             val task = autoInvestTaskRepository.findByChainIdAndUserWalletAddress(
-                userWalletAddress = "0xef678007d18427e6022059dbc264f27507cd1ffc",
+                userWalletAddress = address,
                 chainId = defaultChainId
             ).first()
 
-            assertThat(task.userWalletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
-            assertThat(task.campaignContractAddress).isEqualTo("campaignAddress")
+            assertThat(task.userWalletAddress).isEqualTo(address)
+            assertThat(task.campaignContractAddress).isEqualTo(campaignAddress)
             assertThat(task.chainId).isEqualTo(defaultChainId)
             assertThat(task.amount).isEqualTo(BigInteger.valueOf(1000L))
             assertThat(task.status).isEqualTo(AutoInvestTaskStatus.IN_PROCESS)
@@ -181,8 +181,8 @@ class AutoInvestControllerTest : ControllerTestBase() {
                 AutoInvestTask(
                     UUID.randomUUID(),
                     defaultChainId,
-                    "0xef678007d18427e6022059dbc264f27507cd1ffc",
-                    "campaignAddress",
+                    address,
+                    campaignAddress,
                     BigInteger.valueOf(1000L),
                     AutoInvestTaskStatus.PENDING,
                     null,
@@ -205,8 +205,8 @@ class AutoInvestControllerTest : ControllerTestBase() {
             assertThat(autoInvestListResponse.autoInvests).hasSize(1)
 
             val autoInvestResponse = autoInvestListResponse.autoInvests.first()
-            assertThat(autoInvestResponse.walletAddress).isEqualTo("0xef678007d18427e6022059dbc264f27507cd1ffc")
-            assertThat(autoInvestResponse.campaignAddress).isEqualTo("campaignAddress")
+            assertThat(autoInvestResponse.walletAddress).isEqualTo(address)
+            assertThat(autoInvestResponse.campaignAddress).isEqualTo(campaignAddress)
             assertThat(autoInvestResponse.amount).isEqualTo(BigInteger.valueOf(1000L))
         }
     }
@@ -219,8 +219,8 @@ class AutoInvestControllerTest : ControllerTestBase() {
                 AutoInvestTask(
                     UUID.randomUUID(),
                     defaultChainId,
-                    "0xef678007d18427e6022059dbc264f27507cd1ffc",
-                    "campaignAddress",
+                    address,
+                    campaignAddress,
                     BigInteger.valueOf(1000L),
                     AutoInvestTaskStatus.PENDING,
                     null,
@@ -231,8 +231,8 @@ class AutoInvestControllerTest : ControllerTestBase() {
                 AutoInvestTask(
                     UUID.randomUUID(),
                     defaultChainId,
-                    "0xef678007d18427e6022059dbc264f27507cd1ffc",
-                    "campaignAddress-2",
+                    address,
+                    "campaignaddress-2",
                     BigInteger.valueOf(1000L),
                     AutoInvestTaskStatus.PENDING,
                     null,
@@ -254,7 +254,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             assertThat(autoInvestListResponse.autoInvests.map { it.walletAddress })
                 .containsOnly("0xef678007d18427e6022059dbc264f27507cd1ffc")
             assertThat(autoInvestListResponse.autoInvests.map { it.campaignAddress })
-                .containsExactlyInAnyOrderElementsOf(listOf("campaignAddress", "campaignAddress-2"))
+                .containsExactlyInAnyOrderElementsOf(listOf(campaignAddress, "campaignaddress-2"))
             assertThat(autoInvestListResponse.autoInvests.map { it.amount })
                 .containsOnly(BigInteger.valueOf(1000L))
         }
