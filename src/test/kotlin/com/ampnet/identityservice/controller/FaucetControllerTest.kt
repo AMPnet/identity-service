@@ -6,6 +6,7 @@ import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.ReCaptchaException
 import com.ampnet.identityservice.persistence.model.BlockchainTaskStatus
 import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
+import com.ampnet.identityservice.security.WithMockCrowdfundUser
 import com.ampnet.identityservice.service.ReCaptchaService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -24,7 +25,7 @@ class FaucetControllerTest : ControllerTestBase() {
 
     private val defaultChainId = Chain.MATIC_TESTNET_MUMBAI.id
     private val address = "0xef678007d18427e6022059dbc264f27507cd1ffc"
-    private val faucetPath = "/faucet/$defaultChainId/$address"
+    private val faucetPath = "/faucet/$defaultChainId"
 
     @Autowired
     private lateinit var blockchainTaskRepository: BlockchainTaskRepository
@@ -45,6 +46,7 @@ class FaucetControllerTest : ControllerTestBase() {
     }
 
     @Test
+    @WithMockCrowdfundUser
     fun mustBeAbleToRequestFaucetFunds() {
         val reCaptchaToken = "token"
         suppose("ReCAPTCHA verification is successful") {
@@ -78,6 +80,7 @@ class FaucetControllerTest : ControllerTestBase() {
     }
 
     @Test
+    @WithMockCrowdfundUser
     fun mustFailForInvalidReCaptchaTokenRequestFaucetFunds() {
         val reCaptchaToken = "token"
         suppose("ReCAPTCHA verification has failed") {
@@ -99,10 +102,21 @@ class FaucetControllerTest : ControllerTestBase() {
     }
 
     @Test
+    @WithMockCrowdfundUser
     fun mustReturnErrorWhenFaucetIsNotSupportedForChainId() {
         verify("Faucet request fails for unsupported chain") {
             mockMvc.perform(
-                post("/faucet/0/$address")
+                post("/faucet/0")
+            )
+                .andExpect(status().isBadRequest)
+        }
+    }
+
+    @Test
+    fun mustFailForMissingJwt() {
+        verify("Faucet request fails for missing JWT") {
+            mockMvc.perform(
+                post("/faucet/0")
             )
                 .andExpect(status().isBadRequest)
         }
