@@ -24,12 +24,12 @@ class FaucetController(
 
     companion object : KLogging()
 
-    @PostMapping("/faucet/{chainId}/{address}")
+    @PostMapping("/faucet/{chainId}")
     fun requestFaucetFunds(
         @PathVariable chainId: Long,
-        @PathVariable address: String,
         @RequestBody request: ReCaptchaRequest?
     ): ResponseEntity<Void> {
+        val address = ControllerUtils.getAddressFromSecurityContext()
         logger.debug { "Received faucet request for address: $address, chainId: $chainId" }
         reCaptchaService.validateResponseToken(request?.reCaptchaToken)
 
