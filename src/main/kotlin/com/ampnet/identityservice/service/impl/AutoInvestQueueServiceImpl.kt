@@ -5,6 +5,8 @@ import com.ampnet.identityservice.blockchain.IInvestService.InvestmentRecord
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.controller.pojo.request.AutoInvestRequest
 import com.ampnet.identityservice.controller.pojo.response.AutoInvestResponse
+import com.ampnet.identityservice.exception.ErrorCode
+import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.persistence.model.AutoInvestTask
 import com.ampnet.identityservice.persistence.model.AutoInvestTaskHistoryStatus
 import com.ampnet.identityservice.persistence.model.AutoInvestTaskStatus
@@ -34,9 +36,12 @@ class AutoInvestQueueServiceImpl(
 
     companion object : KLogging() {
         const val QUEUE_NAME = "AutoInvestQueue"
+        const val SUPPORTED_VERSION = "1.0.20"
+        const val VERSION_SIZE = 3
     }
 
     private val executorService = scheduledExecutorServiceProvider.newSingleThreadScheduledExecutor(QUEUE_NAME)
+    private val supportedVersion = splitVersion(SUPPORTED_VERSION)
 
     init {
         if (applicationProperties.autoInvest.enabled) {
@@ -60,6 +65,14 @@ class AutoInvestQueueServiceImpl(
         chainId: Long,
         request: AutoInvestRequest
     ): AutoInvestResponse? {
+        val version = blockchainService.getContractVersion(chainId, campaign)
+        if (!isVersionSupported(version)) {
+            throw InvalidRequestException(
+                ErrorCode.BLOCKCHAIN_UNSUPPORTED_VERSION,
+                "This campaign does not support auto invest functionality"
+            )
+        }
+
         val numModified = autoInvestTaskRepository.createOrUpdate(
             AutoInvestTask(
                 chainId = chainId,
@@ -208,4 +221,28 @@ class AutoInvestQueueServiceImpl(
 
     private fun AutoInvestTask.toRecord() =
         InvestmentRecord(this.userWalletAddress, this.campaignContractAddress, this.amount)
+
+    @Suppress("ReturnCount")
+    private fun isVersionSupported(version: String?): Boolean {
+        version?.let {
+            val contractVersion = splitVersion(it)
+            for (i in 0 until VERSION_SIZE) {
+                if (contractVersion[i] < supportedVersion[i]) {
+                    return false
+                }
+            }
+            return true
+        }
+        return false
+    }
+
+    private fun splitVersion(version: String): List<Int> {
+        val splittedVersion = version.split(".").mapNotNull {
+            it.toIntOrNull()
+        }
+        if (splittedVersion.size != VERSION_SIZE) {
+            throw InvalidRequestException(ErrorCode.BLOCKCHAIN_UNSUPPORTED_VERSION, "Invalid contract version")
+        }
+        return splittedVersion
+    }
 }

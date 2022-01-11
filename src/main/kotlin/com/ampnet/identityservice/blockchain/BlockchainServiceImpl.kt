@@ -184,6 +184,14 @@ class BlockchainServiceImpl(
         return sentTransaction?.transactionHash
     }
 
+    @Throws(InternalException::class)
+    override fun getContractVersion(chainId: Long, address: String): String? {
+        val web3j = chainHandler.getBlockchainProperties(chainId).web3j
+        val transactionManager = ReadonlyTransactionManager(web3j, address)
+        val contract = IVersioned.load(address, web3j, transactionManager, DefaultGasProvider())
+        return contract.version()?.sendSafely()
+    }
+
     internal fun getGasPrice(chainId: Long): BigInteger? {
         chainHandler.getGasPriceFeed(chainId)?.let { url ->
             try {
