@@ -2,9 +2,12 @@ package com.ampnet.identityservice.service.impl
 
 import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.blockchain.IInvestService.InvestmentRecord
+import com.ampnet.identityservice.blockchain.Version
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.controller.pojo.request.AutoInvestRequest
 import com.ampnet.identityservice.controller.pojo.response.AutoInvestResponse
+import com.ampnet.identityservice.exception.ErrorCode
+import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.persistence.model.AutoInvestTask
 import com.ampnet.identityservice.persistence.model.AutoInvestTaskHistoryStatus
 import com.ampnet.identityservice.persistence.model.AutoInvestTaskStatus
@@ -34,9 +37,11 @@ class AutoInvestQueueServiceImpl(
 
     companion object : KLogging() {
         const val QUEUE_NAME = "AutoInvestQueue"
+        const val SUPPORTED_VERSION = "1.0.20"
     }
 
     private val executorService = scheduledExecutorServiceProvider.newSingleThreadScheduledExecutor(QUEUE_NAME)
+    private val supportedVersion = Version(SUPPORTED_VERSION)
 
     init {
         if (applicationProperties.autoInvest.enabled) {
@@ -60,6 +65,18 @@ class AutoInvestQueueServiceImpl(
         chainId: Long,
         request: AutoInvestRequest
     ): AutoInvestResponse? {
+        val version = blockchainService.getContractVersion(chainId, campaign)
+            ?: throw InvalidRequestException(
+                ErrorCode.BLOCKCHAIN_UNSUPPORTED_VERSION,
+                "This campaign is missing version number"
+            )
+        if (Version(version) < supportedVersion) {
+            throw InvalidRequestException(
+                ErrorCode.BLOCKCHAIN_UNSUPPORTED_VERSION,
+                "This campaign does not support auto invest functionality"
+            )
+        }
+
         val numModified = autoInvestTaskRepository.createOrUpdate(
             AutoInvestTask(
                 chainId = chainId,

@@ -8,10 +8,13 @@ import com.ampnet.identityservice.persistence.model.AutoInvestTask
 import com.ampnet.identityservice.persistence.model.AutoInvestTaskStatus
 import com.ampnet.identityservice.persistence.repository.AutoInvestTaskRepository
 import com.ampnet.identityservice.security.WithMockCrowdfundUser
+import com.ampnet.identityservice.service.impl.AutoInvestQueueServiceImpl
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.given
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -36,6 +39,8 @@ class AutoInvestControllerTest : ControllerTestBase() {
     fun init() {
         databaseCleanerService.deleteAllUsers()
         databaseCleanerService.deleteAllAutoInvestTasks()
+        given(blockchainService.getContractVersion(any(), any()))
+            .willReturn(AutoInvestQueueServiceImpl.SUPPORTED_VERSION)
     }
 
     @Test

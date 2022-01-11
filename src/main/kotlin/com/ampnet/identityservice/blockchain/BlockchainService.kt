@@ -10,4 +10,5 @@ interface BlockchainService {
     fun sendFaucetFunds(addresses: List<String>, chainId: Long): String?
     fun getAutoInvestStatus(records: List<InvestmentRecord>, chainId: Long): List<InvestmentRecordStatus>
     fun autoInvestFor(records: List<InvestmentRecord>, chainId: Long): String?
+    fun getContractVersion(chainId: Long, address: String): String?
 }

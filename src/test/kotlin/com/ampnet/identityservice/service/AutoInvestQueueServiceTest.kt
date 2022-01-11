@@ -10,18 +10,23 @@ import com.ampnet.identityservice.config.DatabaseCleanerService
 import com.ampnet.identityservice.config.TestSchedulerConfiguration
 import com.ampnet.identityservice.controller.pojo.request.AutoInvestRequest
 import com.ampnet.identityservice.controller.pojo.response.AutoInvestResponse
+import com.ampnet.identityservice.exception.ErrorCode
+import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.persistence.model.AutoInvestTask
 import com.ampnet.identityservice.persistence.model.AutoInvestTaskHistoryStatus
 import com.ampnet.identityservice.persistence.model.AutoInvestTaskStatus
 import com.ampnet.identityservice.persistence.model.AutoInvestTransaction
 import com.ampnet.identityservice.persistence.repository.AutoInvestTaskRepository
 import com.ampnet.identityservice.persistence.repository.AutoInvestTransactionRepository
+import com.ampnet.identityservice.service.impl.AutoInvestQueueServiceImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
 import org.mockito.kotlin.given
+import org.mockito.kotlin.willReturn
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
@@ -73,6 +78,8 @@ class AutoInvestQueueServiceTest : TestBase() {
     fun beforeEach() {
         databaseCleanerService.deleteAllAutoInvestTasks()
         databaseCleanerService.deleteAllAutoInvestTransactions()
+        given(blockchainService.getContractVersion(any(), any()))
+            .willReturn(AutoInvestQueueServiceImpl.SUPPORTED_VERSION)
     }
 
     @AfterEach
@@ -561,6 +568,63 @@ class AutoInvestQueueServiceTest : TestBase() {
 
             assertThat(autoInvestTaskRepository.getHistoricalUuidsForStatus(AutoInvestTaskHistoryStatus.SUCCESS))
                 .containsExactlyInAnyOrderElementsOf(tasks.map { it.uuid })
+        }
+    }
+
+    @Test
+    fun mustThrowErrorForUnsupportedContractVersion() {
+        suppose("Blockchain service will return unsupported contract version") {
+            given(blockchainService.getContractVersion(any(), any())).willReturn { "1.0.0" }
+        }
+
+        verify("Service will throw exception") {
+            val exception = assertThrows<InvalidRequestException> {
+                autoInvestQueueService.createOrUpdateAutoInvestTask(
+                    address = address1,
+                    campaign = campaign1,
+                    chainId = chainId,
+                    request = AutoInvestRequest(amount = BigInteger.valueOf(600L))
+                )
+            }
+            assertThat(exception.errorCode).isEqualTo(ErrorCode.BLOCKCHAIN_UNSUPPORTED_VERSION)
+        }
+    }
+
+    @Test
+    fun mustThrowErrorForInvalidContractVersion() {
+        suppose("Blockchain service will return invalid contract version") {
+            given(blockchainService.getContractVersion(any(), any())).willReturn { "1.a" }
+        }
+
+        verify("Service will throw exception") {
+            val exception = assertThrows<InvalidRequestException> {
+                autoInvestQueueService.createOrUpdateAutoInvestTask(
+                    address = address1,
+                    campaign = campaign1,
+                    chainId = chainId,
+                    request = AutoInvestRequest(amount = BigInteger.valueOf(600L))
+                )
+            }
+            assertThat(exception.errorCode).isEqualTo(ErrorCode.BLOCKCHAIN_UNSUPPORTED_VERSION)
+        }
+    }
+
+    @Test
+    fun mustThrowErrorForMissingContractVersion() {
+        suppose("Blockchain service will not return contract version") {
+            given(blockchainService.getContractVersion(any(), any())).willReturn { null }
+        }
+
+        verify("Service will throw exception") {
+            val exception = assertThrows<InvalidRequestException> {
+                autoInvestQueueService.createOrUpdateAutoInvestTask(
+                    address = address1,
+                    campaign = campaign1,
+                    chainId = chainId,
+                    request = AutoInvestRequest(amount = BigInteger.valueOf(600L))
+                )
+            }
+            assertThat(exception.errorCode).isEqualTo(ErrorCode.BLOCKCHAIN_UNSUPPORTED_VERSION)
         }
     }
 
