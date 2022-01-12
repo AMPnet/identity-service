@@ -46,14 +46,12 @@ class WhitelistQueueServiceImpl(
     }
 
     override fun executeBlockchainTask(task: BlockchainTask): String? =
-        if (task.payload != null) {
-            val hash = blockchainService.whitelistAddresses(task.addresses.toList(), task.payload!!, task.chainId)
+        task.payload?.let {
+            val hash = blockchainService.whitelistAddresses(task.addresses.toList(), it, task.chainId)
             if (hash == null) {
                 logger.warn { "Failed to whitelist addresses for task: ${task.uuid}" }
             }
             hash
-        } else {
-            null
         }
 
     override fun addAddressToQueue(address: String, request: WhitelistRequest) {
