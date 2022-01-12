@@ -43,7 +43,7 @@ class AutoInvestController(
         @PathVariable address: String
     ): ResponseEntity<AutoInvestListResponse> {
         logger.debug { "Get auto-invest for address: $address and chainId: $chainId" }
-        val tasks = autoInvestTaskRepository.findByChainIdAndUserWalletAddress(
+        val tasks = autoInvestTaskRepository.findByChainIdAndUserWalletAddressOrderByCreatedAtDesc(
             chainId = chainId,
             userWalletAddress = address.lowercase()
         )

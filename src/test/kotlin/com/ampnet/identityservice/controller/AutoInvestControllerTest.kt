@@ -122,7 +122,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
         }
 
         verify("Task is correctly updated in the database") {
-            val task = autoInvestTaskRepository.findByChainIdAndUserWalletAddress(
+            val task = autoInvestTaskRepository.findByChainIdAndUserWalletAddressOrderByCreatedAtDesc(
                 userWalletAddress = address,
                 chainId = defaultChainId
             ).first()
@@ -166,7 +166,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
         }
 
         verify("Task is not updated in the database") {
-            val task = autoInvestTaskRepository.findByChainIdAndUserWalletAddress(
+            val task = autoInvestTaskRepository.findByChainIdAndUserWalletAddressOrderByCreatedAtDesc(
                 userWalletAddress = address,
                 chainId = defaultChainId
             ).first()
