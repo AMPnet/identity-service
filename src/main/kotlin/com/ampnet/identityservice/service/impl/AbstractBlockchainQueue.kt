@@ -41,6 +41,8 @@ abstract class AbstractBlockchainQueue(
 
     protected abstract fun createBlockchainTaskFromPendingTask()
 
+    protected abstract fun executeBlockchainTask(task: BlockchainTask): String?
+
     @Suppress("TooGenericExceptionCaught")
     private fun processTasks() {
         // creates pending tasks for all chains which have at least one address in the queue
@@ -93,21 +95,8 @@ abstract class AbstractBlockchainQueue(
 
     private fun handlePendingTask(task: BlockchainTask) {
         logger.debug { "Starting to process task: $task" }
-
-        val hash = if (task.payload?.isEmpty()?.not() == true) {
-            blockchainService.whitelistAddresses(task.addresses.toList(), task.payload!!, task.chainId)
-        } else {
-            blockchainService.sendFaucetFunds(task.addresses.toList(), task.chainId)
-        }
-
-        if (hash.isNullOrEmpty()) {
-            logger.warn { "Failed to get hash for task: $task.uuid" }
-            return
-        }
-
-        logger.info {
-            "Handling process for addresses: ${task.addresses.contentToString()} with hash: $hash"
-        }
+        val hash = executeBlockchainTask(task) ?: return
+        logger.info { "Handling process for addresses: ${task.addresses.contentToString()} with hash: $hash" }
         blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.IN_PROCESS, hash, task.payload)
     }
 

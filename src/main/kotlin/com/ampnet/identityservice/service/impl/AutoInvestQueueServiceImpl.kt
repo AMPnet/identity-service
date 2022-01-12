@@ -133,7 +133,7 @@ class AutoInvestQueueServiceImpl(
     }
 
     private fun handleInProcessTasksForChain(chainId: Long, tasks: List<AutoInvestTask>) {
-        logger.debug { "Processing in process auto-investments for chainId: $chainId" }
+        logger.debug { "Processing in process auto-investments for chainId: $chainId for tasks: $tasks" }
         val groupedByHash = tasks.filter { it.hash != null }.groupBy { it.hash!! }
         groupedByHash.forEach { handleInProcessHashForChain(it.key, chainId, it.value) }
     }
