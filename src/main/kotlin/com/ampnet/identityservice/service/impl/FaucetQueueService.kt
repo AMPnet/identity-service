@@ -2,6 +2,7 @@ package com.ampnet.identityservice.service.impl
 
 import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.config.ApplicationProperties
+import com.ampnet.identityservice.persistence.model.BlockchainTask
 import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
 import com.ampnet.identityservice.service.ScheduledExecutorServiceProvider
 import com.ampnet.identityservice.service.UuidProvider
@@ -38,4 +39,15 @@ class FaucetQueueService(
             )
         }
     }
+
+    override fun executeBlockchainTask(task: BlockchainTask): String? =
+        if (task.payload == null) {
+            val hash = blockchainService.sendFaucetFunds(task.addresses.toList(), task.chainId)
+            if (hash == null) {
+                logger.warn { "Failed to send faucet funds for task: ${task.uuid}" }
+            }
+            hash
+        } else {
+            null
+        }
 }

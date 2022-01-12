@@ -3,6 +3,7 @@ package com.ampnet.identityservice.service.impl
 import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
+import com.ampnet.identityservice.persistence.model.BlockchainTask
 import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
 import com.ampnet.identityservice.service.ScheduledExecutorServiceProvider
 import com.ampnet.identityservice.service.UuidProvider
@@ -43,6 +44,17 @@ class WhitelistQueueServiceImpl(
             }
         }
     }
+
+    override fun executeBlockchainTask(task: BlockchainTask): String? =
+        if (task.payload != null) {
+            val hash = blockchainService.whitelistAddresses(task.addresses.toList(), task.payload!!, task.chainId)
+            if (hash == null) {
+                logger.warn { "Failed to whitelist addresses for task: ${task.uuid}" }
+            }
+            hash
+        } else {
+            null
+        }
 
     override fun addAddressToQueue(address: String, request: WhitelistRequest) {
         if (blockchainService.isWhitelisted(address, request.issuerAddress, request.chainId)) {
