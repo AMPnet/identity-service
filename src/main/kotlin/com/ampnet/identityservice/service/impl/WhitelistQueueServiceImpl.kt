@@ -56,11 +56,11 @@ class WhitelistQueueServiceImpl(
 
     override fun addAddressToQueue(address: String, request: WhitelistRequest) {
         if (blockchainService.isWhitelisted(address, request.issuerAddress, request.chainId)) {
-            logger.info { "Address: $address for request: $request already whitelisted or in process" }
+            logger.info { "Address: $address for request: $request already whitelisted " }
             return
         }
-        logger.info { "Received task for address: $address" }
+        logger.info { "Adding address: $address for whitelisting" }
         pendingBlockchainTaskRepository.addAddressToQueue(address, request.chainId, request.issuerAddress)
-        logger.info { "Created BlockchainTask" }
+        logger.debug { "Created BlockchainTask" }
     }
 }

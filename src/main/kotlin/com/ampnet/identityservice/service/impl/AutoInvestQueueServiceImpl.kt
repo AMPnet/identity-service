@@ -91,18 +91,15 @@ class AutoInvestQueueServiceImpl(
 
         return if (numModified == 0) {
             logger.warn {
-                "Auto-invest already in process for address: $address, campaign: $campaign," +
-                    " chainId: $chainId"
+                "Auto-invest already in process for address: $address, campaign: $campaign, chainId: $chainId"
             }
             null
         } else {
-            val task = autoInvestTaskRepository.findByUserWalletAddressAndCampaignContractAddressAndChainId(
+            autoInvestTaskRepository.findByUserWalletAddressAndCampaignContractAddressAndChainId(
                 userWalletAddress = address,
                 campaignContractAddress = campaign,
                 chainId = chainId
-            )
-
-            task?.let {
+            )?.let {
                 logger.info { "Submitted auto-invest task: $it" }
                 AutoInvestResponse(
                     walletAddress = it.userWalletAddress,
@@ -168,37 +165,34 @@ class AutoInvestQueueServiceImpl(
     private fun handlePendingTasksForChain(chainId: Long, tasks: List<AutoInvestTask>) {
         logger.debug { "Processing pending auto-investments for chainId: $chainId" }
         val (expiredTasks, activeTasks) = tasks.partition { it.createdAt.isBefore(getMaximumPendingPeriod()) }
-
-        logger.debug { "Deleting ${expiredTasks.size} expired tasks for chainId: $chainId" }
-        autoInvestTaskRepository.completeTasks(
-            expiredTasks.map { it.uuid },
-            AutoInvestTaskHistoryStatus.EXPIRED,
-            ZonedDateTime.now()
-        )
+        if (expiredTasks.isNotEmpty()) {
+            autoInvestTaskRepository.completeTasks(
+                expiredTasks.map { it.uuid },
+                AutoInvestTaskHistoryStatus.EXPIRED,
+                ZonedDateTime.now()
+            )
+            logger.info { "Expired tasks: ${expiredTasks.size}" }
+        }
 
         val records = activeTasks.map { it.toRecord() }
-
         if (records.isEmpty()) {
-            logger.debug { "No active tasks for chainId: $chainId" }
             return
         }
+        logger.debug { "Active tasks for chainId: $chainId has size: ${records.size}" }
 
         val statuses = blockchainService.getAutoInvestStatus(records, chainId)
         val readyToInvestTasks = activeTasks.zip(statuses).filter { it.second.readyToInvest }
-
         if (readyToInvestTasks.isEmpty()) {
-            logger.debug { "No ready to invest tasks for chainId: $chainId" }
             return
         }
 
         val hash = blockchainService.autoInvestFor(readyToInvestTasks.map { it.first.toRecord() }, chainId)
-
         if (hash.isNullOrEmpty()) {
             logger.warn { "Failed to get hash for auto-invest for chainId: $chainId" }
             return
         }
 
-        logger.info { "Auto-investing for chainId: $chainId" }
+        logger.info { "Auto-invested finished with hash: $hash for chainId: $chainId" }
         autoInvestTaskRepository.updateStatusAndHashForIds(
             readyToInvestTasks.map { it.first.uuid },
             AutoInvestTaskStatus.IN_PROCESS,
@@ -212,6 +206,7 @@ class AutoInvestQueueServiceImpl(
                 timeProvider = timeProvider
             )
         )
+        logger.debug { "Update database" }
     }
 
     private fun getMaximumPendingPeriod() = timeProvider.getZonedDateTime()

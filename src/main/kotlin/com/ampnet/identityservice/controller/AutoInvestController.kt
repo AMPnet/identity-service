@@ -28,13 +28,14 @@ class AutoInvestController(
         @RequestBody request: AutoInvestRequest
     ): ResponseEntity<AutoInvestResponse> {
         val address = ControllerUtils.getAddressFromSecurityContext()
-        logger.debug {
+        logger.info {
             "Received auto-invest request: $request for address: $address, campaign: $campaign and chainId: $chainId"
         }
         val response = autoInvestQueueService.createOrUpdateAutoInvestTask(
             address, campaign.lowercase(), chainId, request
         )
-        return response?.let { ResponseEntity.ok(it) } ?: ResponseEntity.badRequest().build()
+        return response?.let { ResponseEntity.ok(it) }
+            ?: ResponseEntity.badRequest().build()
     }
 
     @GetMapping("/auto_invest/{chainId}/{address}")
@@ -42,12 +43,10 @@ class AutoInvestController(
         @PathVariable chainId: Long,
         @PathVariable address: String
     ): ResponseEntity<AutoInvestListResponse> {
-        logger.debug { "Get auto-invest for address: $address and chainId: $chainId" }
         val tasks = autoInvestTaskRepository.findByChainIdAndUserWalletAddressOrderByCreatedAtDesc(
             chainId = chainId,
             userWalletAddress = address.lowercase()
         )
-
         return ResponseEntity.ok(
             AutoInvestListResponse(
                 tasks.map { AutoInvestResponse(it) }
