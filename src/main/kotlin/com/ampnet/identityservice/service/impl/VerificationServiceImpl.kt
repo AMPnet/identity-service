@@ -18,14 +18,13 @@ class VerificationServiceImpl : VerificationService {
 
     companion object : KLogging()
 
-    private val userPayload = mutableMapOf<String, String>()
-    private val message = "Welcome!\nClick “Sign” to sign in. No password needed!\nNonce: "
-    @Suppress("MagicNumber") // the number is stored in the variable anyway, but detekt reports it because of `valueOf`
+    @Suppress("MagicNumber")
     private val vOffset = BigInteger.valueOf(27L)
+    private val userPayload = mutableMapOf<String, String>()
 
     override fun generatePayload(address: String): String {
         val nonce = SecureRandom().nextInt(Integer.MAX_VALUE).toString()
-        val userMessage = message + nonce
+        val userMessage = SignMessage(address, nonce).toString()
         userPayload[address.lowercase()] = userMessage
         return userMessage
     }
@@ -90,6 +89,11 @@ class VerificationServiceImpl : VerificationService {
         } else {
             this
         }
-}
 
-private fun Byte.toByteArray() = ByteArray(1) { this }
+    private fun Byte.toByteArray() = ByteArray(1) { this }
+
+    private data class SignMessage(val address: String, val nonce: String) {
+        override fun toString(): String =
+            "Welcome!\nPlease sign this message to verify that you are the owner of address: $address\nNonce: $nonce"
+    }
+}
