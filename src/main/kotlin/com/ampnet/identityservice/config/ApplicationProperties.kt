@@ -67,6 +67,7 @@ class QueueProperties {
     var polling: Long = 5_000
     var initialDelay: Long = 15_000
     var miningPeriod: Long = 10 * 60 * 1000
+    var maxAddressesPerTask: Int = 10
 }
 
 @Suppress("MagicNumber")
@@ -78,7 +79,6 @@ class PinataProperties {
 @Suppress("MagicNumber")
 class FaucetProperties {
     var enabled: Boolean = false
-    var maxAddressesPerTask: Int = 100
     var gasLimit: BigInteger = BigInteger.valueOf(4_000_000) // test run with 100 random addresses used 3,829,595 gas
 }
 

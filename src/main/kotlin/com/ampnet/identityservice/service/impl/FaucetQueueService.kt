@@ -35,7 +35,7 @@ class FaucetQueueService(
                 uuidProvider.getUuid(),
                 chainId,
                 timeProvider.getZonedDateTime(),
-                applicationProperties.faucet.maxAddressesPerTask
+                applicationProperties.queue.maxAddressesPerTask
             )
         }
     }

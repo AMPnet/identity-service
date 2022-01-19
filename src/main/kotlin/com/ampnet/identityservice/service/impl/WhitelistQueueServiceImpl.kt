@@ -38,7 +38,7 @@ class WhitelistQueueServiceImpl(
                     uuidProvider.getUuid(),
                     chainId,
                     timeProvider.getZonedDateTime(),
-                    applicationProperties.faucet.maxAddressesPerTask,
+                    applicationProperties.queue.maxAddressesPerTask,
                     issuerAddress
                 )
             }
