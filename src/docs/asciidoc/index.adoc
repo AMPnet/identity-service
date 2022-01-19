@@ -146,10 +146,18 @@ will be returned.
 .Response
 include::{snippets}/AutoInvestControllerTest/mustNotUpdateAutoInvestTaskWhenAlreadyInProcess/http-response.adoc[]
 
-=== Get Auto-invest Task Amount
+=== Get Auto-invest Tasks for User
 Returns pending auto-invest tasks for specified chain id and user address.
 
 .Request
 include::{snippets}/AutoInvestControllerTest/mustCorrectlyReturnAutoInvestTask/http-request.adoc[]
 .Response
 include::{snippets}/AutoInvestControllerTest/mustCorrectlyReturnAutoInvestTask/http-response.adoc[]
+
+=== Get Auto-invest Tasks for Campaign
+Returns pending auto-invest tasks for specified chain id and campaign address.
+
+.Request
+include::{snippets}/AutoInvestControllerTest/mustGetPendingAutoInvestTasksForCampaign/http-request.adoc[]
+.Response
+include::{snippets}/AutoInvestControllerTest/mustGetPendingAutoInvestTasksForCampaign/http-response.adoc[]

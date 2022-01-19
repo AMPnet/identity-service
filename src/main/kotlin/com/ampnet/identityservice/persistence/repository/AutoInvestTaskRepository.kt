@@ -76,4 +76,9 @@ interface AutoInvestTaskRepository : JpaRepository<AutoInvestTask, UUID> {
         nativeQuery = true
     )
     fun getHistoricalUuidsForStatus(status: AutoInvestTaskHistoryStatus): List<UUID>
+
+    fun findByChainIdAndCampaignContractAddressOrderByCreatedAtDesc(
+        chainId: Long,
+        campaignContractAddress: String
+    ): List<AutoInvestTask>
 }
