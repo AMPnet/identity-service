@@ -38,6 +38,16 @@ class AutoInvestController(
             ?: ResponseEntity.badRequest().build()
     }
 
+    @GetMapping("/auto_invest/{chainId}/campaign/{campaign}")
+    fun getAutoInvestTasksForCampaign(
+        @PathVariable chainId: Long,
+        @PathVariable campaign: String
+    ): ResponseEntity<AutoInvestListResponse> {
+        val tasks = autoInvestTaskRepository
+            .findByChainIdAndCampaignContractAddressOrderByCreatedAtDesc(chainId, campaign)
+        return ResponseEntity.ok(AutoInvestListResponse(tasks.map { AutoInvestResponse(it) }))
+    }
+
     @GetMapping("/auto_invest/{chainId}/{address}")
     fun getAutoInvestTask(
         @PathVariable chainId: Long,

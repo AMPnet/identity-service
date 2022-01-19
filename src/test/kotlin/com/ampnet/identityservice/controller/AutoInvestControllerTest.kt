@@ -264,4 +264,63 @@ class AutoInvestControllerTest : ControllerTestBase() {
                 .containsOnly(BigInteger.valueOf(1000L))
         }
     }
+
+    @Test
+    fun mustGetPendingAutoInvestTasksForCampaign() {
+        suppose("There are pending auto invest tasks") {
+            autoInvestTaskRepository.createOrUpdate(
+                AutoInvestTask(
+                    UUID.randomUUID(),
+                    defaultChainId,
+                    address,
+                    campaignAddress,
+                    BigInteger.valueOf(1000L),
+                    AutoInvestTaskStatus.PENDING,
+                    null,
+                    ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC"))
+                )
+            )
+            autoInvestTaskRepository.createOrUpdate(
+                AutoInvestTask(
+                    UUID.randomUUID(),
+                    defaultChainId,
+                    "0x00",
+                    campaignAddress,
+                    BigInteger.valueOf(1000L),
+                    AutoInvestTaskStatus.PENDING,
+                    null,
+                    ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC"))
+                )
+            )
+        }
+        suppose("There is task pending for other campaign") {
+            autoInvestTaskRepository.createOrUpdate(
+                AutoInvestTask(
+                    UUID.randomUUID(),
+                    defaultChainId,
+                    address,
+                    "campaignAddress-2",
+                    BigInteger.valueOf(2000L),
+                    AutoInvestTaskStatus.PENDING,
+                    null,
+                    ZonedDateTime.now().withZoneSameInstant(ZoneId.of("UTC"))
+                )
+            )
+        }
+
+        verify("Controller will return a list of pending auto invest tasks for campaign") {
+            val result = mockMvc.perform(get("${autoInvestPath}campaign/$campaignAddress"))
+                .andExpect(status().isOk)
+                .andReturn()
+
+            val autoInvestListResponse: AutoInvestListResponse = objectMapper.readValue(result.response.contentAsString)
+            assertThat(autoInvestListResponse.autoInvests).hasSize(2)
+            assertThat(autoInvestListResponse.autoInvests.map { it.campaignAddress })
+                .containsOnly(campaignAddress)
+            assertThat(autoInvestListResponse.autoInvests.map { it.walletAddress })
+                .containsExactlyInAnyOrderElementsOf(listOf(address, "0x00"))
+            assertThat(autoInvestListResponse.autoInvests.map { it.amount })
+                .containsOnly(BigInteger.valueOf(1000L))
+        }
+    }
 }
