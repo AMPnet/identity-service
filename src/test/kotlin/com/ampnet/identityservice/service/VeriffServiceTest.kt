@@ -36,12 +36,10 @@ class VeriffServiceTest : JpaServiceTestBase() {
     private val zonedDateTimeProvider = CurrentZonedDateTimeProvider()
 
     private val veriffService: VeriffServiceImpl by lazy {
-        val mailService = mock<MailService>()
         val uuidProvider = RandomUuidProvider()
         val whitelistQueueService = mock<WhitelistQueueService>()
         val userService = UserServiceImpl(
-            uuidProvider, zonedDateTimeProvider, userRepository, userInfoRepository, mailTokenRepository,
-            mailService, applicationProperties, whitelistQueueService
+            uuidProvider, zonedDateTimeProvider, userRepository, userInfoRepository, whitelistQueueService
         )
         VeriffServiceImpl(
             zonedDateTimeProvider, veriffSessionRepository, veriffDecisionRepository, userInfoRepository,

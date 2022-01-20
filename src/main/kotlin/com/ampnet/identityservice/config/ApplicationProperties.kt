@@ -11,7 +11,6 @@ class ApplicationProperties {
     val jwt = JwtProperties()
     val veriff = VeriffProperties()
     val test = TestProperties()
-    val mail = MailProperties()
     val queue = QueueProperties()
     val chainEthereum = ChainProperties()
     val chainGoerli = ChainProperties()
@@ -56,12 +55,6 @@ class ChainProperties {
     var autoInvestServiceAddress: String = ""
 }
 
-class MailProperties {
-    var baseUrl: String = ""
-    var sender: String = "no-reply@ampnet.io"
-    var enabled: Boolean = false
-}
-
 @Suppress("MagicNumber")
 class QueueProperties {
     var polling: Long = 5_000
@@ -84,14 +77,14 @@ class FaucetProperties {
 
 @Suppress("MagicNumber")
 class WalletApproveProperties {
-    var gasLimit: BigInteger = BigInteger.valueOf(20_000_000L)
+    var gasLimit: BigInteger = BigInteger.valueOf(10_000_000L)
 }
 
 @Suppress("MagicNumber")
 class AutoInvestProperties {
     var enabled: Boolean = false
     var timeout: Duration = Duration.ofDays(7L)
-    var gasLimit: BigInteger = BigInteger.valueOf(20_000_000L) // estimated gas usage for 100 auto-invests at once
+    var gasLimit: BigInteger = BigInteger.valueOf(10_000_000L) // estimated gas usage for 100 auto-invests at once
     val queue = QueueProperties()
 }
 

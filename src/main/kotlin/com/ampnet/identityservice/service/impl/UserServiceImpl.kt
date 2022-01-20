@@ -1,19 +1,15 @@
 package com.ampnet.identityservice.service.impl
 
-import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.controller.pojo.request.KycTestRequest
 import com.ampnet.identityservice.controller.pojo.request.WhitelistRequest
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.exception.ResourceNotFoundException
 import com.ampnet.identityservice.persistence.model.Document
-import com.ampnet.identityservice.persistence.model.MailToken
 import com.ampnet.identityservice.persistence.model.User
 import com.ampnet.identityservice.persistence.model.UserInfo
-import com.ampnet.identityservice.persistence.repository.MailTokenRepository
 import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
-import com.ampnet.identityservice.service.MailService
 import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.WhitelistQueueService
@@ -33,16 +29,13 @@ class UserServiceImpl(
     private val zonedDateTimeProvider: ZonedDateTimeProvider,
     private val userRepository: UserRepository,
     private val userInfoRepository: UserInfoRepository,
-    private val mailTokenRepository: MailTokenRepository,
-    private val mailService: MailService,
-    private val applicationProperties: ApplicationProperties,
     private val whitelistQueueService: WhitelistQueueService
 ) : UserService {
 
     companion object : KLogging()
 
     @Transactional(readOnly = true)
-    override fun getUserResponse(address: String): UserResponse = generateUserResponse(getUser(address))
+    override fun getUserResponse(address: String): UserResponse = UserResponse(getUser(address))
 
     @Transactional
     @Throws(ResourceNotFoundException::class)
@@ -52,7 +45,7 @@ class UserServiceImpl(
         val user = getUser(userAddress)
         verifyUser(user, userInfo)
         logger.info { "Connected UserInfo: ${userInfo.uuid} to user: $userAddress" }
-        return generateUserResponse(user)
+        return UserResponse(user)
     }
 
     @Transactional
@@ -62,43 +55,15 @@ class UserServiceImpl(
             logger.info { "User is created for address: $lowercaseAddress" }
             userRepository.save(User(lowercaseAddress))
         }
-        return generateUserResponse(user)
+        return UserResponse(user)
     }
 
     @Transactional
     override fun updateEmail(email: String, address: String): UserResponse {
+        logger.debug { "Updating mail for address: $address with new email: $email" }
         val user = getUser(address)
-        logger.info { "Mail confirmation is ${if (applicationProperties.mail.enabled) "enabled" else "disabled"}" }
-        if (applicationProperties.mail.enabled.not()) {
-            user.email = email
-            return generateUserResponse(user)
-        }
-        val mailToken = MailToken(
-            0, address, email, uuidProvider.getUuid(), zonedDateTimeProvider.getZonedDateTime()
-        )
-        mailTokenRepository.save(mailToken)
-        mailService.sendEmailConfirmation(email, mailToken.token)
-        user.email = null
-        return generateUserResponse(user)
-    }
-
-    @Transactional
-    @Throws(InvalidRequestException::class)
-    override fun confirmMail(token: UUID): UserResponse? {
-        mailTokenRepository.findByToken(token)?.let { mailToken ->
-            if (mailToken.isExpired(zonedDateTimeProvider.getZonedDateTime())) {
-                throw InvalidRequestException(
-                    ErrorCode.REG_EMAIL_EXPIRED_TOKEN,
-                    "User is trying to confirm mail with expired token: $token"
-                )
-            }
-            mailTokenRepository.delete(mailToken)
-            userRepository.findByAddress(mailToken.userAddress)?.let { user ->
-                user.email = mailToken.email
-                return generateUserResponse(user)
-            }
-        }
-        return null
+        user.email = email.lowercase()
+        return UserResponse(user)
     }
 
     @Transactional
@@ -112,7 +77,7 @@ class UserServiceImpl(
         )
         userInfoRepository.save(userInfo)
         verifyUser(user, userInfo)
-        return generateUserResponse(user)
+        return UserResponse(user)
     }
 
     @Throws(InvalidRequestException::class)
@@ -132,15 +97,6 @@ class UserServiceImpl(
         userInfo.connected = true
         user.userInfoUuid = userInfo.uuid
         return user
-    }
-
-    private fun generateUserResponse(user: User): UserResponse {
-        val (email, emailVerified) = if (user.email == null) {
-            Pair(mailTokenRepository.findByUserAddressOrderByCreatedAtDesc(user.address).firstOrNull()?.email, false)
-        } else {
-            Pair(user.email, true)
-        }
-        return UserResponse(user.address, email, emailVerified, user.userInfoUuid != null)
     }
 
     private fun getUser(address: String): User = userRepository.findByAddress(address.lowercase())
