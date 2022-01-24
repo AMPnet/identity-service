@@ -10,13 +10,11 @@ import com.ampnet.identityservice.persistence.model.Document
 import com.ampnet.identityservice.persistence.model.RefreshToken
 import com.ampnet.identityservice.persistence.model.User
 import com.ampnet.identityservice.persistence.model.UserInfo
-import com.ampnet.identityservice.persistence.repository.MailTokenRepository
 import com.ampnet.identityservice.persistence.repository.RefreshTokenRepository
 import com.ampnet.identityservice.persistence.repository.UserInfoRepository
 import com.ampnet.identityservice.persistence.repository.UserRepository
 import com.ampnet.identityservice.persistence.repository.VeriffDecisionRepository
 import com.ampnet.identityservice.persistence.repository.VeriffSessionRepository
-import com.ampnet.identityservice.service.MailService
 import com.ampnet.identityservice.service.PinataService
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.VerificationService
@@ -81,16 +79,10 @@ abstract class ControllerTestBase : TestBase() {
     protected lateinit var userRepository: UserRepository
 
     @Autowired
-    protected lateinit var mailTokenRepository: MailTokenRepository
-
-    @Autowired
     protected lateinit var zonedDateTimeProvider: ZonedDateTimeProvider
 
     @Autowired
     protected lateinit var uuidProvider: UuidProvider
-
-    @MockBean
-    protected lateinit var mailService: MailService
 
     @MockBean
     protected lateinit var blockchainService: BlockchainService

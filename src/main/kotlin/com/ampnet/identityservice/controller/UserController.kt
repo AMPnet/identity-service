@@ -16,9 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.util.UUID
 
 @RestController
 class UserController(
@@ -53,12 +51,6 @@ class UserController(
         userService.whitelistAddress(address, request)
         return ResponseEntity.ok().build()
     }
-
-    @GetMapping("/user/email")
-    fun confirmUserEmail(@RequestParam token: UUID): ResponseEntity<UserResponse> =
-        userService.confirmMail(token)?.let { user ->
-            ResponseEntity.ok(user)
-        } ?: ResponseEntity.badRequest().build()
 
     @PostMapping("/user/logout")
     fun logout(): ResponseEntity<Unit> {
