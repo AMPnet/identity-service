@@ -132,7 +132,7 @@ class BlockchainServiceImpl(
     }
 
     @Throws(InternalException::class)
-    override fun autoInvestFor(records: List<InvestmentRecord>, chainId: Long): String? {
+    override fun autoInvestFor(records: List<InvestmentRecordStatus>, chainId: Long): String? {
         logger.info { "Auto-investing on chainId: $chainId" }
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
         val autoInvest = blockchainProperties.autoInvest ?: throw InternalException(
@@ -156,7 +156,8 @@ class BlockchainServiceImpl(
             gasProvider
         )
 
-        val sentTransaction = autoInvestContract.investFor(records).sendSafely()
+        val investmentRecords = records.map { InvestmentRecord(it) }
+        val sentTransaction = autoInvestContract.investFor(investmentRecords).sendSafely()
 
         logger.info { "Successfully send request to auto-invest on chain: $chainId" }
 

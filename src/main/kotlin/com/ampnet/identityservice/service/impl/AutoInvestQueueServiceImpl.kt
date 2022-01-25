@@ -186,7 +186,7 @@ class AutoInvestQueueServiceImpl(
             return
         }
 
-        val hash = blockchainService.autoInvestFor(readyToInvestTasks.map { it.first.toRecord() }, chainId)
+        val hash = blockchainService.autoInvestFor(readyToInvestTasks.map { it.second }, chainId)
         if (hash.isNullOrEmpty()) {
             logger.warn { "Failed to get hash for auto-invest for chainId: $chainId" }
             return
