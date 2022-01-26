@@ -403,8 +403,8 @@ class AutoInvestQueueServiceTest : TestBase() {
         }
 
         suppose("Auto-invest is requested for ready tasks") {
-            val x = readyTasks.map { it.isReadyForAutoInvest(true) }
-            given(blockchainService.autoInvestFor(x, chainId)).willReturn(hash)
+            val readyAutoInvestTasks = readyTasks.map { it.isReadyForAutoInvest(true) }
+            given(blockchainService.autoInvestFor(readyAutoInvestTasks, chainId)).willReturn(hash)
         }
 
         suppose("Transaction is successfully mined") {
