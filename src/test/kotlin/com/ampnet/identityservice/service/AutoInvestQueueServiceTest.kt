@@ -396,7 +396,7 @@ class AutoInvestQueueServiceTest : TestBase() {
             given(blockchainService.getAutoInvestStatus((readyTasks + notReadyTasks).map { it.toRecord() }, chainId))
                 .willReturn(
                     readyTasks.map { it.isReadyForAutoInvest(true) } +
-                            notReadyTasks.map { it.isReadyForAutoInvest(false) }
+                        notReadyTasks.map { it.isReadyForAutoInvest(false) }
                 )
             given(blockchainService.getAutoInvestStatus((notReadyTasks).map { it.toRecord() }, chainId))
                 .willReturn(notReadyTasks.map { it.isReadyForAutoInvest(false) })
@@ -547,15 +547,12 @@ class AutoInvestQueueServiceTest : TestBase() {
             ).willReturn(chain3Tasks.map { it.isReadyForAutoInvest(true) })
         }
         suppose("Blockchain service will return different hash for each chain") {
-            given(blockchainService.autoInvestFor(chain1Tasks.map { it.isReadyForAutoInvest(true) }, 1L)).willReturn(
-                hash1
-            )
-            given(blockchainService.autoInvestFor(chain2Tasks.map { it.isReadyForAutoInvest(true) }, 2L)).willReturn(
-                hash2
-            )
-            given(blockchainService.autoInvestFor(chain3Tasks.map { it.isReadyForAutoInvest(true) }, 3L)).willReturn(
-                hash3
-            )
+            given(blockchainService.autoInvestFor(chain1Tasks.map { it.isReadyForAutoInvest(true) }, 1L))
+                .willReturn(hash1)
+            given(blockchainService.autoInvestFor(chain2Tasks.map { it.isReadyForAutoInvest(true) }, 2L))
+                .willReturn(hash2)
+            given(blockchainService.autoInvestFor(chain3Tasks.map { it.isReadyForAutoInvest(true) }, 3L))
+                .willReturn(hash3)
         }
 
         suppose("Transactions are successfully mined") {
@@ -640,7 +637,7 @@ class AutoInvestQueueServiceTest : TestBase() {
         autoInvestQueueScheduler.execute()
 
         val hasTasksInQueue = autoInvestTaskRepository.findByStatus(AutoInvestTaskStatus.IN_PROCESS).isNotEmpty() ||
-                autoInvestTaskRepository.findByStatus(AutoInvestTaskStatus.PENDING).isNotEmpty()
+            autoInvestTaskRepository.findByStatus(AutoInvestTaskStatus.PENDING).isNotEmpty()
         if (hasTasksInQueue && maxAttempts > 1) {
             processAllTasks(maxAttempts - 1)
         }
