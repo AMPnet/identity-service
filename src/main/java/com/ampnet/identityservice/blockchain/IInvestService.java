@@ -26,7 +26,7 @@ import java.util.concurrent.Callable;
  * <p>Auto generated code.
  * <p><strong>Do not modify!</strong>
  * <p>Please use the <a href="https://docs.web3j.io/command_line.html">web3j command line tools</a>,
- * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the 
+ * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the
  * <a href="https://github.com/web3j/web3j/tree/master/codegen">codegen module</a> to update.
  *
  * <p>Generated with web3j version 4.8.7.
@@ -60,7 +60,7 @@ public class IInvestService extends Contract {
     }
 
     public RemoteFunctionCall<List> getPendingFor(String _user, String _issuer, List<String> _campaignFactories, String queryService, String nameRegistry) {
-        final Function function = new Function(FUNC_GETPENDINGFOR, 
+        final Function function = new Function(FUNC_GETPENDINGFOR,
                 Arrays.<Type>asList(new Address(160, _user),
                 new Address(160, _issuer),
                 new DynamicArray<Address>(
@@ -81,7 +81,7 @@ public class IInvestService extends Contract {
     }
 
     public RemoteFunctionCall<List> getStatus(List<InvestmentRecord> _investments) {
-        final Function function = new Function(FUNC_GETSTATUS, 
+        final Function function = new Function(FUNC_GETSTATUS,
                 Arrays.<Type>asList(new DynamicArray<InvestmentRecord>(InvestmentRecord.class, _investments)),
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<InvestmentRecordStatus>>() {}));
         return new RemoteFunctionCall<List>(function,
@@ -97,7 +97,7 @@ public class IInvestService extends Contract {
 
     public RemoteFunctionCall<TransactionReceipt> investFor(List<InvestmentRecord> _investments) {
         final Function function = new Function(
-                FUNC_INVESTFOR, 
+                FUNC_INVESTFOR,
                 Arrays.<Type>asList(new DynamicArray<InvestmentRecord>(InvestmentRecord.class, _investments)),
                 Collections.<TypeReference<?>>emptyList());
         return executeRemoteCallTransaction(function);
@@ -192,6 +192,17 @@ public class IInvestService extends Contract {
             this.investor = investor.getValue();
             this.campaign = campaign.getValue();
             this.amount = amount.getValue();
+        }
+
+        public InvestmentRecord(InvestmentRecordStatus recordStatus) {
+            super(
+                    new Address(recordStatus.investor),
+                    new Address(recordStatus.campaign),
+                    new Uint256(recordStatus.amount)
+            );
+            this.investor = recordStatus.investor;
+            this.campaign = recordStatus.campaign;
+            this.amount = recordStatus.amount;
         }
     }
 
