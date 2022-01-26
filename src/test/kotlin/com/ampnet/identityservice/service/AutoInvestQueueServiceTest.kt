@@ -375,25 +375,17 @@ class AutoInvestQueueServiceTest : TestBase() {
         }
     }
 
-//    @Test
+    @Test
     fun mustCorrectlyProcessPendingTasksBasedOnInvestmentReadiness() {
-        // TODO: fix
-        lateinit var tasks: List<AutoInvestTask>
-//        lateinit var readyTasks: List<AutoInvestTask>
-//        lateinit var notReadyTasks: List<AutoInvestTask>
+        lateinit var readyTasks: List<AutoInvestTask>
+        lateinit var notReadyTasks: List<AutoInvestTask>
         suppose("There are some pending auto-invest tasks") {
-//            readyTasks = listOf(
-//                createAutoInvestTask(address = address1, campaign = campaign1),
-//                createAutoInvestTask(address = address2, campaign = campaign1),
-//                createAutoInvestTask(address = address3, campaign = campaign1)
-//            )
-//            notReadyTasks = listOf(createAutoInvestTask(address = address1, campaign = campaign2),
-//            createAutoInvestTask(address = address2, campaign = campaign2),
-//            createAutoInvestTask(address = address3, campaign = campaign2))
-            tasks = listOf(
+            readyTasks = listOf(
                 createAutoInvestTask(address = address1, campaign = campaign1),
                 createAutoInvestTask(address = address2, campaign = campaign1),
-                createAutoInvestTask(address = address3, campaign = campaign1),
+                createAutoInvestTask(address = address3, campaign = campaign1)
+            )
+            notReadyTasks = listOf(
                 createAutoInvestTask(address = address1, campaign = campaign2),
                 createAutoInvestTask(address = address2, campaign = campaign2),
                 createAutoInvestTask(address = address3, campaign = campaign2)
@@ -401,22 +393,18 @@ class AutoInvestQueueServiceTest : TestBase() {
         }
 
         suppose("Some tasks will be marked as ready and others as not ready") {
-            given(blockchainService.getAutoInvestStatus(any(), any()))
+            given(blockchainService.getAutoInvestStatus((readyTasks + notReadyTasks).map { it.toRecord() }, chainId))
                 .willReturn(
-                    listOf(
-                        tasks[0].isReadyForAutoInvest(true),
-                        tasks[1].isReadyForAutoInvest(true),
-                        tasks[2].isReadyForAutoInvest(true),
-                        tasks[3].isReadyForAutoInvest(false),
-                        tasks[4].isReadyForAutoInvest(false),
-                        tasks[5].isReadyForAutoInvest(false)
-                    )
+                    readyTasks.map { it.isReadyForAutoInvest(true) } +
+                            notReadyTasks.map { it.isReadyForAutoInvest(false) }
                 )
+            given(blockchainService.getAutoInvestStatus((notReadyTasks).map { it.toRecord() }, chainId))
+                .willReturn(notReadyTasks.map { it.isReadyForAutoInvest(false) })
         }
 
         suppose("Auto-invest is requested for ready tasks") {
-            val readyTasks = tasks.take(3).map { it.isReadyForAutoInvest(true) }
-            given(blockchainService.autoInvestFor(readyTasks, chainId)).willReturn(hash)
+            val x = readyTasks.map { it.isReadyForAutoInvest(true) }
+            given(blockchainService.autoInvestFor(x, chainId)).willReturn(hash)
         }
 
         suppose("Transaction is successfully mined") {
@@ -426,22 +414,22 @@ class AutoInvestQueueServiceTest : TestBase() {
         verify("Only ready to invest tasks are processed") {
             processAllTasks()
 
-            assertThat(autoInvestTaskRepository.findById(tasks[0].uuid)).isEmpty()
-            assertThat(autoInvestTaskRepository.findById(tasks[1].uuid)).isEmpty()
-            assertThat(autoInvestTaskRepository.findById(tasks[2].uuid)).isEmpty()
+            assertThat(autoInvestTaskRepository.findById(readyTasks[0].uuid)).isEmpty
+            assertThat(autoInvestTaskRepository.findById(readyTasks[1].uuid)).isEmpty
+            assertThat(autoInvestTaskRepository.findById(readyTasks[2].uuid)).isEmpty
 
-            assertThat(autoInvestTaskRepository.findById(tasks[3].uuid)).hasValueSatisfying {
+            assertThat(autoInvestTaskRepository.findById(notReadyTasks[0].uuid)).hasValueSatisfying {
                 assertThat(it.status).isEqualTo(AutoInvestTaskStatus.PENDING)
             }
-            assertThat(autoInvestTaskRepository.findById(tasks[4].uuid)).hasValueSatisfying {
+            assertThat(autoInvestTaskRepository.findById(notReadyTasks[1].uuid)).hasValueSatisfying {
                 assertThat(it.status).isEqualTo(AutoInvestTaskStatus.PENDING)
             }
-            assertThat(autoInvestTaskRepository.findById(tasks[5].uuid)).hasValueSatisfying {
+            assertThat(autoInvestTaskRepository.findById(notReadyTasks[2].uuid)).hasValueSatisfying {
                 assertThat(it.status).isEqualTo(AutoInvestTaskStatus.PENDING)
             }
 
             assertThat(autoInvestTaskRepository.getHistoricalUuidsForStatus(AutoInvestTaskHistoryStatus.SUCCESS))
-                .containsExactlyInAnyOrderElementsOf(tasks.take(3).map { it.uuid })
+                .containsExactlyInAnyOrderElementsOf(readyTasks.map { it.uuid })
         }
     }
 
@@ -458,7 +446,8 @@ class AutoInvestQueueServiceTest : TestBase() {
         }
 
         suppose("Blockchain service will return some hash") {
-            given(blockchainService.autoInvestFor(listOf(task.isReadyForAutoInvest(true)), chainId)).willReturn(hash)
+            given(blockchainService.autoInvestFor(listOf(task.isReadyForAutoInvest(true)), chainId))
+                .willReturn(hash)
         }
 
         suppose("Transaction is successfully mined") {
@@ -468,7 +457,7 @@ class AutoInvestQueueServiceTest : TestBase() {
         verify("Task is processed") {
             processAllTasks()
 
-            assertThat(autoInvestTaskRepository.findById(task.uuid)).isEmpty()
+            assertThat(autoInvestTaskRepository.findById(task.uuid)).isEmpty
             assertThat(autoInvestTaskRepository.getHistoricalUuidsForStatus(AutoInvestTaskHistoryStatus.SUCCESS))
                 .containsExactly(task.uuid)
         }
@@ -558,9 +547,15 @@ class AutoInvestQueueServiceTest : TestBase() {
             ).willReturn(chain3Tasks.map { it.isReadyForAutoInvest(true) })
         }
         suppose("Blockchain service will return different hash for each chain") {
-            given(blockchainService.autoInvestFor(chain1Tasks.map { it.isReadyForAutoInvest(true) }, 1L)).willReturn(hash1)
-            given(blockchainService.autoInvestFor(chain2Tasks.map { it.isReadyForAutoInvest(true) }, 2L)).willReturn(hash2)
-            given(blockchainService.autoInvestFor(chain3Tasks.map { it.isReadyForAutoInvest(true) }, 3L)).willReturn(hash3)
+            given(blockchainService.autoInvestFor(chain1Tasks.map { it.isReadyForAutoInvest(true) }, 1L)).willReturn(
+                hash1
+            )
+            given(blockchainService.autoInvestFor(chain2Tasks.map { it.isReadyForAutoInvest(true) }, 2L)).willReturn(
+                hash2
+            )
+            given(blockchainService.autoInvestFor(chain3Tasks.map { it.isReadyForAutoInvest(true) }, 3L)).willReturn(
+                hash3
+            )
         }
 
         suppose("Transactions are successfully mined") {
@@ -645,7 +640,7 @@ class AutoInvestQueueServiceTest : TestBase() {
         autoInvestQueueScheduler.execute()
 
         val hasTasksInQueue = autoInvestTaskRepository.findByStatus(AutoInvestTaskStatus.IN_PROCESS).isNotEmpty() ||
-            autoInvestTaskRepository.findByStatus(AutoInvestTaskStatus.PENDING).isNotEmpty()
+                autoInvestTaskRepository.findByStatus(AutoInvestTaskStatus.PENDING).isNotEmpty()
         if (hasTasksInQueue && maxAttempts > 1) {
             processAllTasks(maxAttempts - 1)
         }
