@@ -5,6 +5,8 @@ import com.ampnet.identityservice.controller.pojo.response.AutoInvestListRespons
 import com.ampnet.identityservice.controller.pojo.response.AutoInvestResponse
 import com.ampnet.identityservice.persistence.repository.AutoInvestTaskRepository
 import com.ampnet.identityservice.service.AutoInvestQueueService
+import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.ContractAddress
 import mu.KLogging
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -32,7 +34,7 @@ class AutoInvestController(
             "Received auto-invest request: $request for address: $address, campaign: $campaign and chainId: $chainId"
         }
         val response = autoInvestQueueService.createOrUpdateAutoInvestTask(
-            address, campaign.lowercase(), chainId, request
+            address, ContractAddress(campaign), ChainId(chainId), request
         )
         return response?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.badRequest().build()

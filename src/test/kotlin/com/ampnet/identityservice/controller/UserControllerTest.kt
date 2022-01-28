@@ -9,6 +9,7 @@ import com.ampnet.identityservice.persistence.model.User
 import com.ampnet.identityservice.security.WithMockCrowdfundUser
 import com.ampnet.identityservice.service.impl.PinataResponse
 import com.ampnet.identityservice.service.pojo.UserResponse
+import com.ampnet.identityservice.util.WalletAddress
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -178,7 +179,10 @@ class UserControllerTest : ControllerTestBase() {
         }
 
         verify("User can whitelist address for issuer") {
-            testContext.whitelistRequest = WhitelistRequest(testContext.issuerAddress, Chain.MATIC_TESTNET_MUMBAI.id)
+            testContext.whitelistRequest = WhitelistRequest(
+                testContext.issuerAddress,
+                Chain.MATIC_TESTNET_MUMBAI.id.value
+            )
             val request = objectMapper.writeValueAsString(testContext.whitelistRequest)
             mockMvc.perform(
                 post(whitelistPath)
@@ -189,7 +193,7 @@ class UserControllerTest : ControllerTestBase() {
         }
         verify("Whitelisting user address has been called") {
             verifyMock(queueService)
-                .addAddressToQueue(testContext.user.address, testContext.whitelistRequest)
+                .addAddressToQueue(WalletAddress(testContext.user.address), testContext.whitelistRequest)
         }
     }
 
@@ -201,7 +205,10 @@ class UserControllerTest : ControllerTestBase() {
         }
 
         verify("User cannot whitelist address without KYC") {
-            testContext.whitelistRequest = WhitelistRequest(testContext.issuerAddress, Chain.MATIC_TESTNET_MUMBAI.id)
+            testContext.whitelistRequest = WhitelistRequest(
+                testContext.issuerAddress,
+                Chain.MATIC_TESTNET_MUMBAI.id.value
+            )
             val request = objectMapper.writeValueAsString(testContext.whitelistRequest)
             val result = mockMvc.perform(
                 post(whitelistPath)
@@ -214,7 +221,7 @@ class UserControllerTest : ControllerTestBase() {
         }
         verify("Whitelisting user address has not been called") {
             verifyMock(queueService, times(0))
-                .addAddressToQueue(testContext.user.address, testContext.whitelistRequest)
+                .addAddressToQueue(WalletAddress(testContext.user.address), testContext.whitelistRequest)
         }
     }
 
@@ -228,7 +235,10 @@ class UserControllerTest : ControllerTestBase() {
         }
 
         verify("User cannot whitelist address without KYC") {
-            testContext.whitelistRequest = WhitelistRequest(testContext.issuerAddress, Chain.MATIC_TESTNET_MUMBAI.id)
+            testContext.whitelistRequest = WhitelistRequest(
+                testContext.issuerAddress,
+                Chain.MATIC_TESTNET_MUMBAI.id.value
+            )
             val request = objectMapper.writeValueAsString(testContext.whitelistRequest)
             val result = mockMvc.perform(
                 post(whitelistPath)
@@ -241,7 +251,7 @@ class UserControllerTest : ControllerTestBase() {
         }
         verify("Whitelisting user address has not been called") {
             verifyMock(queueService, times(0))
-                .addAddressToQueue(testContext.user.address, testContext.whitelistRequest)
+                .addAddressToQueue(WalletAddress(testContext.user.address), testContext.whitelistRequest)
         }
     }
 
@@ -253,7 +263,7 @@ class UserControllerTest : ControllerTestBase() {
         }
 
         verify("User cannot whitelist address without KYC") {
-            testContext.whitelistRequest = WhitelistRequest(testContext.issuerAddress, -1)
+            testContext.whitelistRequest = WhitelistRequest(testContext.issuerAddress, -1L)
             val request = objectMapper.writeValueAsString(testContext.whitelistRequest)
             val result = mockMvc.perform(
                 post(whitelistPath)
@@ -266,7 +276,7 @@ class UserControllerTest : ControllerTestBase() {
         }
         verify("Whitelisting user address has not been called") {
             verifyMock(queueService, times(0))
-                .addAddressToQueue(testContext.user.address, testContext.whitelistRequest)
+                .addAddressToQueue(WalletAddress(testContext.user.address), testContext.whitelistRequest)
         }
     }
 
@@ -278,7 +288,7 @@ class UserControllerTest : ControllerTestBase() {
         }
         suppose("Pinata will return JWT") {
             testContext.pinataResponse = PinataResponse("api-key", "api-secret", "JWT")
-            given(pinataService.getUserJwt(ADDRESS.toString())).willReturn(testContext.pinataResponse)
+            given(pinataService.getUserJwt(WalletAddress(ADDRESS.toString()))).willReturn(testContext.pinataResponse)
         }
 
         verify("User can get Pinata JWT") {

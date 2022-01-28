@@ -4,6 +4,7 @@ import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InternalException
 import com.ampnet.identityservice.service.PinataService
+import com.ampnet.identityservice.util.WalletAddress
 import com.fasterxml.jackson.annotation.JsonProperty
 import mu.KLogging
 import org.springframework.http.HttpEntity
@@ -25,8 +26,8 @@ class PinataServiceImpl(
     private val pinataUrl = "https://api.pinata.cloud/users/generateApiKey"
 
     @Throws(InternalException::class)
-    override fun getUserJwt(address: String): PinataResponse {
-        val request = PinataApiKeyRequest(address, maxUses = applicationProperties.pinata.maxUses)
+    override fun getUserJwt(address: WalletAddress): PinataResponse {
+        val request = PinataApiKeyRequest(address.value, maxUses = applicationProperties.pinata.maxUses)
         try {
             val httpEntity = HttpEntity(request, generateHeaders())
             val response = restTemplate.postForEntity<PinataResponse>(pinataUrl, httpEntity)

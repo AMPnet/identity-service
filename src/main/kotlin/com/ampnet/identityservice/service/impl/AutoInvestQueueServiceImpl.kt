@@ -2,7 +2,6 @@ package com.ampnet.identityservice.service.impl
 
 import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.blockchain.IInvestService.InvestmentRecord
-import com.ampnet.identityservice.blockchain.Version
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.controller.pojo.request.AutoInvestRequest
 import com.ampnet.identityservice.controller.pojo.response.AutoInvestResponse
@@ -18,6 +17,11 @@ import com.ampnet.identityservice.service.AutoInvestQueueService
 import com.ampnet.identityservice.service.ScheduledExecutorServiceProvider
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
+import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.ContractAddress
+import com.ampnet.identityservice.util.ContractVersion
+import com.ampnet.identityservice.util.TransactionHash
+import com.ampnet.identityservice.util.WalletAddress
 import mu.KLogging
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.stereotype.Service
@@ -37,11 +41,10 @@ class AutoInvestQueueServiceImpl(
 
     companion object : KLogging() {
         const val QUEUE_NAME = "AutoInvestQueue"
-        const val SUPPORTED_VERSION = "1.0.20"
+        val supportedVersion = ContractVersion("1.0.20")
     }
 
     private val executorService = scheduledExecutorServiceProvider.newSingleThreadScheduledExecutor(QUEUE_NAME)
-    private val supportedVersion = Version(SUPPORTED_VERSION)
 
     init {
         if (applicationProperties.autoInvest.enabled) {
@@ -60,9 +63,9 @@ class AutoInvestQueueServiceImpl(
     }
 
     override fun createOrUpdateAutoInvestTask(
-        address: String,
-        campaign: String,
-        chainId: Long,
+        address: WalletAddress,
+        campaign: ContractAddress,
+        chainId: ChainId,
         request: AutoInvestRequest
     ): AutoInvestResponse? {
         val version = blockchainService.getContractVersion(chainId, campaign)
@@ -70,7 +73,7 @@ class AutoInvestQueueServiceImpl(
                 ErrorCode.BLOCKCHAIN_UNSUPPORTED_VERSION,
                 "This campaign is missing version number"
             )
-        if (Version(version) < supportedVersion) {
+        if (version < supportedVersion) {
             throw InvalidRequestException(
                 ErrorCode.BLOCKCHAIN_UNSUPPORTED_VERSION,
                 "This campaign does not support auto invest functionality"
@@ -79,9 +82,9 @@ class AutoInvestQueueServiceImpl(
 
         val numModified = autoInvestTaskRepository.createOrUpdate(
             AutoInvestTask(
-                chainId = chainId,
-                userWalletAddress = address,
-                campaignContractAddress = campaign,
+                chainId = chainId.value,
+                userWalletAddress = address.value,
+                campaignContractAddress = campaign.value,
                 amount = request.amount,
                 status = AutoInvestTaskStatus.PENDING,
                 uuidProvider = uuidProvider,
@@ -96,9 +99,9 @@ class AutoInvestQueueServiceImpl(
             null
         } else {
             autoInvestTaskRepository.findByUserWalletAddressAndCampaignContractAddressAndChainId(
-                userWalletAddress = address,
-                campaignContractAddress = campaign,
-                chainId = chainId
+                userWalletAddress = address.value,
+                campaignContractAddress = campaign.value,
+                chainId = chainId.value
             )?.let {
                 logger.info { "Submitted auto-invest task: $it" }
                 AutoInvestResponse(
@@ -129,13 +132,13 @@ class AutoInvestQueueServiceImpl(
         }
     }
 
-    private fun handleInProcessTasksForChain(chainId: Long, tasks: List<AutoInvestTask>) {
+    private fun handleInProcessTasksForChain(chainId: ChainId, tasks: List<AutoInvestTask>) {
         logger.debug { "Processing in process auto-investments for chainId: $chainId for tasks: $tasks" }
         val groupedByHash = tasks.filter { it.hash != null }.groupBy { it.hash!! }
-        groupedByHash.forEach { handleInProcessHashForChain(it.key, chainId, it.value) }
+        groupedByHash.forEach { handleInProcessHashForChain(TransactionHash(it.key), chainId, it.value) }
     }
 
-    private fun handleInProcessHashForChain(hash: String, chainId: Long, tasks: List<AutoInvestTask>) {
+    private fun handleInProcessHashForChain(hash: TransactionHash, chainId: ChainId, tasks: List<AutoInvestTask>) {
         if (blockchainService.isMined(hash, chainId)) {
             logger.info { "Transaction is mined: $hash, removing associated tasks" }
             autoInvestTaskRepository.completeTasks(
@@ -144,7 +147,7 @@ class AutoInvestQueueServiceImpl(
                 ZonedDateTime.now()
             )
         } else {
-            val transaction = autoInvestTransactionRepository.findByChainIdAndHash(chainId, hash)
+            val transaction = autoInvestTransactionRepository.findByChainIdAndHash(chainId.value, hash.value)
             if (transaction?.createdAt?.isBefore(getMaximumMiningPeriod()) == true) {
                 logger.warn {
                     "Waiting for transaction: $hash exceeded ${applicationProperties.autoInvest.queue.miningPeriod}" +
@@ -162,7 +165,7 @@ class AutoInvestQueueServiceImpl(
     }
 
     @Suppress("ReturnCount")
-    private fun handlePendingTasksForChain(chainId: Long, tasks: List<AutoInvestTask>) {
+    private fun handlePendingTasksForChain(chainId: ChainId, tasks: List<AutoInvestTask>) {
         logger.debug { "Processing pending auto-investments for chainId: $chainId" }
         val (expiredTasks, activeTasks) = tasks.partition { it.createdAt.isBefore(getMaximumPendingPeriod()) }
         if (expiredTasks.isNotEmpty()) {
@@ -187,7 +190,7 @@ class AutoInvestQueueServiceImpl(
         }
 
         val hash = blockchainService.autoInvestFor(readyToInvestTasks.map { it.second }, chainId)
-        if (hash.isNullOrEmpty()) {
+        if (hash == null || hash.value.isEmpty()) {
             logger.warn { "Failed to get hash for auto-invest for chainId: $chainId" }
             return
         }
@@ -196,12 +199,12 @@ class AutoInvestQueueServiceImpl(
         autoInvestTaskRepository.updateStatusAndHashForIds(
             readyToInvestTasks.map { it.first.uuid },
             AutoInvestTaskStatus.IN_PROCESS,
-            hash
+            hash.value
         )
         autoInvestTransactionRepository.saveAndFlush(
             AutoInvestTransaction(
-                chainId = chainId,
-                hash = hash,
+                chainId = chainId.value,
+                hash = hash.value,
                 uuidProvider = uuidProvider,
                 timeProvider = timeProvider
             )
@@ -215,8 +218,8 @@ class AutoInvestQueueServiceImpl(
     private fun getMaximumMiningPeriod() = timeProvider.getZonedDateTime()
         .minusSeconds(applicationProperties.autoInvest.queue.miningPeriod)
 
-    private fun List<AutoInvestTask>.groupedByChainId(): Map<Long, List<AutoInvestTask>> =
-        groupBy { it.chainId }
+    private fun List<AutoInvestTask>.groupedByChainId(): Map<ChainId, List<AutoInvestTask>> =
+        groupBy { ChainId(it.chainId) }
 
     private fun AutoInvestTask.toRecord() =
         InvestmentRecord(this.userWalletAddress, this.campaignContractAddress, this.amount)

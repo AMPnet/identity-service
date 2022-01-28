@@ -40,7 +40,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
         databaseCleanerService.deleteAllUsers()
         databaseCleanerService.deleteAllAutoInvestTasks()
         given(blockchainService.getContractVersion(any(), any()))
-            .willReturn(AutoInvestQueueServiceImpl.SUPPORTED_VERSION)
+            .willReturn(AutoInvestQueueServiceImpl.supportedVersion)
     }
 
     @Test
@@ -71,7 +71,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             val task = autoInvestTaskRepository.findByUserWalletAddressAndCampaignContractAddressAndChainId(
                 userWalletAddress = address,
                 campaignContractAddress = campaignAddress,
-                chainId = defaultChainId
+                chainId = defaultChainId.value
             )!!
 
             assertThat(task.userWalletAddress).isEqualTo(address)
@@ -89,7 +89,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             autoInvestTaskRepository.createOrUpdate(
                 AutoInvestTask(
                     UUID.randomUUID(),
-                    defaultChainId,
+                    defaultChainId.value,
                     address,
                     campaignAddress,
                     BigInteger.valueOf(1000L),
@@ -124,7 +124,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
         verify("Task is correctly updated in the database") {
             val task = autoInvestTaskRepository.findByChainIdAndUserWalletAddressOrderByCreatedAtDesc(
                 userWalletAddress = address,
-                chainId = defaultChainId
+                chainId = defaultChainId.value
             ).first()
 
             assertThat(task.userWalletAddress).isEqualTo(address)
@@ -142,7 +142,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             autoInvestTaskRepository.createOrUpdate(
                 AutoInvestTask(
                     UUID.randomUUID(),
-                    defaultChainId,
+                    defaultChainId.value,
                     address,
                     campaignAddress,
                     BigInteger.valueOf(1000L),
@@ -168,7 +168,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
         verify("Task is not updated in the database") {
             val task = autoInvestTaskRepository.findByChainIdAndUserWalletAddressOrderByCreatedAtDesc(
                 userWalletAddress = address,
-                chainId = defaultChainId
+                chainId = defaultChainId.value
             ).first()
 
             assertThat(task.userWalletAddress).isEqualTo(address)
@@ -185,7 +185,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             autoInvestTaskRepository.createOrUpdate(
                 AutoInvestTask(
                     UUID.randomUUID(),
-                    defaultChainId,
+                    defaultChainId.value,
                     address,
                     campaignAddress,
                     BigInteger.valueOf(1000L),
@@ -223,7 +223,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             autoInvestTaskRepository.createOrUpdate(
                 AutoInvestTask(
                     UUID.randomUUID(),
-                    defaultChainId,
+                    defaultChainId.value,
                     address,
                     campaignAddress,
                     BigInteger.valueOf(1000L),
@@ -235,7 +235,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             autoInvestTaskRepository.createOrUpdate(
                 AutoInvestTask(
                     UUID.randomUUID(),
-                    defaultChainId,
+                    defaultChainId.value,
                     address,
                     "campaignaddress-2",
                     BigInteger.valueOf(1000L),
@@ -271,7 +271,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             autoInvestTaskRepository.createOrUpdate(
                 AutoInvestTask(
                     UUID.randomUUID(),
-                    defaultChainId,
+                    defaultChainId.value,
                     address,
                     campaignAddress,
                     BigInteger.valueOf(1000L),
@@ -283,7 +283,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             autoInvestTaskRepository.createOrUpdate(
                 AutoInvestTask(
                     UUID.randomUUID(),
-                    defaultChainId,
+                    defaultChainId.value,
                     "0x00",
                     campaignAddress,
                     BigInteger.valueOf(1000L),
@@ -297,7 +297,7 @@ class AutoInvestControllerTest : ControllerTestBase() {
             autoInvestTaskRepository.createOrUpdate(
                 AutoInvestTask(
                     UUID.randomUUID(),
-                    defaultChainId,
+                    defaultChainId.value,
                     address,
                     "campaignAddress-2",
                     BigInteger.valueOf(2000L),

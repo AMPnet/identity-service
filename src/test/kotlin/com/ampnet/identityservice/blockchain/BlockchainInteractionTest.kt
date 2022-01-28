@@ -11,6 +11,8 @@ import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepositor
 import com.ampnet.identityservice.persistence.repository.UserRepository
 import com.ampnet.identityservice.security.WithMockCrowdfundUser
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
+import com.ampnet.identityservice.util.ContractAddress
+import com.ampnet.identityservice.util.WalletAddress
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -60,8 +62,8 @@ class BlockchainInteractionTest : TestBase() {
     @Autowired
     private lateinit var blockchainService: BlockchainServiceImpl
 
-    private val address = "0x9a72aD187229e9338c7f21E019544947Fb25d473"
-    private val issuerAddress = "0x521B0200138CeF507769F6d8E8d4999F60B6b319"
+    private val address = WalletAddress("0x9a72aD187229e9338c7f21E019544947Fb25d473")
+    private val issuerAddress = ContractAddress("0x521B0200138CeF507769F6d8E8d4999F60B6b319")
     private val chain = Chain.MATIC_TESTNET_MUMBAI
 
     private lateinit var mockMvc: MockMvc
@@ -95,11 +97,11 @@ class BlockchainInteractionTest : TestBase() {
             databaseCleanerService.deleteAllUsers()
             databaseCleanerService.deleteAllUserInfos()
 
-            val user = User(address, "email@mail.co", null, zonedDateTimeProvider.getZonedDateTime(), null)
+            val user = User(address.value, "email@mail.co", null, zonedDateTimeProvider.getZonedDateTime(), null)
             userRepository.save(user)
         }
         suppose("User completed KYC") {
-            val request = objectMapper.writeValueAsString(KycTestRequest(address, "first", "last"))
+            val request = objectMapper.writeValueAsString(KycTestRequest(address.value, "first", "last"))
             mockMvc.perform(
                 MockMvcRequestBuilders.post("/test/kyc")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -109,7 +111,7 @@ class BlockchainInteractionTest : TestBase() {
         }
 
         verify("User can whitelist address for issuer") {
-            val whitelistRequest = WhitelistRequest(issuerAddress, chain.id)
+            val whitelistRequest = WhitelistRequest(issuerAddress.value, chain.id.value)
             val request = objectMapper.writeValueAsString(whitelistRequest)
             mockMvc.perform(
                 MockMvcRequestBuilders.post("/user/whitelist")

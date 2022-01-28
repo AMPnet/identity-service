@@ -10,6 +10,7 @@ import com.ampnet.identityservice.service.TokenService
 import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.impl.PinataResponse
 import com.ampnet.identityservice.service.pojo.UserResponse
+import com.ampnet.identityservice.util.ChainId
 import mu.KLogging
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -45,7 +46,7 @@ class UserController(
     fun whitelistForIssuer(@RequestBody request: WhitelistRequest): ResponseEntity<Unit> {
         val address = ControllerUtils.getAddressFromSecurityContext()
         logger.debug { "Received request to whitelist address: $address for request: $request" }
-        if (Chain.fromId(request.chainId) == null) {
+        if (Chain.fromId(ChainId(request.chainId)) == null) {
             throw InvalidRequestException(ErrorCode.BLOCKCHAIN_ID, "Chain ID: ${request.chainId} not supported")
         }
         userService.whitelistAddress(address, request)

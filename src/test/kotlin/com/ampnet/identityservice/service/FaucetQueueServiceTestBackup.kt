@@ -10,6 +10,9 @@ import com.ampnet.identityservice.config.TestSchedulerConfiguration
 import com.ampnet.identityservice.persistence.model.BlockchainTask
 import com.ampnet.identityservice.persistence.model.BlockchainTaskStatus
 import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
+import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.TransactionHash
+import com.ampnet.identityservice.util.WalletAddress
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.AfterEach
@@ -28,11 +31,11 @@ import java.time.ZonedDateTime
 @Import(TestSchedulerConfiguration::class)
 class FaucetQueueServiceTestBackup : TestBase() {
 
-    private var address1 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF7"
-    private val address2 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF8"
-    private val address3 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF9"
+    private var address1 = WalletAddress("0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF7")
+    private val address2 = WalletAddress("0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF8")
+    private val address3 = WalletAddress("0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF9")
     private val addresses = listOf(address1, address2, address3)
-    private val hash = "0x6f7dea8d5d98d119de31204dfbdc69bb1944db04891ad0c45ab577da8e6de04a"
+    private val hash = TransactionHash("0x6f7dea8d5d98d119de31204dfbdc69bb1944db04891ad0c45ab577da8e6de04a")
     private val chainId = Chain.MATIC_TESTNET_MUMBAI.id
 
     @Autowired
@@ -74,8 +77,8 @@ class FaucetQueueServiceTestBackup : TestBase() {
         val chainId2 = 2L
 
         suppose("There are some addresses in the queue") {
-            addresses.forEach { blockchainTaskRepository.addAddressToQueue(it, chainId1) }
-            addresses.forEach { blockchainTaskRepository.addAddressToQueue(it, chainId2) }
+            addresses.forEach { blockchainTaskRepository.addAddressToQueue(it.value, chainId1) }
+            addresses.forEach { blockchainTaskRepository.addAddressToQueue(it.value, chainId2) }
         }
 
         suppose("Blockchain service will send faucet funds to any address") {
@@ -92,7 +95,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(2)
-            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash }
+            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash.value }
         }
     }
 
@@ -224,7 +227,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(2)
-            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash }
+            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash.value }
         }
     }
 
@@ -301,7 +304,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(2)
-            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash }
+            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash.value }
 
             tasks.sortBy { it.createdAt }
 
@@ -339,7 +342,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
     @Test
     fun mustStartTaskAfterFailedTask() {
-        val failedHash = "failed_hash"
+        val failedHash = TransactionHash("failed_hash")
         suppose("Transaction is not mined") {
             given(blockchainService.isMined(failedHash, chainId)).willReturn(false)
         }
@@ -411,7 +414,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
             tasks.sortBy { it.createdAt }
 
             assertThat(tasks).hasSize(10)
-            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash }
+            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash.value }
 
             for (i in 0..8) {
                 assertThat(tasks[i].createdAt).isBefore(tasks[i + 1].createdAt)
@@ -431,18 +434,18 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
     private fun createFaucetTask(
         status: BlockchainTaskStatus = BlockchainTaskStatus.CREATED,
-        addresses: List<String> = listOf(address1, address2, address3),
-        chain: Long = chainId,
-        hash: String? = null,
+        addresses: List<WalletAddress> = listOf(address1, address2, address3),
+        chain: ChainId = chainId,
+        hash: TransactionHash? = null,
         updatedAt: ZonedDateTime? = null
     ): BlockchainTask {
         val task = BlockchainTask(
             uuidProvider.getUuid(),
-            addresses.toTypedArray(),
-            chain,
+            addresses.map { it.value }.toTypedArray(),
+            chain.value,
             status,
             null,
-            hash,
+            hash?.value,
             zonedDateTimeProvider.getZonedDateTime(),
             updatedAt
         )

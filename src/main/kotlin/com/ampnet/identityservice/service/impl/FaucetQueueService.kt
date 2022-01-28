@@ -7,6 +7,9 @@ import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepositor
 import com.ampnet.identityservice.service.ScheduledExecutorServiceProvider
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
+import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.TransactionHash
+import com.ampnet.identityservice.util.WalletAddress
 import org.springframework.stereotype.Service
 
 @Service
@@ -40,9 +43,12 @@ class FaucetQueueService(
         }
     }
 
-    override fun executeBlockchainTask(task: BlockchainTask): String? =
+    override fun executeBlockchainTask(task: BlockchainTask): TransactionHash? =
         if (task.payload == null) {
-            val hash = blockchainService.sendFaucetFunds(task.addresses.toList(), task.chainId)
+            val hash = blockchainService.sendFaucetFunds(
+                task.addresses.toList().map { WalletAddress(it) },
+                ChainId(task.chainId)
+            )
             if (hash == null) {
                 logger.warn { "Failed to send faucet funds for task: ${task.uuid}" }
             }

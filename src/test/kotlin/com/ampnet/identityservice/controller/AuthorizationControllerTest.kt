@@ -9,6 +9,7 @@ import com.ampnet.identityservice.controller.pojo.response.PayloadResponse
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.persistence.model.RefreshToken
 import com.ampnet.identityservice.persistence.model.User
+import com.ampnet.identityservice.util.WalletAddress
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -59,7 +60,7 @@ class AuthorizationControllerTest : ControllerTestBase() {
             databaseCleanerService.deleteAllUsers()
         }
         suppose("Client signs the payload") {
-            val payload = verificationService.generatePayload(ADDRESS.toString())
+            val payload = verificationService.generatePayload(WalletAddress(ADDRESS.toString()))
             testContext.signedPayload = "0x" + KEY_PAIR.signWithEIP191PersonalSign(payload.toByteArray()).toHex()
         }
 
@@ -89,7 +90,7 @@ class AuthorizationControllerTest : ControllerTestBase() {
             testContext.user = createUser()
         }
         suppose("Client signs the payload") {
-            val payload = verificationService.generatePayload(ADDRESS.toString())
+            val payload = verificationService.generatePayload(WalletAddress(ADDRESS.toString()))
             testContext.signedPayload = "0x" + KEY_PAIR.signWithEIP191PersonalSign(payload.toByteArray()).toHex()
         }
 

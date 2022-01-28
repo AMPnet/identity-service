@@ -3,6 +3,9 @@ package com.ampnet.identityservice.service
 import com.ampnet.identityservice.ManualFixedScheduler
 import com.ampnet.identityservice.persistence.model.BlockchainTask
 import com.ampnet.identityservice.persistence.model.BlockchainTaskStatus
+import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.TransactionHash
+import com.ampnet.identityservice.util.WalletAddress
 import org.mockito.kotlin.any
 import org.mockito.kotlin.given
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,18 +25,18 @@ class FaucetQueueServiceTest : BlockchainQueueTestBase() {
 
     override fun createTask(
         status: BlockchainTaskStatus,
-        addresses: List<String>,
-        chain: Long,
-        hash: String?,
+        addresses: List<WalletAddress>,
+        chain: ChainId,
+        hash: TransactionHash?,
         updatedAt: ZonedDateTime?
     ): BlockchainTask {
         val task = BlockchainTask(
             uuidProvider.getUuid(),
-            addresses.toTypedArray(),
-            chain,
+            addresses.map { it.value }.toTypedArray(),
+            chain.value,
             status,
             null,
-            hash,
+            hash?.value,
             zonedDateTimeProvider.getZonedDateTime(),
             updatedAt
         )

@@ -19,6 +19,11 @@ import com.ampnet.identityservice.persistence.model.AutoInvestTransaction
 import com.ampnet.identityservice.persistence.repository.AutoInvestTaskRepository
 import com.ampnet.identityservice.persistence.repository.AutoInvestTransactionRepository
 import com.ampnet.identityservice.service.impl.AutoInvestQueueServiceImpl
+import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.ContractAddress
+import com.ampnet.identityservice.util.ContractVersion
+import com.ampnet.identityservice.util.TransactionHash
+import com.ampnet.identityservice.util.WalletAddress
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -38,13 +43,13 @@ import java.time.ZonedDateTime
 @Import(TestSchedulerConfiguration::class)
 class AutoInvestQueueServiceTest : TestBase() {
 
-    private var address1 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF7"
-    private val address2 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF8"
-    private val address3 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF9"
-    private val campaign1 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aFa"
-    private val campaign2 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aFb"
-    private val campaign3 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aFc"
-    private val hash = "0x6f7dea8d5d98d119de31204dfbdc69bb1944db04891ad0c45ab577da8e6de04a"
+    private var address1 = WalletAddress("0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF7")
+    private val address2 = WalletAddress("0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF8")
+    private val address3 = WalletAddress("0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF9")
+    private val campaign1 = ContractAddress("0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aFa")
+    private val campaign2 = ContractAddress("0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aFb")
+    private val campaign3 = ContractAddress("0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aFc")
+    private val hash = TransactionHash("0x6f7dea8d5d98d119de31204dfbdc69bb1944db04891ad0c45ab577da8e6de04a")
     private val chainId = Chain.MATIC_TESTNET_MUMBAI.id
 
     @Autowired
@@ -79,7 +84,7 @@ class AutoInvestQueueServiceTest : TestBase() {
         databaseCleanerService.deleteAllAutoInvestTasks()
         databaseCleanerService.deleteAllAutoInvestTransactions()
         given(blockchainService.getContractVersion(any(), any()))
-            .willReturn(AutoInvestQueueServiceImpl.SUPPORTED_VERSION)
+            .willReturn(AutoInvestQueueServiceImpl.supportedVersion)
     }
 
     @AfterEach
@@ -104,16 +109,16 @@ class AutoInvestQueueServiceTest : TestBase() {
             assertThat(response).isNotNull()
             assertThat(response).isEqualTo(
                 AutoInvestResponse(
-                    walletAddress = address1,
-                    campaignAddress = campaign1,
+                    walletAddress = address1.value,
+                    campaignAddress = campaign1.value,
                     amount = BigInteger.valueOf(100L)
                 )
             )
 
             val databaseTask = autoInvestTaskRepository.findByUserWalletAddressAndCampaignContractAddressAndChainId(
-                userWalletAddress = address1,
-                campaignContractAddress = campaign1,
-                chainId = chainId
+                userWalletAddress = address1.value,
+                campaignContractAddress = campaign1.value,
+                chainId = chainId.value
             )
 
             assertThat(databaseTask).isNotNull()
@@ -151,8 +156,8 @@ class AutoInvestQueueServiceTest : TestBase() {
             assertThat(response).isNotNull()
             assertThat(response).isEqualTo(
                 AutoInvestResponse(
-                    walletAddress = address1,
-                    campaignAddress = campaign1,
+                    walletAddress = address1.value,
+                    campaignAddress = campaign1.value,
                     amount = BigInteger.valueOf(600L)
                 )
             )
@@ -315,7 +320,7 @@ class AutoInvestQueueServiceTest : TestBase() {
 
         suppose("There is auto-invest transaction in the database") {
             autoInvestTransactionRepository.save(
-                AutoInvestTransaction(chainId, hash, uuidProvider, zonedDateTimeProvider)
+                AutoInvestTransaction(chainId.value, hash.value, uuidProvider, zonedDateTimeProvider)
             )
         }
 
@@ -354,8 +359,8 @@ class AutoInvestQueueServiceTest : TestBase() {
             autoInvestTransactionRepository.save(
                 AutoInvestTransaction(
                     uuidProvider.getUuid(),
-                    chainId,
-                    hash,
+                    chainId.value,
+                    hash.value,
                     zonedDateTimeProvider.getZonedDateTime()
                         .minusSeconds(applicationProperties.autoInvest.queue.miningPeriod * 2)
                 )
@@ -519,46 +524,46 @@ class AutoInvestQueueServiceTest : TestBase() {
         lateinit var tasks: List<AutoInvestTask>
         suppose("There are some pending auto-invest tasks") {
             tasks = listOf(
-                createAutoInvestTask(address = address1, campaign = campaign1, chain = 1L),
-                createAutoInvestTask(address = address2, campaign = campaign2, chain = 1L),
-                createAutoInvestTask(address = address3, campaign = campaign3, chain = 2L),
-                createAutoInvestTask(address = address1, campaign = campaign1, chain = 2L),
-                createAutoInvestTask(address = address2, campaign = campaign2, chain = 3L),
-                createAutoInvestTask(address = address3, campaign = campaign3, chain = 3L)
+                createAutoInvestTask(address = address1, campaign = campaign1, chain = ChainId(1L)),
+                createAutoInvestTask(address = address2, campaign = campaign2, chain = ChainId(1L)),
+                createAutoInvestTask(address = address3, campaign = campaign3, chain = ChainId(2L)),
+                createAutoInvestTask(address = address1, campaign = campaign1, chain = ChainId(2L)),
+                createAutoInvestTask(address = address2, campaign = campaign2, chain = ChainId(3L)),
+                createAutoInvestTask(address = address3, campaign = campaign3, chain = ChainId(3L))
             )
         }
 
         val chain1Tasks = listOf(tasks[0], tasks[1])
         val chain2Tasks = listOf(tasks[2], tasks[3])
         val chain3Tasks = listOf(tasks[4], tasks[5])
-        val hash1 = "hash1"
-        val hash2 = "hash2"
-        val hash3 = "hash3"
+        val hash1 = TransactionHash("hash1")
+        val hash2 = TransactionHash("hash2")
+        val hash3 = TransactionHash("hash3")
 
         suppose("Tasks are marked as ready") {
             given(
-                blockchainService.getAutoInvestStatus(chain1Tasks.map { it.toRecord() }, 1L)
+                blockchainService.getAutoInvestStatus(chain1Tasks.map { it.toRecord() }, ChainId(1L))
             ).willReturn(chain1Tasks.map { it.isReadyForAutoInvest(true) })
             given(
-                blockchainService.getAutoInvestStatus(chain2Tasks.map { it.toRecord() }, 2L)
+                blockchainService.getAutoInvestStatus(chain2Tasks.map { it.toRecord() }, ChainId(2L))
             ).willReturn(chain2Tasks.map { it.isReadyForAutoInvest(true) })
             given(
-                blockchainService.getAutoInvestStatus(chain3Tasks.map { it.toRecord() }, 3L)
+                blockchainService.getAutoInvestStatus(chain3Tasks.map { it.toRecord() }, ChainId(3L))
             ).willReturn(chain3Tasks.map { it.isReadyForAutoInvest(true) })
         }
         suppose("Blockchain service will return different hash for each chain") {
-            given(blockchainService.autoInvestFor(chain1Tasks.map { it.isReadyForAutoInvest(true) }, 1L))
+            given(blockchainService.autoInvestFor(chain1Tasks.map { it.isReadyForAutoInvest(true) }, ChainId(1L)))
                 .willReturn(hash1)
-            given(blockchainService.autoInvestFor(chain2Tasks.map { it.isReadyForAutoInvest(true) }, 2L))
+            given(blockchainService.autoInvestFor(chain2Tasks.map { it.isReadyForAutoInvest(true) }, ChainId(2L)))
                 .willReturn(hash2)
-            given(blockchainService.autoInvestFor(chain3Tasks.map { it.isReadyForAutoInvest(true) }, 3L))
+            given(blockchainService.autoInvestFor(chain3Tasks.map { it.isReadyForAutoInvest(true) }, ChainId(3L)))
                 .willReturn(hash3)
         }
 
         suppose("Transactions are successfully mined") {
-            given(blockchainService.isMined(hash1, 1L)).willReturn(true)
-            given(blockchainService.isMined(hash2, 2L)).willReturn(true)
-            given(blockchainService.isMined(hash3, 3L)).willReturn(true)
+            given(blockchainService.isMined(hash1, ChainId(1L))).willReturn(true)
+            given(blockchainService.isMined(hash2, ChainId(2L))).willReturn(true)
+            given(blockchainService.isMined(hash3, ChainId(3L))).willReturn(true)
         }
 
         verify("Tasks are processed") {
@@ -579,7 +584,7 @@ class AutoInvestQueueServiceTest : TestBase() {
     @Test
     fun mustThrowErrorForUnsupportedContractVersion() {
         suppose("Blockchain service will return unsupported contract version") {
-            given(blockchainService.getContractVersion(any(), any())).willReturn { "1.0.0" }
+            given(blockchainService.getContractVersion(any(), any())).willReturn { ContractVersion("1.0.0") }
         }
 
         verify("Service will throw exception") {
@@ -598,7 +603,7 @@ class AutoInvestQueueServiceTest : TestBase() {
     @Test
     fun mustThrowErrorForInvalidContractVersion() {
         suppose("Blockchain service will return invalid contract version") {
-            given(blockchainService.getContractVersion(any(), any())).willReturn { "1.a" }
+            given(blockchainService.getContractVersion(any(), any())).willReturn { ContractVersion("1.a") }
         }
 
         verify("Service will throw exception") {
@@ -645,21 +650,21 @@ class AutoInvestQueueServiceTest : TestBase() {
 
     private fun createAutoInvestTask(
         status: AutoInvestTaskStatus = AutoInvestTaskStatus.PENDING,
-        address: String = address1,
-        campaign: String = campaign1,
-        chain: Long = chainId,
+        address: WalletAddress = address1,
+        campaign: ContractAddress = campaign1,
+        chain: ChainId = chainId,
         amount: Long = 100L,
-        hash: String? = null,
+        hash: TransactionHash? = null,
         createdAt: ZonedDateTime = zonedDateTimeProvider.getZonedDateTime()
     ): AutoInvestTask {
         val task = AutoInvestTask(
             uuidProvider.getUuid(),
-            chain,
-            address,
-            campaign,
+            chain.value,
+            address.value,
+            campaign.value,
             BigInteger.valueOf(amount),
             status,
-            hash,
+            hash?.value,
             createdAt
         )
         return autoInvestTaskRepository.save(task)
