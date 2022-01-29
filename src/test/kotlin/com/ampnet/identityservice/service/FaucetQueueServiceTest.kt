@@ -48,14 +48,14 @@ class FaucetQueueServiceTest : BlockchainQueueTestBase() {
     }
 
     override fun mockBlockchainTaskSuccessfulResponse() {
-        given(blockchainService.sendFaucetFunds(any(), any())).willReturn(hash)
+        given(blockchainService.sendFaucetFunds(any(), anyValueClass(ChainId(0L)))).willReturn(hash)
     }
 
     override fun mockBlockchainTaskExceptionResponse() {
-        given(blockchainService.sendFaucetFunds(any(), any())).willThrow(RuntimeException())
+        given(blockchainService.sendFaucetFunds(any(), anyValueClass(ChainId(0L)))).willThrow(RuntimeException())
     }
 
     override fun mockBlockchainHashNullResponse() {
-        given(blockchainService.sendFaucetFunds(any(), any())).willReturn(null)
+        given(blockchainService.sendFaucetFunds(any(), anyValueClass(ChainId(0L)))).willReturn(null)
     }
 }

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.given
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -82,11 +83,12 @@ class FaucetQueueServiceTestBackup : TestBase() {
         }
 
         suppose("Blockchain service will send faucet funds to any address") {
-            given(blockchainService.sendFaucetFunds(any(), any())).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(any(), anyValueClass(ChainId(0L)))).willReturn(hash)
         }
 
         suppose("Transactions are mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         verify("Service will handle tasks created from address queue") {
@@ -102,11 +104,11 @@ class FaucetQueueServiceTestBackup : TestBase() {
     @Test
     fun mustHandleSingleTaskInQueue() {
         suppose("Blockchain service will send faucet funds") {
-            given(blockchainService.sendFaucetFunds(addresses, chainId)).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(eq(addresses), chainId.mockito())).willReturn(hash)
         }
 
         suppose("Transaction is mined") {
-            given(blockchainService.isMined(hash, chainId)).willReturn(true)
+            given(blockchainService.isMined(hash.mockito(), chainId.mockito())).willReturn(true)
         }
 
         suppose("There is a task in queue") {
@@ -120,14 +122,14 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
             assertThat(tasks).hasSize(1)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.COMPLETED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
         }
     }
 
     @Test
     fun mustRetryPendingTaskWhenExceptionIsThrown() {
         suppose("Blockchain service will throw exception") {
-            given(blockchainService.sendFaucetFunds(any(), any())).willThrow(RuntimeException())
+            given(blockchainService.sendFaucetFunds(any(), anyValueClass(ChainId(0L)))).willThrow(RuntimeException())
         }
 
         suppose("There is a task in queue") {
@@ -148,7 +150,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
     @Test
     fun mustRetryInProcessTaskWhenExceptionIsThrown() {
         suppose("Blockchain service will throw exception") {
-            given(blockchainService.isMined(hash, chainId)).willThrow(RuntimeException())
+            given(blockchainService.isMined(hash.mockito(), chainId.mockito())).willThrow(RuntimeException())
         }
 
         suppose("There is a task in process") {
@@ -162,7 +164,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
             assertThat(tasks).hasSize(2)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
             assertThat(tasks[1].status).isEqualTo(BlockchainTaskStatus.CREATED)
         }
     }
@@ -170,7 +172,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
     @Test
     fun mustHandleSingleTaskInQueueWhenFirstReturnedHashIsNull() {
         suppose("Blockchain service will not send faucet funds") {
-            given(blockchainService.sendFaucetFunds(addresses, chainId)).willReturn(null)
+            given(blockchainService.sendFaucetFunds(eq(addresses), chainId.mockito())).willReturn(null)
         }
 
         suppose("There is a task in queue") {
@@ -188,11 +190,11 @@ class FaucetQueueServiceTestBackup : TestBase() {
         }
 
         suppose("Blockchain service will send faucet funds") {
-            given(blockchainService.sendFaucetFunds(addresses, chainId)).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(eq(addresses), chainId.mockito())).willReturn(hash)
         }
 
         suppose("Transaction is mined") {
-            given(blockchainService.isMined(hash, chainId)).willReturn(true)
+            given(blockchainService.isMined(hash.mockito(), chainId.mockito())).willReturn(true)
         }
 
         verify("Service will handle the task") {
@@ -202,18 +204,19 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
             assertThat(tasks).hasSize(1)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.COMPLETED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
         }
     }
 
     @Test
     fun mustHandleTwoNewTasksInQueue() {
         suppose("Blockchain service will send faucet funds to any address") {
-            given(blockchainService.sendFaucetFunds(any(), any())).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(any(), anyValueClass(ChainId(0L)))).willReturn(hash)
         }
 
         suppose("Transactions are mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         suppose("There are two tasks in queue") {
@@ -249,7 +252,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
             assertThat(tasks).hasSize(2)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
             assertThat(tasks[1].status).isEqualTo(BlockchainTaskStatus.CREATED)
         }
     }
@@ -265,7 +268,8 @@ class FaucetQueueServiceTestBackup : TestBase() {
         }
 
         suppose("Transaction is not mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(false)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(false)
         }
 
         verify("Task will remain in process") {
@@ -275,18 +279,19 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
             assertThat(tasks).hasSize(1)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.IN_PROCESS)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
         }
     }
 
     @Test
     fun mustHandleTaskInProcessAndNewTask() {
         suppose("Blockchain service will send faucet funds to any address") {
-            given(blockchainService.sendFaucetFunds(any(), any())).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(any(), anyValueClass(ChainId(0L)))).willReturn(hash)
         }
 
         suppose("Transactions are mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         var task: BlockchainTask? = null
@@ -316,7 +321,8 @@ class FaucetQueueServiceTestBackup : TestBase() {
     @Test
     fun mustHandleNotMinedTransaction() {
         suppose("Transaction is not mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(false)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(false)
         }
 
         suppose("There is a task in process") {
@@ -335,7 +341,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
             assertThat(tasks).hasSize(2)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
             assertThat(tasks[1].status).isEqualTo(BlockchainTaskStatus.CREATED)
         }
     }
@@ -344,7 +350,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
     fun mustStartTaskAfterFailedTask() {
         val failedHash = TransactionHash("failed_hash")
         suppose("Transaction is not mined") {
-            given(blockchainService.isMined(failedHash, chainId)).willReturn(false)
+            given(blockchainService.isMined(failedHash.mockito(), chainId.mockito())).willReturn(false)
         }
 
         suppose("There is a task in process") {
@@ -358,11 +364,11 @@ class FaucetQueueServiceTestBackup : TestBase() {
         }
 
         suppose("Blockchain service will mine transaction") {
-            given(blockchainService.sendFaucetFunds(addresses, chainId)).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(eq(addresses), chainId.mockito())).willReturn(hash)
         }
 
         suppose("New transaction will be mined") {
-            given(blockchainService.isMined(hash, chainId)).willReturn(true)
+            given(blockchainService.isMined(hash.mockito(), chainId.mockito())).willReturn(true)
         }
 
         var task: BlockchainTask? = null
@@ -377,7 +383,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
                 ?: fail("Missing failed transaction")
 
             assertThat(failedTask.status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(failedTask.hash).isEqualTo(failedHash)
+            assertThat(failedTask.hash).isEqualTo(failedHash.value)
         }
 
         verify("Second task is completed") {
@@ -387,18 +393,19 @@ class FaucetQueueServiceTestBackup : TestBase() {
                 ?: fail("Missing transaction")
 
             assertThat(successfulTask.status).isEqualTo(BlockchainTaskStatus.COMPLETED)
-            assertThat(successfulTask.hash).isEqualTo(hash)
+            assertThat(successfulTask.hash).isEqualTo(hash.value)
         }
     }
 
     @Test
     fun mustHandleMultipleTasksInOrder() {
         suppose("Blockchain service will send faucet funds to any address") {
-            given(blockchainService.sendFaucetFunds(any(), any())).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(any(), anyValueClass(ChainId(0L)))).willReturn(hash)
         }
 
         suppose("Transactions are mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         suppose("There are multiple tasks") {
@@ -426,7 +433,8 @@ class FaucetQueueServiceTestBackup : TestBase() {
     private tailrec fun processAllTasks(maxAttempts: Int = 100) {
         faucetQueueScheduler.execute()
 
-        val hasTasksInQueue = blockchainTaskRepository.getInProcess() != null || blockchainTaskRepository.getPending() != null
+        val hasTasksInQueue =
+            blockchainTaskRepository.getInProcess() != null || blockchainTaskRepository.getPending() != null
         if (hasTasksInQueue && maxAttempts > 1) {
             processAllTasks(maxAttempts - 1)
         }

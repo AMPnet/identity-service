@@ -25,7 +25,7 @@ class FaucetControllerTest : ControllerTestBase() {
 
     private val defaultChainId = Chain.MATIC_TESTNET_MUMBAI.id
     private val address = "0xef678007d18427e6022059dbc264f27507cd1ffc"
-    private val faucetPath = "/faucet/$defaultChainId"
+    private val faucetPath = "/faucet/${defaultChainId.value}"
 
     @Autowired
     private lateinit var blockchainTaskRepository: BlockchainTaskRepository
@@ -73,7 +73,7 @@ class FaucetControllerTest : ControllerTestBase() {
             val task = blockchainTaskRepository.findById(taskUuid)
             assertThat(task).hasValueSatisfying {
                 assertThat(it.addresses).containsExactly(address)
-                assertThat(it.chainId).isEqualTo(defaultChainId)
+                assertThat(it.chainId).isEqualTo(defaultChainId.value)
                 assertThat(it.status).isEqualTo(BlockchainTaskStatus.CREATED)
             }
         }

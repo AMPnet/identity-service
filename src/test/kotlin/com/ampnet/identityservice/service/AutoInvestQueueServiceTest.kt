@@ -30,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.given
 import org.mockito.kotlin.willReturn
 import org.springframework.beans.factory.annotation.Autowired
@@ -83,7 +84,7 @@ class AutoInvestQueueServiceTest : TestBase() {
     fun beforeEach() {
         databaseCleanerService.deleteAllAutoInvestTasks()
         databaseCleanerService.deleteAllAutoInvestTransactions()
-        given(blockchainService.getContractVersion(any(), any()))
+        given(blockchainService.getContractVersion(anyValueClass(ChainId(0L)), anyValueClass(ContractAddress(""))))
             .willReturn(AutoInvestQueueServiceImpl.supportedVersion)
     }
 
@@ -122,9 +123,9 @@ class AutoInvestQueueServiceTest : TestBase() {
             )
 
             assertThat(databaseTask).isNotNull()
-            assertThat(databaseTask?.userWalletAddress).isEqualTo(address1)
-            assertThat(databaseTask?.campaignContractAddress).isEqualTo(campaign1)
-            assertThat(databaseTask?.chainId).isEqualTo(chainId)
+            assertThat(databaseTask?.userWalletAddress).isEqualTo(address1.value)
+            assertThat(databaseTask?.campaignContractAddress).isEqualTo(campaign1.value)
+            assertThat(databaseTask?.chainId).isEqualTo(chainId.value)
             assertThat(databaseTask?.amount).isEqualTo(BigInteger.valueOf(100L))
             assertThat(databaseTask?.status).isEqualTo(AutoInvestTaskStatus.PENDING)
         }
@@ -164,9 +165,9 @@ class AutoInvestQueueServiceTest : TestBase() {
 
             val databaseTask = autoInvestTaskRepository.findById(task.uuid)
             assertThat(databaseTask).hasValueSatisfying {
-                assertThat(it.userWalletAddress).isEqualTo(address1)
-                assertThat(it.campaignContractAddress).isEqualTo(campaign1)
-                assertThat(it.chainId).isEqualTo(chainId)
+                assertThat(it.userWalletAddress).isEqualTo(address1.value)
+                assertThat(it.campaignContractAddress).isEqualTo(campaign1.value)
+                assertThat(it.chainId).isEqualTo(chainId.value)
                 assertThat(it.amount).isEqualTo(BigInteger.valueOf(600L))
                 assertThat(it.status).isEqualTo(AutoInvestTaskStatus.PENDING)
             }
@@ -201,9 +202,9 @@ class AutoInvestQueueServiceTest : TestBase() {
 
             val databaseTask = autoInvestTaskRepository.findById(task.uuid)
             assertThat(databaseTask).hasValueSatisfying {
-                assertThat(it.userWalletAddress).isEqualTo(address1)
-                assertThat(it.campaignContractAddress).isEqualTo(campaign1)
-                assertThat(it.chainId).isEqualTo(chainId)
+                assertThat(it.userWalletAddress).isEqualTo(address1.value)
+                assertThat(it.campaignContractAddress).isEqualTo(campaign1.value)
+                assertThat(it.chainId).isEqualTo(chainId.value)
                 assertThat(it.amount).isEqualTo(BigInteger.valueOf(400L))
                 assertThat(it.status).isEqualTo(AutoInvestTaskStatus.IN_PROCESS)
             }
@@ -272,13 +273,13 @@ class AutoInvestQueueServiceTest : TestBase() {
         }
 
         suppose("Blockchain service will report task as ready to invest") {
-            given(blockchainService.getAutoInvestStatus(any(), any())).willReturn(
+            given(blockchainService.getAutoInvestStatus(any(), anyValueClass(ChainId(0L)))).willReturn(
                 listOf(task.isReadyForAutoInvest(true))
             )
         }
 
         suppose("Blockchain service will return null for hash") {
-            given(blockchainService.autoInvestFor(any(), any())).willReturn(null)
+            given(blockchainService.autoInvestFor(any(), anyValueClass(ChainId(0L)))).willReturn(null)
         }
 
         verify("Task status is not changed") {
@@ -446,17 +447,17 @@ class AutoInvestQueueServiceTest : TestBase() {
         }
 
         suppose("Task is marked as ready") {
-            given(blockchainService.getAutoInvestStatus(any(), any()))
+            given(blockchainService.getAutoInvestStatus(any(), anyValueClass(ChainId(0L))))
                 .willReturn(listOf(task.isReadyForAutoInvest(true)))
         }
 
         suppose("Blockchain service will return some hash") {
-            given(blockchainService.autoInvestFor(listOf(task.isReadyForAutoInvest(true)), chainId))
+            given(blockchainService.autoInvestFor(eq(listOf(task.isReadyForAutoInvest(true))), chainId.mockito()))
                 .willReturn(hash)
         }
 
         suppose("Transaction is successfully mined") {
-            given(blockchainService.isMined(hash, chainId)).willReturn(true)
+            given(blockchainService.isMined(hash.mockito(), chainId.mockito())).willReturn(true)
         }
 
         verify("Task is processed") {
@@ -480,7 +481,7 @@ class AutoInvestQueueServiceTest : TestBase() {
         }
 
         suppose("Tasks are marked as ready") {
-            given(blockchainService.getAutoInvestStatus(any(), any()))
+            given(blockchainService.getAutoInvestStatus(any(), anyValueClass(ChainId(0L))))
                 .willReturn(
                     listOf(
                         task1.isReadyForAutoInvest(true),
@@ -493,18 +494,20 @@ class AutoInvestQueueServiceTest : TestBase() {
         suppose("Blockchain service will return some hash") {
             given(
                 blockchainService.autoInvestFor(
-                    listOf(
-                        task1.isReadyForAutoInvest(true),
-                        task2.isReadyForAutoInvest(true),
-                        task3.isReadyForAutoInvest(true)
+                    eq(
+                        listOf(
+                            task1.isReadyForAutoInvest(true),
+                            task2.isReadyForAutoInvest(true),
+                            task3.isReadyForAutoInvest(true)
+                        )
                     ),
-                    chainId
+                    chainId.mockito()
                 )
             ).willReturn(hash)
         }
 
         suppose("Transaction is successfully mined") {
-            given(blockchainService.isMined(hash, chainId)).willReturn(true)
+            given(blockchainService.isMined(hash.mockito(), chainId.mockito())).willReturn(true)
         }
 
         verify("Tasks are processed") {
@@ -584,7 +587,8 @@ class AutoInvestQueueServiceTest : TestBase() {
     @Test
     fun mustThrowErrorForUnsupportedContractVersion() {
         suppose("Blockchain service will return unsupported contract version") {
-            given(blockchainService.getContractVersion(any(), any())).willReturn { ContractVersion("1.0.0") }
+            given(blockchainService.getContractVersion(anyValueClass(ChainId(0L)), anyValueClass(ContractAddress(""))))
+                .willReturn { ContractVersion("1.0.0") }
         }
 
         verify("Service will throw exception") {
@@ -603,7 +607,8 @@ class AutoInvestQueueServiceTest : TestBase() {
     @Test
     fun mustThrowErrorForInvalidContractVersion() {
         suppose("Blockchain service will return invalid contract version") {
-            given(blockchainService.getContractVersion(any(), any())).willReturn { ContractVersion("1.a") }
+            given(blockchainService.getContractVersion(anyValueClass(ChainId(0L)), anyValueClass(ContractAddress(""))))
+                .willReturn { ContractVersion("1.a") }
         }
 
         verify("Service will throw exception") {
@@ -622,7 +627,8 @@ class AutoInvestQueueServiceTest : TestBase() {
     @Test
     fun mustThrowErrorForMissingContractVersion() {
         suppose("Blockchain service will not return contract version") {
-            given(blockchainService.getContractVersion(any(), any())).willReturn { null }
+            given(blockchainService.getContractVersion(anyValueClass(ChainId(0L)), anyValueClass(ContractAddress(""))))
+                .willReturn { null }
         }
 
         verify("Service will throw exception") {

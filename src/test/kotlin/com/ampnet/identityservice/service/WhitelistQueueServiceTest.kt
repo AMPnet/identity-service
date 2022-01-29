@@ -4,6 +4,7 @@ import com.ampnet.identityservice.ManualFixedScheduler
 import com.ampnet.identityservice.persistence.model.BlockchainTask
 import com.ampnet.identityservice.persistence.model.BlockchainTaskStatus
 import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.ContractAddress
 import com.ampnet.identityservice.util.TransactionHash
 import com.ampnet.identityservice.util.WalletAddress
 import org.mockito.kotlin.any
@@ -48,17 +49,35 @@ class WhitelistQueueServiceTest : BlockchainQueueTestBase() {
     }
 
     override fun mockBlockchainTaskSuccessfulResponse() {
-        given(blockchainService.whitelistAddresses(any(), any(), any()))
+        given(
+            blockchainService.whitelistAddresses(
+                any(),
+                anyValueClass(ContractAddress("")),
+                anyValueClass(ChainId(0L))
+            )
+        )
             .willReturn(hash)
     }
 
     override fun mockBlockchainTaskExceptionResponse() {
-        given(blockchainService.whitelistAddresses(any(), any(), any()))
+        given(
+            blockchainService.whitelistAddresses(
+                any(),
+                anyValueClass(ContractAddress("")),
+                anyValueClass(ChainId(0L))
+            )
+        )
             .willThrow(RuntimeException())
     }
 
     override fun mockBlockchainHashNullResponse() {
-        given(blockchainService.whitelistAddresses(any(), any(), any()))
+        given(
+            blockchainService.whitelistAddresses(
+                any(),
+                anyValueClass(ContractAddress("")),
+                anyValueClass(ChainId(0L))
+            )
+        )
             .willReturn(null)
     }
 }

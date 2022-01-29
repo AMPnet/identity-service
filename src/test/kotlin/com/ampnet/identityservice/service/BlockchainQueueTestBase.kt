@@ -18,7 +18,6 @@ import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.any
 import org.mockito.kotlin.given
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -94,7 +93,8 @@ abstract class BlockchainQueueTestBase : TestBase() {
         }
 
         suppose("Transactions are mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         suppose("There are some addresses in the queue for different chains") {
@@ -123,7 +123,8 @@ abstract class BlockchainQueueTestBase : TestBase() {
         }
 
         suppose("Transaction is mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         suppose("There is a task in queue") {
@@ -168,7 +169,7 @@ abstract class BlockchainQueueTestBase : TestBase() {
     @Test
     fun mustRetryInProcessTaskWhenExceptionIsThrown() {
         suppose("Blockchain service will throw exception") {
-            given(blockchainService.isMined(hash, chainId)).willThrow(RuntimeException())
+            given(blockchainService.isMined(hash.mockito(), chainId.mockito())).willThrow(RuntimeException())
         }
 
         suppose("There is a task in process") {
@@ -182,7 +183,7 @@ abstract class BlockchainQueueTestBase : TestBase() {
 
             assertThat(tasks).hasSize(2)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
             assertThat(tasks[0].payload).isEqualTo(payload)
             assertThat(tasks[1].status).isEqualTo(BlockchainTaskStatus.CREATED)
             assertThat(tasks[1].payload).isEqualTo(payload)
@@ -215,7 +216,8 @@ abstract class BlockchainQueueTestBase : TestBase() {
         }
 
         suppose("Transaction is mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         verify("Service will handle the task") {
@@ -225,7 +227,7 @@ abstract class BlockchainQueueTestBase : TestBase() {
 
             assertThat(tasks).hasSize(1)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.COMPLETED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
             assertThat(tasks[0].payload).isEqualTo(payload)
         }
     }
@@ -237,7 +239,8 @@ abstract class BlockchainQueueTestBase : TestBase() {
         }
 
         suppose("Transactions are mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         suppose("There are two tasks in queue") {
@@ -273,7 +276,7 @@ abstract class BlockchainQueueTestBase : TestBase() {
 
             assertThat(tasks).hasSize(2)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
             assertThat(tasks[0].payload).isEqualTo(payload)
             assertThat(tasks[1].status).isEqualTo(BlockchainTaskStatus.CREATED)
             assertThat(tasks[1].payload).isEqualTo(payload)
@@ -291,7 +294,8 @@ abstract class BlockchainQueueTestBase : TestBase() {
         }
 
         suppose("Transaction is not mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(false)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(false)
         }
 
         verify("Task will remain in process") {
@@ -301,7 +305,7 @@ abstract class BlockchainQueueTestBase : TestBase() {
 
             assertThat(tasks).hasSize(1)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.IN_PROCESS)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
             assertThat(tasks[0].payload).isEqualTo(payload)
         }
     }
@@ -313,7 +317,8 @@ abstract class BlockchainQueueTestBase : TestBase() {
         }
 
         suppose("Transactions are mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         var task: BlockchainTask? = null
@@ -347,7 +352,8 @@ abstract class BlockchainQueueTestBase : TestBase() {
     @Test
     fun mustHandleNotMinedTransaction() {
         suppose("Transaction is not mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(false)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(false)
         }
 
         suppose("There is a task in process") {
@@ -366,7 +372,7 @@ abstract class BlockchainQueueTestBase : TestBase() {
 
             assertThat(tasks).hasSize(2)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
             assertThat(tasks[0].payload).isEqualTo(payload)
             assertThat(tasks[1].status).isEqualTo(BlockchainTaskStatus.CREATED)
             assertThat(tasks[1].payload).isEqualTo(payload)
@@ -377,7 +383,7 @@ abstract class BlockchainQueueTestBase : TestBase() {
     fun mustStartTaskAfterFailedTask() {
         val failedHash = TransactionHash("failed_hash")
         suppose("Transaction is not mined") {
-            given(blockchainService.isMined(failedHash, chainId)).willReturn(false)
+            given(blockchainService.isMined(failedHash.mockito(), chainId.mockito())).willReturn(false)
         }
 
         suppose("There is a task in process") {
@@ -395,7 +401,7 @@ abstract class BlockchainQueueTestBase : TestBase() {
         }
 
         suppose("New transaction will be mined") {
-            given(blockchainService.isMined(hash, chainId)).willReturn(true)
+            given(blockchainService.isMined(hash.mockito(), chainId.mockito())).willReturn(true)
         }
 
         var task: BlockchainTask? = null
@@ -410,7 +416,7 @@ abstract class BlockchainQueueTestBase : TestBase() {
                 ?: fail("Missing failed transaction")
 
             assertThat(failedTask.status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(failedTask.hash).isEqualTo(failedHash)
+            assertThat(failedTask.hash).isEqualTo(failedHash.value)
             assertThat(failedTask.payload).isEqualTo(payload)
         }
 
@@ -421,7 +427,7 @@ abstract class BlockchainQueueTestBase : TestBase() {
                 ?: fail("Missing transaction")
 
             assertThat(successfulTask.status).isEqualTo(BlockchainTaskStatus.COMPLETED)
-            assertThat(successfulTask.hash).isEqualTo(hash)
+            assertThat(successfulTask.hash).isEqualTo(hash.value)
             assertThat(successfulTask.payload).isEqualTo(payload)
         }
     }
@@ -433,7 +439,8 @@ abstract class BlockchainQueueTestBase : TestBase() {
         }
 
         suppose("Transactions are mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         suppose("There are multiple tasks") {
