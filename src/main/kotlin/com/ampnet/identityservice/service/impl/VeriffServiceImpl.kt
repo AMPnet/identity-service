@@ -88,9 +88,9 @@ class VeriffServiceImpl(
             }
         logger.debug { "User has pending Veriff session" }
 
-        if (session.createdAt
-                .isBefore(zonedDateTimeProvider.getZonedDateTime().minusDays(VERIFF_SESSION_DURATION_IN_DAYS))
-        ) {
+        val latestValidDate = zonedDateTimeProvider.getZonedDateTime().minusDays(VERIFF_SESSION_DURATION_IN_DAYS)
+
+        if (session.createdAt.isBefore(latestValidDate)) {
             logger.warn { "Veriff session expired" }
             createVeriffSession(address, baseUrl)?.let { newSession ->
                 return ServiceVerificationResponse(newSession.url, newSession.state)
