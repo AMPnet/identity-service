@@ -3,6 +3,10 @@ package com.ampnet.identityservice.service
 import com.ampnet.identityservice.ManualFixedScheduler
 import com.ampnet.identityservice.persistence.model.BlockchainTask
 import com.ampnet.identityservice.persistence.model.BlockchainTaskStatus
+import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.ContractAddress
+import com.ampnet.identityservice.util.TransactionHash
+import com.ampnet.identityservice.util.WalletAddress
 import org.mockito.kotlin.any
 import org.mockito.kotlin.given
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,18 +26,18 @@ class WhitelistQueueServiceTest : BlockchainQueueTestBase() {
 
     override fun createTask(
         status: BlockchainTaskStatus,
-        addresses: List<String>,
-        chain: Long,
-        hash: String?,
+        addresses: List<WalletAddress>,
+        chain: ChainId,
+        hash: TransactionHash?,
         updatedAt: ZonedDateTime?
     ): BlockchainTask {
         val task = BlockchainTask(
             uuidProvider.getUuid(),
-            addresses.toTypedArray(),
-            chain,
+            addresses.map { it.value }.toTypedArray(),
+            chain.value,
             status,
             this.payload,
-            hash,
+            hash?.value,
             zonedDateTimeProvider.getZonedDateTime(),
             updatedAt
         )
@@ -45,17 +49,35 @@ class WhitelistQueueServiceTest : BlockchainQueueTestBase() {
     }
 
     override fun mockBlockchainTaskSuccessfulResponse() {
-        given(blockchainService.whitelistAddresses(any(), any(), any()))
+        given(
+            blockchainService.whitelistAddresses(
+                any(),
+                anyValueClass(ContractAddress("")),
+                anyValueClass(ChainId(0L))
+            )
+        )
             .willReturn(hash)
     }
 
     override fun mockBlockchainTaskExceptionResponse() {
-        given(blockchainService.whitelistAddresses(any(), any(), any()))
+        given(
+            blockchainService.whitelistAddresses(
+                any(),
+                anyValueClass(ContractAddress("")),
+                anyValueClass(ChainId(0L))
+            )
+        )
             .willThrow(RuntimeException())
     }
 
     override fun mockBlockchainHashNullResponse() {
-        given(blockchainService.whitelistAddresses(any(), any(), any()))
+        given(
+            blockchainService.whitelistAddresses(
+                any(),
+                anyValueClass(ContractAddress("")),
+                anyValueClass(ChainId(0L))
+            )
+        )
             .willReturn(null)
     }
 }

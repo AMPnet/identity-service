@@ -9,6 +9,10 @@ import com.ampnet.identityservice.service.ScheduledExecutorServiceProvider
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.WhitelistQueueService
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
+import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.ContractAddress
+import com.ampnet.identityservice.util.TransactionHash
+import com.ampnet.identityservice.util.WalletAddress
 import org.springframework.stereotype.Service
 
 @Service
@@ -45,22 +49,31 @@ class WhitelistQueueServiceImpl(
         }
     }
 
-    override fun executeBlockchainTask(task: BlockchainTask): String? =
+    override fun executeBlockchainTask(task: BlockchainTask): TransactionHash? =
         task.payload?.let {
-            val hash = blockchainService.whitelistAddresses(task.addresses.toList(), it, task.chainId)
+            val hash = blockchainService.whitelistAddresses(
+                task.addresses.toList().map { WalletAddress(it) },
+                ContractAddress(it),
+                ChainId(task.chainId)
+            )
             if (hash == null) {
                 logger.warn { "Failed to whitelist addresses for task: ${task.uuid}" }
             }
             hash
         }
 
-    override fun addAddressToQueue(address: String, request: WhitelistRequest) {
-        if (blockchainService.isWhitelisted(address, request.issuerAddress, request.chainId)) {
+    override fun addAddressToQueue(address: WalletAddress, request: WhitelistRequest) {
+        if (blockchainService.isWhitelisted(
+                address,
+                ContractAddress(request.issuerAddress),
+                ChainId(request.chainId)
+            )
+        ) {
             logger.info { "Address: $address for request: $request already whitelisted " }
             return
         }
         logger.info { "Adding address: $address for whitelisting" }
-        pendingBlockchainTaskRepository.addAddressToQueue(address, request.chainId, request.issuerAddress)
+        pendingBlockchainTaskRepository.addAddressToQueue(address.value, request.chainId, request.issuerAddress)
         logger.debug { "Created BlockchainTask" }
     }
 }

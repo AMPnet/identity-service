@@ -14,6 +14,7 @@ import com.ampnet.identityservice.service.impl.UserServiceImpl
 import com.ampnet.identityservice.service.impl.VeriffServiceImpl
 import com.ampnet.identityservice.service.pojo.VeriffResponse
 import com.ampnet.identityservice.service.pojo.VeriffStatus
+import com.ampnet.identityservice.util.WalletAddress
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -104,7 +105,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
         }
 
         verify("Service will return url from stored veriff session") {
-            val response = veriffService.getVeriffSession(testContext.user.address, baseUrl)
+            val response = veriffService.getVeriffSession(WalletAddress(testContext.user.address), baseUrl)
                 ?: fail("Service didn't return session")
             assertThat(response.verificationUrl).isEqualTo(testContext.veriffSession.url)
             val decision = response.decision ?: fail("Missing decision")
@@ -140,7 +141,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
         }
 
         verify("Service will return url from stored veriff session") {
-            val response = veriffService.getVeriffSession(testContext.user.address, baseUrl)
+            val response = veriffService.getVeriffSession(WalletAddress(testContext.user.address), baseUrl)
                 ?: fail("Service didn't return session")
             assertThat(response.verificationUrl).isEqualTo(testContext.veriffSession.url)
             val decision = response.decision ?: fail("Missing decision")
@@ -180,7 +181,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
         }
 
         verify("Service will return a new url veriff session") {
-            val response = veriffService.getVeriffSession(testContext.user.address, baseUrl)
+            val response = veriffService.getVeriffSession(WalletAddress(testContext.user.address), baseUrl)
                 ?: fail("Service didn't return session")
             assertThat(response.verificationUrl).isNotEqualTo(testContext.veriffSession.url)
             val decision = response.decision ?: fail("Missing decision")
@@ -225,7 +226,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
         }
 
         verify("Service will return a new url veriff session") {
-            val response = veriffService.getVeriffSession(testContext.user.address, baseUrl)
+            val response = veriffService.getVeriffSession(WalletAddress(testContext.user.address), baseUrl)
                 ?: fail("Service didn't return session")
             assertThat(response.verificationUrl).isNotEqualTo(testContext.veriffSession.url)
             val decision = response.decision ?: fail("Missing decision")
@@ -270,7 +271,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
         }
 
         verify("Service will return a new url veriff session") {
-            val response = veriffService.getVeriffSession(testContext.user.address, baseUrl)
+            val response = veriffService.getVeriffSession(WalletAddress(testContext.user.address), baseUrl)
                 ?: fail("Service didn't return session")
             assertThat(response.verificationUrl).isNotEqualTo(testContext.veriffSession.url)
             val decision = response.decision ?: fail("Missing decision")
@@ -312,7 +313,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
         }
 
         verify("Service will return a new url veriff session") {
-            val response = veriffService.getVeriffSession(testContext.user.address, baseUrl)
+            val response = veriffService.getVeriffSession(WalletAddress(testContext.user.address), baseUrl)
                 ?: fail("Service didn't return session")
             assertThat(response.verificationUrl).isNotEqualTo(testContext.veriffSession.url)
             assertThat(response.state).isEqualTo(VeriffSessionState.CREATED.name.lowercase(Locale.getDefault()))
@@ -414,7 +415,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
     fun mustThrowExceptionForMissingUser() {
         verify("Service will throw ResourceNotFoundException exception") {
             val exception = assertThrows<ResourceNotFoundException> {
-                veriffService.getVeriffSession("random_address", baseUrl)
+                veriffService.getVeriffSession(WalletAddress("random_address"), baseUrl)
             }
             assertThat(exception.errorCode).isEqualTo(ErrorCode.USER_JWT_MISSING)
         }

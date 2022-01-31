@@ -26,6 +26,7 @@ import com.ampnet.identityservice.service.pojo.VeriffSessionResponse
 import com.ampnet.identityservice.service.pojo.VeriffStatus
 import com.ampnet.identityservice.service.pojo.VeriffVerification
 import com.ampnet.identityservice.service.unwrap
+import com.ampnet.identityservice.util.WalletAddress
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -79,17 +80,17 @@ class VeriffServiceImpl(
      */
     @Transactional
     @Throws(ResourceNotFoundException::class)
-    override fun getVeriffSession(address: String, baseUrl: String): ServiceVerificationResponse? {
+    override fun getVeriffSession(address: WalletAddress, baseUrl: String): ServiceVerificationResponse? {
         logger.debug { "Get Veriff session for address: $address" }
-        val session = veriffSessionRepository.findByUserAddressOrderByCreatedAtDesc(address).firstOrNull()
+        val session = veriffSessionRepository.findByUserAddressOrderByCreatedAtDesc(address.value).firstOrNull()
             ?: return createVeriffSession(address, baseUrl)?.let { newSession ->
                 ServiceVerificationResponse(newSession.url, newSession.state)
             }
         logger.debug { "User has pending Veriff session" }
 
-        if (session.createdAt
-            .isBefore(zonedDateTimeProvider.getZonedDateTime().minusDays(VERIFF_SESSION_DURATION_IN_DAYS))
-        ) {
+        val latestValidDate = zonedDateTimeProvider.getZonedDateTime().minusDays(VERIFF_SESSION_DURATION_IN_DAYS)
+
+        if (session.createdAt.isBefore(latestValidDate)) {
             logger.warn { "Veriff session expired" }
             createVeriffSession(address, baseUrl)?.let { newSession ->
                 return ServiceVerificationResponse(newSession.url, newSession.state)
@@ -166,7 +167,7 @@ class VeriffServiceImpl(
         }
     }
 
-    private fun createVeriffSession(address: String, baseUrl: String): VeriffSession? {
+    private fun createVeriffSession(address: WalletAddress, baseUrl: String): VeriffSession? {
         logger.debug { "Creating Veriff session for address: $address" }
         val user = userService.getUserResponse(address)
         val callback = if (baseUrl.startsWith("https:")) baseUrl else ""
@@ -179,7 +180,7 @@ class VeriffServiceImpl(
         return try {
             val veriffSessionResponse = restTemplate.postForEntity<VeriffSessionResponse>(uri, httpEntity).body
             veriffSessionResponse?.let {
-                val veriffSession = VeriffSession(veriffSessionResponse, address)
+                val veriffSession = VeriffSession(veriffSessionResponse, address.value)
                 logger.debug { "Create Veriff session: ${veriffSession.id}" }
                 return veriffSessionRepository.save(veriffSession)
             }
@@ -251,7 +252,7 @@ class VeriffServiceImpl(
     private fun verifyUser(userInfo: UserInfo, vendorData: String?) {
         vendorData?.let {
             try {
-                userService.connectUserInfo(it, userInfo.sessionId)
+                userService.connectUserInfo(WalletAddress(it), userInfo.sessionId)
                 veriffSessionRepository.findById(userInfo.sessionId).unwrap()?.let { session ->
                     session.connected = true
                 }

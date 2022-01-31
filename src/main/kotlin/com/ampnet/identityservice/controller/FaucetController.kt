@@ -6,6 +6,7 @@ import com.ampnet.identityservice.controller.pojo.request.ReCaptchaRequest
 import com.ampnet.identityservice.exception.InternalException
 import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
 import com.ampnet.identityservice.service.ReCaptchaService
+import com.ampnet.identityservice.util.ChainId
 import mu.KLogging
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PathVariable
@@ -34,7 +35,7 @@ class FaucetController(
         reCaptchaService.validateResponseToken(request?.reCaptchaToken)
 
         val chainProperties = try {
-            chainHandler.getBlockchainProperties(chainId)
+            chainHandler.getBlockchainProperties(ChainId(chainId))
         } catch (e: InternalException) {
             logger.warn { "No properties exist for chainId: $chainId" }
             null
@@ -45,7 +46,7 @@ class FaucetController(
             return ResponseEntity.badRequest().build()
         }
 
-        blockchainTaskRepository.addAddressToQueue(address, chainId)
+        blockchainTaskRepository.addAddressToQueue(address.value, chainId)
 
         return ResponseEntity.ok(null)
     }

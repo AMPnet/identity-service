@@ -8,6 +8,8 @@ import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepositor
 import com.ampnet.identityservice.service.ScheduledExecutorServiceProvider
 import com.ampnet.identityservice.service.UuidProvider
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
+import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.TransactionHash
 import mu.KLogging
 import org.springframework.beans.factory.DisposableBean
 import java.util.concurrent.TimeUnit
@@ -41,7 +43,7 @@ abstract class AbstractBlockchainQueue(
 
     protected abstract fun createBlockchainTaskFromPendingTask()
 
-    protected abstract fun executeBlockchainTask(task: BlockchainTask): String?
+    protected abstract fun executeBlockchainTask(task: BlockchainTask): TransactionHash?
 
     @Suppress("TooGenericExceptionCaught")
     private fun processTasks() {
@@ -78,7 +80,7 @@ abstract class AbstractBlockchainQueue(
         }
 
         task.hash?.let { hash ->
-            if (blockchainService.isMined(hash, task.chainId)) {
+            if (blockchainService.isMined(TransactionHash(hash), ChainId(task.chainId))) {
                 handleMinedTransaction(task)
             } else {
                 if (task.updatedAt?.isBefore(getMaximumMiningPeriod()) == true) {
@@ -97,7 +99,7 @@ abstract class AbstractBlockchainQueue(
         logger.debug { "Starting to process task: $task" }
         val hash = executeBlockchainTask(task) ?: return
         logger.info { "Handling process for addresses: ${task.addresses.contentToString()} with hash: $hash" }
-        blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.IN_PROCESS, hash, task.payload)
+        blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.IN_PROCESS, hash.value, task.payload)
     }
 
     private fun handleMinedTransaction(task: BlockchainTask) {

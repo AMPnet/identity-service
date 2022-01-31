@@ -16,6 +16,7 @@ import com.ampnet.identityservice.service.WhitelistQueueService
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import com.ampnet.identityservice.service.pojo.UserResponse
 import com.ampnet.identityservice.service.unwrap
+import com.ampnet.identityservice.util.WalletAddress
 import mu.KLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -35,11 +36,11 @@ class UserServiceImpl(
     companion object : KLogging()
 
     @Transactional(readOnly = true)
-    override fun getUserResponse(address: String): UserResponse = UserResponse(getUser(address))
+    override fun getUserResponse(address: WalletAddress): UserResponse = UserResponse(getUser(address))
 
     @Transactional
     @Throws(ResourceNotFoundException::class)
-    override fun connectUserInfo(userAddress: String, sessionId: String): UserResponse {
+    override fun connectUserInfo(userAddress: WalletAddress, sessionId: String): UserResponse {
         val userInfo = userInfoRepository.findBySessionIdOrderByCreatedAtDesc(sessionId).firstOrNull()
             ?: throw ResourceNotFoundException(ErrorCode.REG_INCOMPLETE, "Missing UserInfo with session id: $sessionId")
         val user = getUser(userAddress)
@@ -49,17 +50,16 @@ class UserServiceImpl(
     }
 
     @Transactional
-    override fun createUser(address: String): UserResponse {
-        val lowercaseAddress = address.lowercase()
-        val user = userRepository.findByAddress(lowercaseAddress) ?: kotlin.run {
-            logger.info { "User is created for address: $lowercaseAddress" }
-            userRepository.save(User(lowercaseAddress))
+    override fun createUser(address: WalletAddress): UserResponse {
+        val user = userRepository.findByAddress(address.value) ?: kotlin.run {
+            logger.info { "User is created for address: $address" }
+            userRepository.save(User(address.value))
         }
         return UserResponse(user)
     }
 
     @Transactional
-    override fun updateEmail(email: String, address: String): UserResponse {
+    override fun updateEmail(email: String, address: WalletAddress): UserResponse {
         logger.debug { "Updating mail for address: $address with new email: $email" }
         val user = getUser(address)
         user.email = email.lowercase()
@@ -68,7 +68,7 @@ class UserServiceImpl(
 
     @Transactional
     override fun verifyUserWithTestData(request: KycTestRequest): UserResponse {
-        val user = getUser(request.address)
+        val user = getUser(WalletAddress(request.address))
         val userInfo = UserInfo(
             uuidProvider.getUuid(), "44927492-8799-406e-8076-933bc9164ebc",
             request.firstName, request.lastName, null, null,
@@ -81,7 +81,7 @@ class UserServiceImpl(
     }
 
     @Throws(InvalidRequestException::class)
-    override fun whitelistAddress(userAddress: String, request: WhitelistRequest) {
+    override fun whitelistAddress(userAddress: WalletAddress, request: WhitelistRequest) {
         val user = getUser(userAddress)
         user.userInfoUuid?.let { userInfoUuid ->
             if (isDocumentExpired(userInfoUuid)) {
@@ -99,7 +99,7 @@ class UserServiceImpl(
         return user
     }
 
-    private fun getUser(address: String): User = userRepository.findByAddress(address.lowercase())
+    private fun getUser(address: WalletAddress): User = userRepository.findByAddress(address.value)
         ?: throw ResourceNotFoundException(ErrorCode.USER_JWT_MISSING, "Missing user with address: $address")
 
     private fun disconnectUserInfo(user: User) {

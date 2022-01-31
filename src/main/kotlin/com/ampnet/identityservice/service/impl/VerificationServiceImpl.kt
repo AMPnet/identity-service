@@ -4,6 +4,7 @@ import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.exception.ResourceNotFoundException
 import com.ampnet.identityservice.service.VerificationService
+import com.ampnet.identityservice.util.WalletAddress
 import mu.KLogging
 import org.kethereum.crypto.signedMessageToKey
 import org.kethereum.crypto.toAddress
@@ -20,37 +21,35 @@ class VerificationServiceImpl : VerificationService {
 
     @Suppress("MagicNumber")
     private val vOffset = BigInteger.valueOf(27L)
-    private val userPayload = mutableMapOf<String, String>()
+    private val userPayload = mutableMapOf<WalletAddress, String>()
 
-    override fun generatePayload(address: String): String {
+    override fun generatePayload(address: WalletAddress): String {
         val nonce = SecureRandom().nextInt(Integer.MAX_VALUE).toString()
-        val userMessage = SignMessage(address, nonce).toString()
-        userPayload[address.lowercase()] = userMessage
+        val userMessage = SignMessage(address.value, nonce).toString()
+        userPayload[address] = userMessage
         return userMessage
     }
 
     @Throws(ResourceNotFoundException::class, InvalidRequestException::class)
-    override fun verifyPayload(address: String, signedPayload: String) {
-        val lowercaseAddress = address.lowercase()
-        val payload = userPayload[lowercaseAddress] ?: throw ResourceNotFoundException(
-            ErrorCode.AUTH_PAYLOAD_MISSING, "There is no payload associated with address: $lowercaseAddress."
+    override fun verifyPayload(address: WalletAddress, signedPayload: String) {
+        val payload = userPayload[address] ?: throw ResourceNotFoundException(
+            ErrorCode.AUTH_PAYLOAD_MISSING, "There is no payload associated with address: $address."
         )
-        verifySignedPayload(lowercaseAddress, payload, signedPayload)
+        verifySignedPayload(address, payload, signedPayload)
     }
 
-    internal fun verifySignedPayload(address: String, payload: String, signedPayload: String) {
-        val lowercaseAddress = address.lowercase()
+    internal fun verifySignedPayload(address: WalletAddress, payload: String, signedPayload: String) {
         val eip919 = generateEip191Message(payload.toByteArray())
         try {
             val signatureData = getSignatureData(signedPayload)
             val publicKey = signedMessageToKey(eip919, signatureData)
-            if (lowercaseAddress != publicKey.toAddress().toString().lowercase()) {
+            if (address != WalletAddress(publicKey.toAddress().toString())) {
                 throw InvalidRequestException(
                     ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID,
-                    "Address: $lowercaseAddress not equal to signed address: ${publicKey.toAddress()}"
+                    "Address: $address not equal to signed address: ${publicKey.toAddress()}"
                 )
             }
-            userPayload.remove(lowercaseAddress)
+            userPayload.remove(address)
         } catch (ex: SignatureException) {
             throw InvalidRequestException(
                 ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID, "Public key cannot be recovered from the signature", ex

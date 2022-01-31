@@ -6,6 +6,11 @@ import com.ampnet.identityservice.blockchain.properties.ChainPropertiesHandler
 import com.ampnet.identityservice.config.ApplicationProperties
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InternalException
+import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.ContractAddress
+import com.ampnet.identityservice.util.ContractVersion
+import com.ampnet.identityservice.util.TransactionHash
+import com.ampnet.identityservice.util.WalletAddress
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClientException
@@ -34,7 +39,11 @@ class BlockchainServiceImpl(
 
     @Suppress("ReturnCount")
     @Throws(InternalException::class)
-    override fun whitelistAddresses(addresses: List<String>, issuerAddress: String, chainId: Long): String? {
+    override fun whitelistAddresses(
+        addresses: List<WalletAddress>,
+        issuerAddress: ContractAddress,
+        chainId: ChainId
+    ): TransactionHash? {
         logger.info { "Whitelisting addresses: $addresses on chain: $chainId for issuer: $issuerAddress" }
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
         val gasPrice = getGasPrice(chainId)
@@ -43,44 +52,47 @@ class BlockchainServiceImpl(
         val transactionManager = RawTransactionManager(
             blockchainProperties.web3j,
             blockchainProperties.walletApprover.credentials,
-            chainId
+            chainId.value
         )
         val gasProvider = StaticGasProvider(gasPrice, applicationProperties.walletApprove.gasLimit)
         val walletApproverContract = WalletApproverService.load(
-            blockchainProperties.walletApprover.contractAddress,
+            blockchainProperties.walletApprover.contractAddress.value,
             blockchainProperties.web3j,
             transactionManager,
             gasProvider
         )
 
-        val sentTransaction = walletApproverContract.approveWallets(issuerAddress, addresses).sendSafely()
+        val sentTransaction = walletApproverContract.approveWallets(
+            issuerAddress.value,
+            addresses.map { it.value }
+        ).sendSafely()
 
         logger.info {
             "Successfully send request to whitelist addresses: $addresses on chain: $chainId for issuer: $issuerAddress"
         }
 
-        return sentTransaction?.transactionHash
+        return sentTransaction?.transactionHash?.let { TransactionHash(it) }
     }
 
     @Throws(InternalException::class)
-    override fun isMined(hash: String, chainId: Long): Boolean {
+    override fun isMined(hash: TransactionHash, chainId: ChainId): Boolean {
         val web3j = chainHandler.getBlockchainProperties(chainId).web3j
-        val transaction = web3j.ethGetTransactionReceipt(hash).sendSafely()
+        val transaction = web3j.ethGetTransactionReceipt(hash.value).sendSafely()
         return transaction?.transactionReceipt?.isPresent ?: false
     }
 
     @Throws(InternalException::class)
-    override fun isWhitelisted(address: String, issuerAddress: String?, chainId: Long): Boolean {
+    override fun isWhitelisted(address: WalletAddress, issuerAddress: ContractAddress?, chainId: ChainId): Boolean {
         if (issuerAddress == null)
             return false
         val web3j = chainHandler.getBlockchainProperties(chainId).web3j
-        val transactionManager = ReadonlyTransactionManager(web3j, address)
-        val contract = IIssuerCommon.load(issuerAddress, web3j, transactionManager, DefaultGasProvider())
-        return contract.isWalletApproved(address).sendSafely() ?: false
+        val transactionManager = ReadonlyTransactionManager(web3j, address.value)
+        val contract = IIssuerCommon.load(issuerAddress.value, web3j, transactionManager, DefaultGasProvider())
+        return contract.isWalletApproved(address.value).sendSafely() ?: false
     }
 
     @Throws(InternalException::class)
-    override fun sendFaucetFunds(addresses: List<String>, chainId: Long): String? {
+    override fun sendFaucetFunds(addresses: List<WalletAddress>, chainId: ChainId): TransactionHash? {
         logger.info { "Sending funds to addresses: $addresses on chain: $chainId" }
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
         val faucet = blockchainProperties.faucet ?: throw InternalException(
@@ -94,26 +106,26 @@ class BlockchainServiceImpl(
         val transactionManager = RawTransactionManager(
             blockchainProperties.web3j,
             faucet.credentials,
-            chainId
+            chainId.value
         )
         val gasProvider = StaticGasProvider(gasPrice, applicationProperties.faucet.gasLimit)
         val faucetContract = IFaucetService.load(
-            faucet.contractAddress,
+            faucet.contractAddress.value,
             blockchainProperties.web3j,
             transactionManager,
             gasProvider
         )
 
-        val sentTransaction = faucetContract.faucet(addresses).sendSafely()
+        val sentTransaction = faucetContract.faucet(addresses.map { it.value }).sendSafely()
 
         logger.info { "Successfully send request to fund addresses: $addresses on chain: $chainId" }
 
-        return sentTransaction?.transactionHash
+        return sentTransaction?.transactionHash?.let { TransactionHash(it) }
     }
 
     @Suppress("UNCHECKED_CAST")
     @Throws(InternalException::class)
-    override fun getAutoInvestStatus(records: List<InvestmentRecord>, chainId: Long): List<InvestmentRecordStatus> {
+    override fun getAutoInvestStatus(records: List<InvestmentRecord>, chainId: ChainId): List<InvestmentRecordStatus> {
         val chainProperties = chainHandler.getBlockchainProperties(chainId)
         val web3j = chainProperties.web3j
         val autoInvest = chainProperties.autoInvest ?: throw InternalException(
@@ -122,7 +134,7 @@ class BlockchainServiceImpl(
         )
         val transactionManager = ReadonlyTransactionManager(web3j, autoInvest.credentials.address)
         val contract = IInvestService.load(
-            autoInvest.contractAddress,
+            autoInvest.contractAddress.value,
             web3j,
             transactionManager,
             DefaultGasProvider()
@@ -132,7 +144,7 @@ class BlockchainServiceImpl(
     }
 
     @Throws(InternalException::class)
-    override fun autoInvestFor(records: List<InvestmentRecordStatus>, chainId: Long): String? {
+    override fun autoInvestFor(records: List<InvestmentRecordStatus>, chainId: ChainId): TransactionHash? {
         logger.info { "Auto-investing on chainId: $chainId" }
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
         val autoInvest = blockchainProperties.autoInvest ?: throw InternalException(
@@ -146,11 +158,11 @@ class BlockchainServiceImpl(
         val transactionManager = RawTransactionManager(
             blockchainProperties.web3j,
             autoInvest.credentials,
-            chainId
+            chainId.value
         )
         val gasProvider = StaticGasProvider(gasPrice, applicationProperties.autoInvest.gasLimit)
         val autoInvestContract = IInvestService.load(
-            autoInvest.contractAddress,
+            autoInvest.contractAddress.value,
             blockchainProperties.web3j,
             transactionManager,
             gasProvider
@@ -161,18 +173,18 @@ class BlockchainServiceImpl(
 
         logger.info { "Successfully send request to auto-invest on chain: $chainId" }
 
-        return sentTransaction?.transactionHash
+        return sentTransaction?.transactionHash?.let { TransactionHash(it) }
     }
 
     @Throws(InternalException::class)
-    override fun getContractVersion(chainId: Long, address: String): String? {
+    override fun getContractVersion(chainId: ChainId, address: ContractAddress): ContractVersion? {
         val web3j = chainHandler.getBlockchainProperties(chainId).web3j
-        val transactionManager = ReadonlyTransactionManager(web3j, address)
-        val contract = IVersioned.load(address, web3j, transactionManager, DefaultGasProvider())
-        return contract.version()?.sendSafely()
+        val transactionManager = ReadonlyTransactionManager(web3j, address.value)
+        val contract = IVersioned.load(address.value, web3j, transactionManager, DefaultGasProvider())
+        return contract.version()?.sendSafely()?.let { ContractVersion(it) }
     }
 
-    internal fun getGasPrice(chainId: Long): BigInteger? {
+    internal fun getGasPrice(chainId: ChainId): BigInteger? {
         chainHandler.getGasPriceFeed(chainId)?.let { url ->
             try {
                 val response = restTemplate

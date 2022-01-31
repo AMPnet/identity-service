@@ -11,6 +11,7 @@ import com.ampnet.identityservice.persistence.repository.RefreshTokenRepository
 import com.ampnet.identityservice.service.TokenService
 import com.ampnet.identityservice.service.ZonedDateTimeProvider
 import com.ampnet.identityservice.service.pojo.AccessAndRefreshToken
+import com.ampnet.identityservice.util.WalletAddress
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom
@@ -31,15 +32,14 @@ class TokenServiceImpl(
 
     @Transactional
     @Throws(KeyException::class, TokenException::class)
-    override fun generateAccessAndRefreshForUser(address: String): AccessAndRefreshToken {
-        val lowercaseAddress = address.lowercase()
-        deleteRefreshToken(lowercaseAddress)
+    override fun generateAccessAndRefreshForUser(address: WalletAddress): AccessAndRefreshToken {
+        deleteRefreshToken(address)
         val token = getRandomToken()
         val refreshToken = refreshTokenRepository.save(
-            RefreshToken(0, lowercaseAddress, token, zonedDateTimeProvider.getZonedDateTime())
+            RefreshToken(0, address.value, token, zonedDateTimeProvider.getZonedDateTime())
         )
         val accessToken = JwtTokenUtils.encodeToken(
-            lowercaseAddress,
+            address.value,
             applicationProperties.jwt.privateKey,
             applicationProperties.jwt.accessTokenValidityInMilliseconds()
         )
@@ -78,7 +78,8 @@ class TokenServiceImpl(
     }
 
     @Transactional
-    override fun deleteRefreshToken(address: String) = refreshTokenRepository.deleteByUserAddress(address.lowercase())
+    override fun deleteRefreshToken(address: WalletAddress) =
+        refreshTokenRepository.deleteByUserAddress(address.value)
 
     private fun getRandomToken(): String = (1..REFRESH_TOKEN_LENGTH)
         .map { secureRandom.nextInt(charPool.size) }

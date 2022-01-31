@@ -1,4 +1,4 @@
-package com.ampnet.identityservice.blockchain
+package com.ampnet.identityservice.util
 
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InvalidRequestException
@@ -7,21 +7,21 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-class VersionTest {
+class ContractVersionTest {
 
     @Test
     fun mustCompareVersion() {
-        assertTrue(Version("2") > Version("1"))
-        assertTrue(Version("2") > Version("1.0"))
-        assertTrue(Version("1.0.1") > Version("1.0"))
-        assertTrue(Version("1.2") > Version("1.0.1"))
-        assertTrue(Version("1.0.1") > Version("1.0.0"))
+        assertTrue(ContractVersion("2") > ContractVersion("1"))
+        assertTrue(ContractVersion("2") > ContractVersion("1.0"))
+        assertTrue(ContractVersion("1.0.1") > ContractVersion("1.0"))
+        assertTrue(ContractVersion("1.2") > ContractVersion("1.0.1"))
+        assertTrue(ContractVersion("1.0.1") > ContractVersion("1.0.0"))
     }
 
     @Test
     fun mustThrowExceptionForInvalidVersionSize() {
         val exception = assertThrows<InvalidRequestException> {
-            Version("2").requireSize(2)
+            ContractVersion("2").requireSize(2)
         }
         assertThat(exception.errorCode).isEqualTo(ErrorCode.BLOCKCHAIN_UNSUPPORTED_VERSION)
     }

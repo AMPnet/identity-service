@@ -2,13 +2,23 @@ package com.ampnet.identityservice.blockchain
 
 import com.ampnet.identityservice.blockchain.IInvestService.InvestmentRecord
 import com.ampnet.identityservice.blockchain.IInvestService.InvestmentRecordStatus
+import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.ContractAddress
+import com.ampnet.identityservice.util.ContractVersion
+import com.ampnet.identityservice.util.TransactionHash
+import com.ampnet.identityservice.util.WalletAddress
 
 interface BlockchainService {
-    fun whitelistAddresses(addresses: List<String>, issuerAddress: String, chainId: Long): String?
-    fun isMined(hash: String, chainId: Long): Boolean
-    fun isWhitelisted(address: String, issuerAddress: String?, chainId: Long): Boolean
-    fun sendFaucetFunds(addresses: List<String>, chainId: Long): String?
-    fun getAutoInvestStatus(records: List<InvestmentRecord>, chainId: Long): List<InvestmentRecordStatus>
-    fun autoInvestFor(records: List<InvestmentRecordStatus>, chainId: Long): String?
-    fun getContractVersion(chainId: Long, address: String): String?
+    fun whitelistAddresses(
+        addresses: List<WalletAddress>,
+        issuerAddress: ContractAddress,
+        chainId: ChainId
+    ): TransactionHash?
+
+    fun isMined(hash: TransactionHash, chainId: ChainId): Boolean
+    fun isWhitelisted(address: WalletAddress, issuerAddress: ContractAddress?, chainId: ChainId): Boolean
+    fun sendFaucetFunds(addresses: List<WalletAddress>, chainId: ChainId): TransactionHash?
+    fun getAutoInvestStatus(records: List<InvestmentRecord>, chainId: ChainId): List<InvestmentRecordStatus>
+    fun autoInvestFor(records: List<InvestmentRecordStatus>, chainId: ChainId): TransactionHash?
+    fun getContractVersion(chainId: ChainId, address: ContractAddress): ContractVersion?
 }

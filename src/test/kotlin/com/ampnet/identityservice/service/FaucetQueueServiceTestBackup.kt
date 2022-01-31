@@ -10,12 +10,16 @@ import com.ampnet.identityservice.config.TestSchedulerConfiguration
 import com.ampnet.identityservice.persistence.model.BlockchainTask
 import com.ampnet.identityservice.persistence.model.BlockchainTaskStatus
 import com.ampnet.identityservice.persistence.repository.BlockchainTaskRepository
+import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.TransactionHash
+import com.ampnet.identityservice.util.WalletAddress
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.given
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -28,11 +32,11 @@ import java.time.ZonedDateTime
 @Import(TestSchedulerConfiguration::class)
 class FaucetQueueServiceTestBackup : TestBase() {
 
-    private var address1 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF7"
-    private val address2 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF8"
-    private val address3 = "0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF9"
+    private var address1 = WalletAddress("0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF7")
+    private val address2 = WalletAddress("0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF8")
+    private val address3 = WalletAddress("0xbdD53fE8b8c2359Ed321b6ef00908fb3e94D0aF9")
     private val addresses = listOf(address1, address2, address3)
-    private val hash = "0x6f7dea8d5d98d119de31204dfbdc69bb1944db04891ad0c45ab577da8e6de04a"
+    private val hash = TransactionHash("0x6f7dea8d5d98d119de31204dfbdc69bb1944db04891ad0c45ab577da8e6de04a")
     private val chainId = Chain.MATIC_TESTNET_MUMBAI.id
 
     @Autowired
@@ -74,16 +78,17 @@ class FaucetQueueServiceTestBackup : TestBase() {
         val chainId2 = 2L
 
         suppose("There are some addresses in the queue") {
-            addresses.forEach { blockchainTaskRepository.addAddressToQueue(it, chainId1) }
-            addresses.forEach { blockchainTaskRepository.addAddressToQueue(it, chainId2) }
+            addresses.forEach { blockchainTaskRepository.addAddressToQueue(it.value, chainId1) }
+            addresses.forEach { blockchainTaskRepository.addAddressToQueue(it.value, chainId2) }
         }
 
         suppose("Blockchain service will send faucet funds to any address") {
-            given(blockchainService.sendFaucetFunds(any(), any())).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(any(), anyValueClass(ChainId(0L)))).willReturn(hash)
         }
 
         suppose("Transactions are mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         verify("Service will handle tasks created from address queue") {
@@ -92,18 +97,18 @@ class FaucetQueueServiceTestBackup : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(2)
-            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash }
+            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash.value }
         }
     }
 
     @Test
     fun mustHandleSingleTaskInQueue() {
         suppose("Blockchain service will send faucet funds") {
-            given(blockchainService.sendFaucetFunds(addresses, chainId)).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(eq(addresses), chainId.mockito())).willReturn(hash)
         }
 
         suppose("Transaction is mined") {
-            given(blockchainService.isMined(hash, chainId)).willReturn(true)
+            given(blockchainService.isMined(hash.mockito(), chainId.mockito())).willReturn(true)
         }
 
         suppose("There is a task in queue") {
@@ -117,14 +122,14 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
             assertThat(tasks).hasSize(1)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.COMPLETED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
         }
     }
 
     @Test
     fun mustRetryPendingTaskWhenExceptionIsThrown() {
         suppose("Blockchain service will throw exception") {
-            given(blockchainService.sendFaucetFunds(any(), any())).willThrow(RuntimeException())
+            given(blockchainService.sendFaucetFunds(any(), anyValueClass(ChainId(0L)))).willThrow(RuntimeException())
         }
 
         suppose("There is a task in queue") {
@@ -145,7 +150,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
     @Test
     fun mustRetryInProcessTaskWhenExceptionIsThrown() {
         suppose("Blockchain service will throw exception") {
-            given(blockchainService.isMined(hash, chainId)).willThrow(RuntimeException())
+            given(blockchainService.isMined(hash.mockito(), chainId.mockito())).willThrow(RuntimeException())
         }
 
         suppose("There is a task in process") {
@@ -159,7 +164,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
             assertThat(tasks).hasSize(2)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
             assertThat(tasks[1].status).isEqualTo(BlockchainTaskStatus.CREATED)
         }
     }
@@ -167,7 +172,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
     @Test
     fun mustHandleSingleTaskInQueueWhenFirstReturnedHashIsNull() {
         suppose("Blockchain service will not send faucet funds") {
-            given(blockchainService.sendFaucetFunds(addresses, chainId)).willReturn(null)
+            given(blockchainService.sendFaucetFunds(eq(addresses), chainId.mockito())).willReturn(null)
         }
 
         suppose("There is a task in queue") {
@@ -185,11 +190,11 @@ class FaucetQueueServiceTestBackup : TestBase() {
         }
 
         suppose("Blockchain service will send faucet funds") {
-            given(blockchainService.sendFaucetFunds(addresses, chainId)).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(eq(addresses), chainId.mockito())).willReturn(hash)
         }
 
         suppose("Transaction is mined") {
-            given(blockchainService.isMined(hash, chainId)).willReturn(true)
+            given(blockchainService.isMined(hash.mockito(), chainId.mockito())).willReturn(true)
         }
 
         verify("Service will handle the task") {
@@ -199,18 +204,19 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
             assertThat(tasks).hasSize(1)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.COMPLETED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
         }
     }
 
     @Test
     fun mustHandleTwoNewTasksInQueue() {
         suppose("Blockchain service will send faucet funds to any address") {
-            given(blockchainService.sendFaucetFunds(any(), any())).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(any(), anyValueClass(ChainId(0L)))).willReturn(hash)
         }
 
         suppose("Transactions are mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         suppose("There are two tasks in queue") {
@@ -224,7 +230,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(2)
-            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash }
+            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash.value }
         }
     }
 
@@ -246,7 +252,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
             assertThat(tasks).hasSize(2)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
             assertThat(tasks[1].status).isEqualTo(BlockchainTaskStatus.CREATED)
         }
     }
@@ -262,7 +268,8 @@ class FaucetQueueServiceTestBackup : TestBase() {
         }
 
         suppose("Transaction is not mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(false)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(false)
         }
 
         verify("Task will remain in process") {
@@ -272,18 +279,19 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
             assertThat(tasks).hasSize(1)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.IN_PROCESS)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
         }
     }
 
     @Test
     fun mustHandleTaskInProcessAndNewTask() {
         suppose("Blockchain service will send faucet funds to any address") {
-            given(blockchainService.sendFaucetFunds(any(), any())).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(any(), anyValueClass(ChainId(0L)))).willReturn(hash)
         }
 
         suppose("Transactions are mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         var task: BlockchainTask? = null
@@ -301,7 +309,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
             val tasks = blockchainTaskRepository.findAll()
 
             assertThat(tasks).hasSize(2)
-            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash }
+            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash.value }
 
             tasks.sortBy { it.createdAt }
 
@@ -313,7 +321,8 @@ class FaucetQueueServiceTestBackup : TestBase() {
     @Test
     fun mustHandleNotMinedTransaction() {
         suppose("Transaction is not mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(false)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(false)
         }
 
         suppose("There is a task in process") {
@@ -332,16 +341,16 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
             assertThat(tasks).hasSize(2)
             assertThat(tasks[0].status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(tasks[0].hash).isEqualTo(hash)
+            assertThat(tasks[0].hash).isEqualTo(hash.value)
             assertThat(tasks[1].status).isEqualTo(BlockchainTaskStatus.CREATED)
         }
     }
 
     @Test
     fun mustStartTaskAfterFailedTask() {
-        val failedHash = "failed_hash"
+        val failedHash = TransactionHash("failed_hash")
         suppose("Transaction is not mined") {
-            given(blockchainService.isMined(failedHash, chainId)).willReturn(false)
+            given(blockchainService.isMined(failedHash.mockito(), chainId.mockito())).willReturn(false)
         }
 
         suppose("There is a task in process") {
@@ -355,11 +364,11 @@ class FaucetQueueServiceTestBackup : TestBase() {
         }
 
         suppose("Blockchain service will mine transaction") {
-            given(blockchainService.sendFaucetFunds(addresses, chainId)).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(eq(addresses), chainId.mockito())).willReturn(hash)
         }
 
         suppose("New transaction will be mined") {
-            given(blockchainService.isMined(hash, chainId)).willReturn(true)
+            given(blockchainService.isMined(hash.mockito(), chainId.mockito())).willReturn(true)
         }
 
         var task: BlockchainTask? = null
@@ -374,7 +383,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
                 ?: fail("Missing failed transaction")
 
             assertThat(failedTask.status).isEqualTo(BlockchainTaskStatus.FAILED)
-            assertThat(failedTask.hash).isEqualTo(failedHash)
+            assertThat(failedTask.hash).isEqualTo(failedHash.value)
         }
 
         verify("Second task is completed") {
@@ -384,18 +393,19 @@ class FaucetQueueServiceTestBackup : TestBase() {
                 ?: fail("Missing transaction")
 
             assertThat(successfulTask.status).isEqualTo(BlockchainTaskStatus.COMPLETED)
-            assertThat(successfulTask.hash).isEqualTo(hash)
+            assertThat(successfulTask.hash).isEqualTo(hash.value)
         }
     }
 
     @Test
     fun mustHandleMultipleTasksInOrder() {
         suppose("Blockchain service will send faucet funds to any address") {
-            given(blockchainService.sendFaucetFunds(any(), any())).willReturn(hash)
+            given(blockchainService.sendFaucetFunds(any(), anyValueClass(ChainId(0L)))).willReturn(hash)
         }
 
         suppose("Transactions are mined") {
-            given(blockchainService.isMined(any(), any())).willReturn(true)
+            given(blockchainService.isMined(anyValueClass(TransactionHash("")), anyValueClass(ChainId(0L))))
+                .willReturn(true)
         }
 
         suppose("There are multiple tasks") {
@@ -411,7 +421,7 @@ class FaucetQueueServiceTestBackup : TestBase() {
             tasks.sortBy { it.createdAt }
 
             assertThat(tasks).hasSize(10)
-            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash }
+            assertThat(tasks).allMatch { it.status == BlockchainTaskStatus.COMPLETED && it.hash == hash.value }
 
             for (i in 0..8) {
                 assertThat(tasks[i].createdAt).isBefore(tasks[i + 1].createdAt)
@@ -423,7 +433,8 @@ class FaucetQueueServiceTestBackup : TestBase() {
     private tailrec fun processAllTasks(maxAttempts: Int = 100) {
         faucetQueueScheduler.execute()
 
-        val hasTasksInQueue = blockchainTaskRepository.getInProcess() != null || blockchainTaskRepository.getPending() != null
+        val hasTasksInQueue =
+            blockchainTaskRepository.getInProcess() != null || blockchainTaskRepository.getPending() != null
         if (hasTasksInQueue && maxAttempts > 1) {
             processAllTasks(maxAttempts - 1)
         }
@@ -431,18 +442,18 @@ class FaucetQueueServiceTestBackup : TestBase() {
 
     private fun createFaucetTask(
         status: BlockchainTaskStatus = BlockchainTaskStatus.CREATED,
-        addresses: List<String> = listOf(address1, address2, address3),
-        chain: Long = chainId,
-        hash: String? = null,
+        addresses: List<WalletAddress> = listOf(address1, address2, address3),
+        chain: ChainId = chainId,
+        hash: TransactionHash? = null,
         updatedAt: ZonedDateTime? = null
     ): BlockchainTask {
         val task = BlockchainTask(
             uuidProvider.getUuid(),
-            addresses.toTypedArray(),
-            chain,
+            addresses.map { it.value }.toTypedArray(),
+            chain.value,
             status,
             null,
-            hash,
+            hash?.value,
             zonedDateTimeProvider.getZonedDateTime(),
             updatedAt
         )
