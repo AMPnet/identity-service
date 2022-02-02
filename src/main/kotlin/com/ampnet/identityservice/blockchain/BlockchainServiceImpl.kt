@@ -141,12 +141,9 @@ class BlockchainServiceImpl(
         )
         val result = contract.getStatus(records).sendSafely() as List<InvestmentRecordStatus>?
         logger.debug {
-            "Received auto-invest statues: ${
-                result?.joinToString {
-                    "[investor: ${it.investor}, amount: ${it.amount}, campaign: ${it.campaign}, " +
-                            "ready: ${it.readyToInvest}]"
-                }
-            }"
+            "Received auto-invest statues: ${result?.joinToString {
+                "[investor: ${it.investor}, amount: ${it.amount}, campaign: ${it.campaign}, ready: ${it.readyToInvest}]"
+            }}"
         }
         return result ?: emptyList()
     }
@@ -178,11 +175,9 @@ class BlockchainServiceImpl(
 
         val investmentRecords = records.map { InvestmentRecord(it) }
         logger.info {
-            "Auto-investing for: ${
-                investmentRecords.joinToString {
-                    "[investor: ${it.investor}, amount: ${it.amount}, campaign: ${it.campaign}]"
-                }
-            }"
+            "Auto-investing for: ${investmentRecords.joinToString {
+                "[investor: ${it.investor}, amount: ${it.amount}, campaign: ${it.campaign}]"
+            }}"
         }
         val sentTransaction = autoInvestContract.investFor(investmentRecords).sendSafely()
 
