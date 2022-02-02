@@ -96,7 +96,6 @@ abstract class AbstractBlockchainQueue(
     }
 
     private fun handlePendingTask(task: BlockchainTask) {
-        logger.debug { "Starting to process task: $task" }
         val hash = executeBlockchainTask(task) ?: return
         logger.info { "Handling process for addresses: ${task.addresses.contentToString()} with hash: $hash" }
         blockchainTaskRepository.setStatus(task.uuid, BlockchainTaskStatus.IN_PROCESS, hash.value, task.payload)

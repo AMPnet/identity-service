@@ -140,6 +140,7 @@ class BlockchainServiceImpl(
             DefaultGasProvider()
         )
         val result = contract.getStatus(records).sendSafely() as List<InvestmentRecordStatus>?
+        logger.debug { "Received auto-invest statues: $result" }
         return result ?: emptyList()
     }
 
@@ -169,6 +170,7 @@ class BlockchainServiceImpl(
         )
 
         val investmentRecords = records.map { InvestmentRecord(it) }
+        logger.info { "Auto-investing for: $investmentRecords" }
         val sentTransaction = autoInvestContract.investFor(investmentRecords).sendSafely()
 
         logger.info { "Successfully send request to auto-invest on chain: $chainId" }
