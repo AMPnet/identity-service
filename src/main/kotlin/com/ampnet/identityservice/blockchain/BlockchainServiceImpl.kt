@@ -190,9 +190,9 @@ class BlockchainServiceImpl(
                 val response = restTemplate
                     .getForObject<GasPriceFeedResponse>(url, GasPriceFeedResponse::class)
                 response.fast?.let { price ->
-                    val gWei = Convert.toWei(price.toString(), Convert.Unit.GWEI).toBigInteger()
-                    logger.debug { "Fetched gas price in GWei: $gWei" }
-                    return gWei
+                    val wei = Convert.toWei(price.toBigDecimal(), Convert.Unit.GWEI).toBigInteger()
+                    logger.debug { "Fetched gas price in Wei: $wei" }
+                    return wei
                 }
             } catch (ex: RestClientException) {
                 logger.warn { "Failed to get price for feed: $url" }
@@ -203,10 +203,10 @@ class BlockchainServiceImpl(
     }
 
     private data class GasPriceFeedResponse(
-        val safeLow: Long?,
-        val standard: Long?,
-        val fast: Long?,
-        val fastest: Long?,
+        val safeLow: Double?,
+        val standard: Double?,
+        val fast: Double?,
+        val fastest: Double?,
         val blockTime: Long?,
         val blockNumber: Long?
     )
