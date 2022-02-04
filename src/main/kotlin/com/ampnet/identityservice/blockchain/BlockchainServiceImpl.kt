@@ -100,7 +100,7 @@ class BlockchainServiceImpl(
             exceptionMessage = "Missing or disabled faucet configuration for chainId: $chainId"
         )
 
-        val gasPrice = getGasPrice(chainId)
+        val gasPrice = getGasPrice(chainId, true)
         logger.debug { "Gas price: $gasPrice" }
 
         val transactionManager = RawTransactionManager(
@@ -194,15 +194,24 @@ class BlockchainServiceImpl(
         return contract.version()?.sendSafely()?.let { ContractVersion(it) }
     }
 
-    internal fun getGasPrice(chainId: ChainId): BigInteger? {
+    internal fun getGasPrice(chainId: ChainId, fastest: Boolean = false): BigInteger? {
         chainHandler.getGasPriceFeed(chainId)?.let { url ->
             try {
                 val response = restTemplate
                     .getForObject<GasPriceFeedResponse>(url, GasPriceFeedResponse::class)
-                response.fast?.let { price ->
-                    val wei = Convert.toWei(price.toBigDecimal(), Convert.Unit.GWEI).toBigInteger()
-                    logger.debug { "Fetched gas price in Wei: $wei" }
-                    return wei
+                return if (fastest) {
+                    response.fastest?.let { price ->
+                        @Suppress("MagicNumber")
+                        val wei = Convert.toWei((price * 1.2).toBigDecimal(), Convert.Unit.GWEI).toBigInteger()
+                        logger.debug { "Fetched gas price in Wei: $wei" }
+                        wei
+                    }
+                } else {
+                    response.fast?.let { price ->
+                        val wei = Convert.toWei(price.toBigDecimal(), Convert.Unit.GWEI).toBigInteger()
+                        logger.debug { "Fetched gas price in Wei: $wei" }
+                        wei
+                    }
                 }
             } catch (ex: RestClientException) {
                 logger.warn { "Failed to get price for feed: $url" }
