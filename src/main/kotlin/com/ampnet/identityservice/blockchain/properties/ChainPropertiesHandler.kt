@@ -51,7 +51,8 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
             ),
             faucet = if (isFaucetAvailable(chainProperties)) chainProperties.faucet else null,
             autoInvest = if (isAutoInvestAvailable(chainProperties)) chainProperties.autoInvest else null,
-            web3j = Web3j.build(HttpService(rpcUrl))
+            web3j = Web3j.build(HttpService(rpcUrl)),
+            blockTime = chainProperties.blockTime
         )
     }
 

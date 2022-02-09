@@ -8,7 +8,8 @@ data class ChainPropertiesWithServices(
     val walletApprover: CredentialsAndContractAddress,
     val faucet: CredentialsAndContractAddress?,
     val autoInvest: CredentialsAndContractAddress?,
-    val web3j: Web3j
+    val web3j: Web3j,
+    val blockTime: Long?
 )
 
 data class CredentialsAndContractAddress(

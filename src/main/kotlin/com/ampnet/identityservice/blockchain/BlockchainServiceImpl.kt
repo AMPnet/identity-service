@@ -19,7 +19,6 @@ import org.springframework.web.client.getForObject
 import org.web3j.protocol.core.RemoteFunctionCall
 import org.web3j.protocol.core.Request
 import org.web3j.protocol.core.Response
-import org.web3j.tx.RawTransactionManager
 import org.web3j.tx.ReadonlyTransactionManager
 import org.web3j.tx.gas.DefaultGasProvider
 import org.web3j.tx.gas.StaticGasProvider
@@ -49,10 +48,11 @@ class BlockchainServiceImpl(
         val gasPrice = getGasPrice(chainId)
         logger.debug { "Gas price: $gasPrice" }
 
-        val transactionManager = RawTransactionManager(
+        val transactionManager = LatestRawTransactionManager(
             blockchainProperties.web3j,
             blockchainProperties.walletApprover.credentials,
-            chainId.value
+            chainId.value,
+            blockchainProperties.blockTime
         )
         val gasProvider = StaticGasProvider(gasPrice, applicationProperties.walletApprove.gasLimit)
         val walletApproverContract = WalletApproverService.load(
@@ -103,10 +103,11 @@ class BlockchainServiceImpl(
         val gasPrice = getGasPrice(chainId, true)
         logger.debug { "Gas price: $gasPrice" }
 
-        val transactionManager = RawTransactionManager(
+        val transactionManager = LatestRawTransactionManager(
             blockchainProperties.web3j,
             faucet.credentials,
-            chainId.value
+            chainId.value,
+            blockchainProperties.blockTime
         )
         val gasProvider = StaticGasProvider(gasPrice, applicationProperties.faucet.gasLimit)
         val faucetContract = IFaucetService.load(
@@ -160,10 +161,11 @@ class BlockchainServiceImpl(
         val gasPrice = getGasPrice(chainId)
         logger.debug { "Gas price: $gasPrice" }
 
-        val transactionManager = RawTransactionManager(
+        val transactionManager = LatestRawTransactionManager(
             blockchainProperties.web3j,
             autoInvest.credentials,
-            chainId.value
+            chainId.value,
+            blockchainProperties.blockTime
         )
         val gasProvider = StaticGasProvider(gasPrice, applicationProperties.autoInvest.gasLimit)
         val autoInvestContract = IInvestService.load(

@@ -53,6 +53,7 @@ class ChainProperties {
     var walletApproverServiceAddress: String = ""
     var faucetServiceAddress: String = ""
     var autoInvestServiceAddress: String = ""
+    var blockTime: Long? = null
 }
 
 @Suppress("MagicNumber")
