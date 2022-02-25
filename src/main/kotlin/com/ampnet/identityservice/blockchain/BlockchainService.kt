@@ -21,4 +21,5 @@ interface BlockchainService {
     fun getAutoInvestStatus(records: List<InvestmentRecord>, chainId: ChainId): List<InvestmentRecordStatus>
     fun autoInvestFor(records: List<InvestmentRecordStatus>, chainId: ChainId): TransactionHash?
     fun getContractVersion(chainId: ChainId, address: ContractAddress): ContractVersion?
+    fun isSignatureValid(chainId: ChainId, address: ContractAddress, data: ByteArray, signature: ByteArray): Boolean
 }

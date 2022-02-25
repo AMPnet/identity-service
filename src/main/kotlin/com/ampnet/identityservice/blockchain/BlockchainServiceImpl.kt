@@ -196,6 +196,16 @@ class BlockchainServiceImpl(
         return contract.version()?.sendSafely()?.let { ContractVersion(it) }
     }
 
+    @Throws(InternalException::class)
+    override fun isSignatureValid(chainId: ChainId, address: ContractAddress, data: ByteArray, signature: ByteArray): Boolean {
+        val web3j = chainHandler.getBlockchainProperties(chainId).web3j
+        val transactionManager = ReadonlyTransactionManager(web3j, address.value)
+        val contract = ERC1271.load(address.value, web3j, transactionManager, DefaultGasProvider())
+        return contract.isValidSignature(data, signature)?.sendSafely()
+            ?.let { it.contentEquals("0x1626ba7e".toByteArray()) }
+            ?: false
+    }
+
     internal fun getGasPrice(chainId: ChainId, fastest: Boolean = false): BigInteger? {
         chainHandler.getGasPriceFeed(chainId)?.let { url ->
             try {

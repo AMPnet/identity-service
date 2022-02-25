@@ -1,9 +1,12 @@
 package com.ampnet.identityservice.service.impl
 
+import com.ampnet.identityservice.blockchain.BlockchainService
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.exception.ResourceNotFoundException
 import com.ampnet.identityservice.service.VerificationService
+import com.ampnet.identityservice.util.ChainId
+import com.ampnet.identityservice.util.ContractAddress
 import com.ampnet.identityservice.util.WalletAddress
 import mu.KLogging
 import org.kethereum.crypto.signedMessageToKey
@@ -13,9 +16,10 @@ import org.springframework.stereotype.Service
 import java.math.BigInteger
 import java.security.SecureRandom
 import java.security.SignatureException
+import org.web3j.crypto.Hash.sha3 as keccak256
 
 @Service
-class VerificationServiceImpl : VerificationService {
+class VerificationServiceImpl(private val blockchainService: BlockchainService) : VerificationService {
 
     companion object : KLogging()
 
@@ -35,14 +39,33 @@ class VerificationServiceImpl : VerificationService {
         val payload = userPayload[address] ?: throw ResourceNotFoundException(
             ErrorCode.AUTH_PAYLOAD_MISSING, "There is no payload associated with address: $address."
         )
-        verifySignedPayload(address, payload, signedPayload)
+        if (payload.length == 132) {
+            verifyPersonalSignedPayload(address, payload, signedPayload)
+        } else {
+            verifyEip1271Signature(ChainId(0L), ContractAddress(address.value), payload, signedPayload)
+        }
     }
 
-    internal fun verifySignedPayload(address: WalletAddress, payload: String, signedPayload: String) {
-        val eip919 = generateEip191Message(payload.toByteArray())
+    internal fun verifyEip1271Signature(chainId: ChainId, address: ContractAddress, payload: String, signedPayload: String) {
+        val message = if (signedPayload == "0x") {
+            generateEip191Message(payload.toByteArray())
+        } else {
+            payload.toByteArray()
+        }
+        val data = keccak256(message)
+        if (blockchainService.isSignatureValid(chainId, address, data, signedPayload.toByteArray())) {
+            throw InvalidRequestException(
+                ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID,
+                "Contract: $address didn't sign the message: $signedPayload"
+            )
+        }
+    }
+
+    internal fun verifyPersonalSignedPayload(address: WalletAddress, payload: String, signedPayload: String) {
+        val eip191 = generateEip191Message(payload.toByteArray())
         try {
-            val signatureData = getSignatureData(signedPayload)
-            val publicKey = signedMessageToKey(eip919, signatureData)
+            val signatureData = getPersonalSignatureData(signedPayload)
+            val publicKey = signedMessageToKey(eip191, signatureData)
             if (address != WalletAddress(publicKey.toAddress().toString())) {
                 throw InvalidRequestException(
                     ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID,
@@ -65,7 +88,7 @@ class VerificationServiceImpl : VerificationService {
      Ethereum uses an additional v(recovery identifier) variable. The signature can be notated as {r, s, v}.
      */
     @Suppress("MagicNumber")
-    private fun getSignatureData(signedPayload: String): SignatureData {
+    private fun getPersonalSignatureData(signedPayload: String): SignatureData {
         if (signedPayload.length != 132)
             throw InvalidRequestException(
                 ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID, "Signature: $signedPayload is of wrong length."
