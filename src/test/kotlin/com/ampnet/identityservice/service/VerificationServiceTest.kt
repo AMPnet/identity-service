@@ -8,6 +8,7 @@ import com.ampnet.identityservice.service.impl.VerificationServiceImpl
 import com.ampnet.identityservice.util.ContractAddress
 import com.ampnet.identityservice.util.WalletAddress
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.kethereum.crypto.createEthereumKeyPair
@@ -24,13 +25,14 @@ class VerificationServiceTest : JpaServiceTestBase() {
 
     private val blockchainService by lazy { BlockchainServiceImpl(applicationProperties, restTemplate) }
     private val verificationService by lazy { VerificationServiceImpl(blockchainService) }
+    private val chainId = Chain.MATIC_MAIN.id
 
     @Test
     fun mustBeAbleToVerifyPayload() {
         val address = WalletAddress(ADDRESS.toString())
         val payload = verificationService.generatePayload(address)
         val signedPayload = "0x" + KEY_PAIR.signWithEIP191PersonalSign(payload.toByteArray()).toHex()
-        verificationService.verifyPayload(address, signedPayload)
+        verificationService.verifyPayload(address, signedPayload, chainId)
     }
 
     @Test
@@ -39,7 +41,7 @@ class VerificationServiceTest : JpaServiceTestBase() {
         val address = WalletAddress(keyPair.publicKey.toAddress().toString())
         val payload = verificationService.generatePayload(address)
         val signedPayload = keyPair.signWithEIP191PersonalSign(payload.toByteArray()).toHex()
-        verificationService.verifyPayload(address, "0x$signedPayload")
+        verificationService.verifyPayload(address, "0x$signedPayload", chainId)
     }
 
     @Test
@@ -78,13 +80,13 @@ class VerificationServiceTest : JpaServiceTestBase() {
         val signedPayload = "0xb2c945a6cec73f6fac442eef9a59f9c35af728211b974167f581fc61954749e25259adb2034cdd15241ead" +
             "0e6e9e7524c2f2126f02c0404a7c9403cec4b99dc01b"
         val error = assertThrows<InvalidRequestException> {
-            assertThat(verificationService.verifyPayload(address, signedPayload))
+            assertThat(verificationService.verifyPayload(address, signedPayload, chainId))
         }
         assertThat(error.errorCode).isEqualTo(ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID)
     }
 
     @Test
-//    @Disabled("Not for automated testing")
+    @Disabled("Not for automated testing")
     fun mustValidatePersonalSignature() {
         val address = WalletAddress("0x9a72ad187229e9338c7f21e019544947fb25d473")
         val message =
@@ -95,7 +97,7 @@ class VerificationServiceTest : JpaServiceTestBase() {
     }
 
     @Test
-//    @Disabled("Not for automated testing")
+    @Disabled("Not for automated testing")
     fun mustValidateGnosisSignature() {
         val address = ContractAddress("0x6cf77b38c601c8c93271a9ea27ca4a3209b67ff3")
         val message =
@@ -105,7 +107,7 @@ class VerificationServiceTest : JpaServiceTestBase() {
     }
 
     @Test
-//    @Disabled("Not for automated testing")
+    @Disabled("Not for automated testing")
     fun mustValidateAmbireSignature() {
         val address = ContractAddress("0x5b8502e07d49e66d4273bf453f6f033163d3b4e8")
         val message =

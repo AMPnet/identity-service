@@ -23,6 +23,7 @@ import org.web3j.tx.ReadonlyTransactionManager
 import org.web3j.tx.gas.DefaultGasProvider
 import org.web3j.tx.gas.StaticGasProvider
 import org.web3j.utils.Convert
+import org.web3j.utils.Numeric
 import java.io.IOException
 import java.math.BigInteger
 
@@ -35,6 +36,7 @@ class BlockchainServiceImpl(
 ) : BlockchainService {
 
     private val chainHandler = ChainPropertiesHandler(applicationProperties)
+    private val validSignature = Numeric.hexStringToByteArray("0x1626ba7e")
 
     @Suppress("ReturnCount")
     @Throws(InternalException::class)
@@ -197,12 +199,17 @@ class BlockchainServiceImpl(
     }
 
     @Throws(InternalException::class)
-    override fun isSignatureValid(chainId: ChainId, address: ContractAddress, data: ByteArray, signature: ByteArray): Boolean {
+    override fun isSignatureValid(
+        chainId: ChainId,
+        address: ContractAddress,
+        data: ByteArray,
+        signature: ByteArray
+    ): Boolean {
         val web3j = chainHandler.getBlockchainProperties(chainId).web3j
         val transactionManager = ReadonlyTransactionManager(web3j, address.value)
-        val contract = ERC1271.load(address.value, web3j, transactionManager, DefaultGasProvider())
+        val contract = IERC1271.load(address.value, web3j, transactionManager, DefaultGasProvider())
         return contract.isValidSignature(data, signature)?.sendSafely()
-            ?.let { it.contentEquals("0x1626ba7e".toByteArray()) }
+            ?.let { it.contentEquals(validSignature) }
             ?: false
     }
 

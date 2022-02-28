@@ -23,6 +23,7 @@ include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayload/http-resp
 === Get JWT
 To get JWT the user must sign the payload received from `POST /authorize` route using his private key.
 User is created in the database on his first login.
+`chain_id` in the request body is optional, it is used for verifying smart contract signatures, e.g. Gnosis, Ambire.
 
 .Request
 include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwtForNewUser/http-request.adoc[]
