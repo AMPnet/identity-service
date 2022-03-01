@@ -8,6 +8,7 @@ import com.ampnet.identityservice.controller.pojo.response.PayloadResponse
 import com.ampnet.identityservice.service.TokenService
 import com.ampnet.identityservice.service.UserService
 import com.ampnet.identityservice.service.VerificationService
+import com.ampnet.identityservice.util.ChainId
 import com.ampnet.identityservice.util.WalletAddress
 import mu.KLogging
 import org.springframework.http.ResponseEntity
@@ -34,7 +35,11 @@ class AuthorizationController(
     @PostMapping("/authorize/jwt")
     fun authorizeJwt(@RequestBody request: AuthorizationRequest): ResponseEntity<AccessRefreshTokenResponse> {
         logger.debug { "Received request for token with address: ${request.address}" }
-        verificationService.verifyPayload(WalletAddress(request.address), request.signedPayload)
+        verificationService.verifyPayload(
+            WalletAddress(request.address),
+            request.signedPayload,
+            request.chainId?.let { ChainId(it) }
+        )
         val accessAndRefreshToken = tokenService.generateAccessAndRefreshForUser(WalletAddress(request.address))
         logger.debug { "User address: ${request.address} successfully authorized." }
         userService.createUser(WalletAddress(request.address))

@@ -65,7 +65,7 @@ class AuthorizationControllerTest : ControllerTestBase() {
         }
 
         verify("Client is authorized and gets jwt") {
-            val request = AuthorizationRequest(ADDRESS.toString(), testContext.signedPayload)
+            val request = AuthorizationRequest(ADDRESS.toString(), testContext.signedPayload, 0)
             val result = mockMvc.perform(
                 post(authorizeJwtPath)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -95,7 +95,7 @@ class AuthorizationControllerTest : ControllerTestBase() {
         }
 
         verify("Client is authorized and gets jwt") {
-            val request = AuthorizationRequest(ADDRESS.toString(), testContext.signedPayload)
+            val request = AuthorizationRequest(ADDRESS.toString(), testContext.signedPayload, 0)
             val result = mockMvc.perform(
                 post(authorizeJwtPath)
                     .contentType(MediaType.APPLICATION_JSON)
