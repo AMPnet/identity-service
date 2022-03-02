@@ -50,7 +50,7 @@ class FaucetQueueService(
                 ChainId(task.chainId)
             )
             if (hash == null) {
-                logger.warn { "Failed to send faucet funds for task: ${task.uuid}" }
+                logger.info { "Failed to send faucet funds for task: ${task.uuid}" }
             }
             hash
         } else {

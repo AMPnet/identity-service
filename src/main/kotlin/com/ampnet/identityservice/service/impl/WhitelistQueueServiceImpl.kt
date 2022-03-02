@@ -57,7 +57,7 @@ class WhitelistQueueServiceImpl(
                 ChainId(task.chainId)
             )
             if (hash == null) {
-                logger.warn { "Failed to whitelist addresses for task: ${task.uuid}" }
+                logger.info { "Failed to whitelist addresses for task: ${task.uuid}" }
             }
             hash
         }
