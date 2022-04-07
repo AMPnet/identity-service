@@ -17,6 +17,7 @@ class ApplicationProperties {
     val chainMatic = ChainProperties()
     val chainMumbai = ChainProperties()
     val chainHardhatTestnet = ChainProperties()
+    val chainPoa = ChainProperties()
     val pinata = PinataProperties()
     val faucet = FaucetProperties()
     val walletApprove = WalletApproveProperties()

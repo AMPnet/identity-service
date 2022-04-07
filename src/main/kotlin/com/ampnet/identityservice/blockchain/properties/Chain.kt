@@ -33,6 +33,12 @@ enum class Chain(val id: ChainId, val rpcUrl: String, val infura: String?, val p
         "http://hardhat:8545",
         null,
         null
+    ),
+    AMPNET_POA(
+        ChainId(1337L),
+        "https://poa.ampnet.io/rpc",
+        null,
+        null
     );
 
     companion object {
