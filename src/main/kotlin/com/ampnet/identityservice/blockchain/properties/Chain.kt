@@ -35,7 +35,7 @@ enum class Chain(val id: ChainId, val rpcUrl: String, val infura: String?, val p
         null
     ),
     AMPNET_POA(
-        ChainId(1337L),
+        ChainId(1984L),
         "https://poa.ampnet.io/rpc",
         null,
         null
