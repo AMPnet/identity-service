@@ -76,7 +76,7 @@ class VeriffServiceTest : JpaServiceTestBase() {
             assertThat(testContext.userInfo.document.type).isEqualTo("DRIVERS_LICENSE")
             assertThat(testContext.userInfo.document.number).isEqualTo("MORGA753116SM9IJ")
             assertThat(testContext.userInfo.document.country).isEqualTo("GB")
-            assertThat(testContext.userInfo.document.validUntil).isEqualTo("2022-04-20")
+            assertThat(testContext.userInfo.document.validUntil).isEqualTo("2222-04-20")
         }
         verify("User data is stored") {
             assertThat(userInfoRepository.findById(testContext.userInfo.uuid)).isNotNull
