@@ -213,6 +213,7 @@ class BlockchainServiceImpl(
             ?: false
     }
 
+    @Suppress("NestedBlockDepth")
     internal fun getGasPrice(chainId: ChainId, fastest: Boolean = false): BigInteger? {
         chainHandler.getGasPriceFeed(chainId)?.let { url ->
             try {

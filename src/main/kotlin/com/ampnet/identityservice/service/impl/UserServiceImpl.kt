@@ -68,6 +68,7 @@ class UserServiceImpl(
         return UserResponse(user)
     }
 
+    @Suppress("MagicNumber")
     @Transactional
     override fun verifyUserWithTestData(request: KycTestRequest): UserResponse {
         val user = getUser(WalletAddress(request.address))
