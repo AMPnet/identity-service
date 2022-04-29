@@ -21,6 +21,8 @@ import mu.KLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 @Service
@@ -69,10 +71,12 @@ class UserServiceImpl(
     @Transactional
     override fun verifyUserWithTestData(request: KycTestRequest): UserResponse {
         val user = getUser(WalletAddress(request.address))
+        val now = zonedDateTimeProvider.getZonedDateTime().withZoneSameInstant(ZoneId.of("UTC"))
+        val validUntil = now.plusDays(10).format(DateTimeFormatter.ISO_LOCAL_DATE)
         val userInfo = UserInfo(
             uuidProvider.getUuid(), "44927492-8799-406e-8076-933bc9164ebc",
             request.firstName, request.lastName, null, null,
-            Document("DRIVERS_LICENSE", "GB", "MORGA753116SM9IJ", "2222-04-20", null),
+            Document("DRIVERS_LICENSE", "GB", "MORGA753116SM9IJ", validUntil, null),
             null, null, zonedDateTimeProvider.getZonedDateTime(), true, false
         )
         userInfoRepository.save(userInfo)
