@@ -1,6 +1,7 @@
 package com.ampnet.identityservice.controller
 
 import com.ampnet.identityservice.controller.pojo.request.AuthorizationRequest
+import com.ampnet.identityservice.controller.pojo.request.AuthorizationRequestByMessage
 import com.ampnet.identityservice.controller.pojo.request.PayloadRequest
 import com.ampnet.identityservice.controller.pojo.request.RefreshTokenRequest
 import com.ampnet.identityservice.controller.pojo.response.AccessRefreshTokenResponse
@@ -32,14 +33,31 @@ class AuthorizationController(
         return ResponseEntity.ok(PayloadResponse(payload))
     }
 
+    @PostMapping("/authorize/by-message")
+    fun getPayloadByMessage(): ResponseEntity<PayloadResponse> {
+        logger.debug { "Received request to get payload by message" }
+        val payload = verificationService.generatePayloadByMessage()
+        return ResponseEntity.ok(PayloadResponse(payload))
+    }
+
     @PostMapping("/authorize/jwt")
     fun authorizeJwt(@RequestBody request: AuthorizationRequest): ResponseEntity<AccessRefreshTokenResponse> {
         logger.debug { "Received request for token with address: ${request.address}" }
         verificationService.verifyPayload(
-            WalletAddress(request.address),
-            request.signedPayload,
-            request.chainId?.let { ChainId(it) }
+            address = WalletAddress(request.address),
+            signedPayload = request.signedPayload,
+            chainId = request.chainId?.let { ChainId(it) }
         )
+        val accessAndRefreshToken = tokenService.generateAccessAndRefreshForUser(WalletAddress(request.address))
+        logger.debug { "User address: ${request.address} successfully authorized." }
+        userService.createUser(WalletAddress(request.address))
+        return ResponseEntity.ok(AccessRefreshTokenResponse(accessAndRefreshToken))
+    }
+
+    @PostMapping("/authorize/jwt/by-message")
+    fun jwtByMessage(@RequestBody request: AuthorizationRequestByMessage): ResponseEntity<AccessRefreshTokenResponse> {
+        logger.debug { "Received request for token by message to sign: ${request.messageToSign}" }
+        verificationService.verifyPayloadByMessage(request)
         val accessAndRefreshToken = tokenService.generateAccessAndRefreshForUser(WalletAddress(request.address))
         logger.debug { "User address: ${request.address} successfully authorized." }
         userService.createUser(WalletAddress(request.address))

@@ -1,6 +1,7 @@
 package com.ampnet.identityservice.service.impl
 
 import com.ampnet.identityservice.blockchain.BlockchainService
+import com.ampnet.identityservice.controller.pojo.request.AuthorizationRequestByMessage
 import com.ampnet.identityservice.exception.ErrorCode
 import com.ampnet.identityservice.exception.InvalidRequestException
 import com.ampnet.identityservice.exception.ResourceNotFoundException
@@ -17,6 +18,8 @@ import org.web3j.utils.Numeric
 import java.math.BigInteger
 import java.security.SecureRandom
 import java.security.SignatureException
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import org.web3j.crypto.Hash.sha3 as keccak256
 
 @Service
@@ -26,14 +29,23 @@ class VerificationServiceImpl(private val blockchainService: BlockchainService) 
 
     @Suppress("MagicNumber")
     private val vOffset = BigInteger.valueOf(27L)
+
     @Suppress("MagicNumber")
     private val personalSignatureLength = 132
-    private val userPayload = mutableMapOf<WalletAddress, String>()
+    private val userPayload = ConcurrentHashMap<WalletAddress, String>()
+    private val messagePayloads = ConcurrentHashMap<String, String>()
 
     override fun generatePayload(address: WalletAddress): String {
         val nonce = SecureRandom().nextInt(Integer.MAX_VALUE).toString()
         val userMessage = SignMessage(address.value, nonce).toString()
         userPayload[address] = userMessage
+        return userMessage
+    }
+
+    override fun generatePayloadByMessage(): String {
+        val nonce = SecureRandom().nextInt(Integer.MAX_VALUE).toString()
+        val userMessage = SignMessage(null, nonce).toString()
+        messagePayloads[userMessage] = userMessage
         return userMessage
     }
 
@@ -53,6 +65,14 @@ class VerificationServiceImpl(private val blockchainService: BlockchainService) 
             }
             verifyEip1271Signature(chainId, ContractAddress(address.value), payload, signedPayload)
         }
+    }
+
+    override fun verifyPayloadByMessage(request: AuthorizationRequestByMessage) {
+        val payload = messagePayloads[request.messageToSign] ?: throw ResourceNotFoundException(
+            ErrorCode.AUTH_PAYLOAD_MISSING, "There is no payload for message: ${request.messageToSign}."
+        )
+
+        return verifyMessageSignedPayload(WalletAddress(request.address), payload, request.signedPayload)
     }
 
     internal fun verifyEip1271Signature(
@@ -95,6 +115,26 @@ class VerificationServiceImpl(private val blockchainService: BlockchainService) 
         }
     }
 
+    internal fun verifyMessageSignedPayload(address: WalletAddress, payload: String, signedPayload: String) {
+        val eip191 = generateEip191Message(payload.toByteArray())
+
+        try {
+            val signatureData = getPersonalSignatureData(signedPayload)
+            val publicKey = signedMessageToKey(eip191, signatureData)
+            if (address != WalletAddress(publicKey.toAddress().toString())) {
+                throw InvalidRequestException(
+                    ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID,
+                    "Address: $address not equal to signed address: ${publicKey.toAddress()}"
+                )
+            }
+            messagePayloads.remove(payload)
+        } catch (ex: SignatureException) {
+            throw InvalidRequestException(
+                ErrorCode.AUTH_SIGNED_PAYLOAD_INVALID, "Public key cannot be recovered from the signature", ex
+            )
+        }
+    }
+
     private fun generateEip191Message(message: ByteArray): ByteArray =
         0x19.toByte().toByteArray() + ("Ethereum Signed Message:\n" + message.size).toByteArray() + message
 
@@ -129,8 +169,14 @@ class VerificationServiceImpl(private val blockchainService: BlockchainService) 
 
     private fun Byte.toByteArray() = ByteArray(1) { this }
 
-    private data class SignMessage(val address: String, val nonce: String) {
+    private data class SignMessage(val address: String?, val nonce: String) {
         override fun toString(): String =
-            "Welcome!\nPlease sign this message to verify that you are the owner of address: $address\nNonce: $nonce"
+            if (address != null) {
+                "Welcome!\nPlease sign this message to verify that you are the owner of address:" +
+                    " $address\nNonce: $nonce"
+            } else {
+                "Please sign this message to verify your wallet ownership," +
+                    " unique ID: ${UUID.randomUUID()}, nonce: $nonce"
+            }
     }
 }

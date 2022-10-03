@@ -2,6 +2,7 @@ package com.ampnet.identityservice.controller
 
 import com.ampnet.core.jwt.JwtTokenUtils
 import com.ampnet.identityservice.controller.pojo.request.AuthorizationRequest
+import com.ampnet.identityservice.controller.pojo.request.AuthorizationRequestByMessage
 import com.ampnet.identityservice.controller.pojo.request.PayloadRequest
 import com.ampnet.identityservice.controller.pojo.request.RefreshTokenRequest
 import com.ampnet.identityservice.controller.pojo.response.AccessRefreshTokenResponse
@@ -28,7 +29,9 @@ class AuthorizationControllerTest : ControllerTestBase() {
     private lateinit var testContext: TestContext
 
     private val authorizePath = "/authorize"
+    private val authorizeByMessagePath = "/authorize/by-message"
     private val authorizeJwtPath = "$authorizePath/jwt"
+    private val authorizeJwtByMessagePath = "$authorizePath/jwt/by-message"
     private val tokenRefreshPath = "$authorizePath/refresh"
 
     @BeforeEach
@@ -46,6 +49,18 @@ class AuthorizationControllerTest : ControllerTestBase() {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))
             )
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn()
+            val payloadResponse: PayloadResponse = objectMapper.readValue(result.response.contentAsString)
+            assertThat(payloadResponse).isNotNull
+        }
+    }
+
+    @Test
+    fun mustBeAbleToGetPayloadByMessage() {
+        verify("Controller returns payload") {
+            val result = mockMvc.perform(post(authorizeByMessagePath))
                 .andExpect(status().isOk)
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andReturn()
@@ -107,6 +122,70 @@ class AuthorizationControllerTest : ControllerTestBase() {
             val response: AccessRefreshTokenResponse = objectMapper.readValue(result.response.contentAsString)
             verifyAccessRefreshTokenResponse(response)
         }
+        verify("New user is not created in database") {
+            assertThat(userRepository.count()).isEqualTo(1)
+        }
+    }
+
+    @Test
+    fun mustBeAbleToAuthorizeJwtByMessageForNewUser() {
+        suppose("There are no users in database") {
+            databaseCleanerService.deleteAllUsers()
+        }
+
+        val messageToSign = verificationService.generatePayloadByMessage()
+
+        suppose("Client signs the payload") {
+            testContext.signedPayload = "0x" + KEY_PAIR.signWithEIP191PersonalSign(messageToSign.toByteArray()).toHex()
+        }
+
+        verify("Client is authorized and gets jwt") {
+            val request = AuthorizationRequestByMessage(ADDRESS.toString(), messageToSign, testContext.signedPayload)
+            val result = mockMvc.perform(
+                post(authorizeJwtByMessagePath)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+            )
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn()
+            val response: AccessRefreshTokenResponse = objectMapper.readValue(result.response.contentAsString)
+            verifyAccessRefreshTokenResponse(response)
+        }
+
+        verify("User is created") {
+            val user = userRepository.findByAddress(ADDRESS.toString())
+            assertThat(user).isNotNull
+        }
+    }
+
+    @Test
+    fun mustBeAbleToAuthorizeJwtByMessageForExistingUser() {
+        suppose("There is a user") {
+            databaseCleanerService.deleteAllUsers()
+            testContext.user = createUser()
+        }
+
+        val messageToSign = verificationService.generatePayloadByMessage()
+
+        suppose("Client signs the payload") {
+            testContext.signedPayload = "0x" + KEY_PAIR.signWithEIP191PersonalSign(messageToSign.toByteArray()).toHex()
+        }
+
+        verify("Client is authorized and gets jwt") {
+            val request = AuthorizationRequestByMessage(ADDRESS.toString(), messageToSign, testContext.signedPayload)
+            val result = mockMvc.perform(
+                post(authorizeJwtByMessagePath)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+            )
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn()
+            val response: AccessRefreshTokenResponse = objectMapper.readValue(result.response.contentAsString)
+            verifyAccessRefreshTokenResponse(response)
+        }
+
         verify("New user is not created in database") {
             assertThat(userRepository.count()).isEqualTo(1)
         }

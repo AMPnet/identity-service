@@ -20,6 +20,14 @@ include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayload/http-requ
 .Response
 include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayload/http-response.adoc[]
 
+=== Get payload by message
+Used to retrieve a payload with unique ID and nonce.
+
+.Request
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayloadByMessage/http-request.adoc[]
+.Response
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToGetPayloadByMessage/http-response.adoc[]
+
 === Get JWT
 To get JWT the user must sign the payload received from `POST /authorize` route using his private key.
 User is created in the database on his first login.
@@ -29,6 +37,16 @@ User is created in the database on his first login.
 include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwtForNewUser/http-request.adoc[]
 .Response
 include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwtForNewUser/http-response.adoc[]
+
+=== Get JWT by message
+To get JWT by message the user must sign the payload received from `POST /authorize/by-message` route using his
+private key.
+User is created in the database on his first login.
+
+.Request
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwtByMessageForNewUser/http-request.adoc[]
+.Response
+include::{snippets}/AuthorizationControllerTest/mustBeAbleToAuthorizeJwtByMessageForNewUser/http-response.adoc[]
 
 === Refresh token
 .Request
